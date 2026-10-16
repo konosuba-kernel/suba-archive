@@ -1,0 +1,814 @@
+{
+  "version": "b3.1",
+  "document_revision": 2,
+  "compiler_sha256": "90c9523de43bebbd0a6932e74abc8cd670b60478c3b4f0fc1eff74fbf4cfb686",
+  "document_sha256": "dd2768aabdba558f23da05b60d7f1e72744beaa27538813d45638520a70f8e7d",
+  "metadata_sha256": "698e997196902d4da8eb612628d0262ef9d0ab8a422369977a877be3b1eeadcb",
+  "runner_sha256": "b566ab040b2ee370d5b54a0e30ee343a00286f33929d6ace4553ec18c855b901",
+  "qemu": "/usr/bin/qemu-riscv64",
+  "guest_stack_bytes": 1048576,
+  "cases": [
+    {
+      "name": "hello",
+      "source_sha256": {
+        "main.vt": "6d16d941aa77565d8fc1af3e28fa689c9a4fb20b480b3293125c0b2c7cbd887b",
+        "program.build": "3cab1ff0b603cacbc58a60bb283060f74433adec0525c0cd9a568ae5545876b4"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=52 assembly=0 names=5 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=52 assembly=0 names=5 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "7d7b14b05631de6de8a5581ca7a848cf3ebbe6614fddc9923f1a7bffeba3b37e"
+    },
+    {
+      "name": "modules",
+      "source_sha256": {
+        "math.vt": "8f25eaf6646f17cc3393eb09cfd97e06b0f55163d07ae430c6b695f7573d5b7e",
+        "main.vt": "eec42e50f0741845b497a17fb8e130b723bf6de129c3fe21dc8c7e423bc40353"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=2 imports=1 assembly_files=0 source=135 assembly=0 names=11 name_bytes=63 decls=2 types=6 fields=0 params=1 max_ast=5 max_ir=6 max_frame=64 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=5 max_args=1 max_params=1 text=408 data=0 objects=0 symbols=13 fixups=11 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=2 imports=1 assembly_files=0 source=135 assembly=0 names=11 name_bytes=63 decls=2 types=6 fields=0 params=1 max_ast=5 max_ir=6 max_frame=64 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=5 max_args=1 max_params=1 text=408 data=0 objects=0 symbols=13 fixups=11 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "3d3aefa6d938663561782168c796bda9c82e3e8ab55650043c3d5d306b885dca"
+    },
+    {
+      "name": "values",
+      "source_sha256": {
+        "main.vt": "2e78ff5b3e77e661ebd0612ebd4e537d68f69a8cc142fc4ac9e0879425487100"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=166 assembly=0 names=8 name_bytes=22 decls=2 types=10 fields=2 params=0 max_ast=19 max_ir=28 max_frame=192 max_bindings=2 max_defers=0 max_loops=0 max_saved=4 max_slots=22 max_args=0 max_params=0 text=628 data=0 objects=0 symbols=15 fixups=20 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=166 assembly=0 names=8 name_bytes=22 decls=2 types=10 fields=2 params=0 max_ast=19 max_ir=28 max_frame=192 max_bindings=2 max_defers=0 max_loops=0 max_saved=4 max_slots=22 max_args=0 max_params=0 text=628 data=0 objects=0 symbols=15 fixups=20 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 21,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "cc5d75c07d6902d1b12a7a8e618594db81bb7704115d3c03fd98b3bdd37936f4"
+    },
+    {
+      "name": "literal_bad",
+      "source_sha256": {
+        "main.vt": "9cf1a298fa4a3adfccda4119af741a5d4f10fb6b614879a5db1f50e91eed5ff2"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=49\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=49\n"
+        }
+      ]
+    },
+    {
+      "name": "literal_good",
+      "source_sha256": {
+        "main.vt": "ec34747bd99ad0ebd40ef42e4a1319c7950d8e497da2a94dd8b414a25315d31a"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=85 assembly=0 names=4 name_bytes=7 decls=1 types=6 fields=0 params=0 max_ast=12 max_ir=17 max_frame=80 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=9 max_args=0 max_params=0 text=364 data=0 objects=0 symbols=12 fixups=10 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=85 assembly=0 names=4 name_bytes=7 decls=1 types=6 fields=0 params=0 max_ast=12 max_ir=17 max_frame=80 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=9 max_args=0 max_params=0 text=364 data=0 objects=0 symbols=12 fixups=10 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "c3800b858ea4246818c320fce9a71972539363dc19c9a8f1b0688fa28f57a1b8"
+    },
+    {
+      "name": "arithmetic",
+      "source_sha256": {
+        "main.vt": "a1c9eec6d65b7393fcd8841d48b5d093bf02b9a5b346520f58462fd9dc4b9fc3"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=135 assembly=0 names=6 name_bytes=18 decls=1 types=6 fields=0 params=0 max_ast=14 max_ir=16 max_frame=96 max_bindings=2 max_defers=0 max_loops=0 max_saved=0 max_slots=14 max_args=0 max_params=0 text=460 data=0 objects=0 symbols=11 fixups=12 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=135 assembly=0 names=6 name_bytes=18 decls=1 types=6 fields=0 params=0 max_ast=14 max_ir=16 max_frame=96 max_bindings=2 max_defers=0 max_loops=0 max_saved=0 max_slots=14 max_args=0 max_params=0 text=460 data=0 objects=0 symbols=11 fixups=12 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 2,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "d85a05ab5cfa70c7ce3603524637c8d7cfa0338c4667cec4429b25da472a4549"
+    },
+    {
+      "name": "overflow",
+      "source_sha256": {
+        "main.vt": "e93437baf7f904b587f895793f30ba184e19585c83357c20ab84d3ef9bc27022"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=71 assembly=0 names=5 name_bytes=9 decls=1 types=6 fields=0 params=0 max_ast=8 max_ir=9 max_frame=48 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=7 max_args=0 max_params=0 text=356 data=0 objects=0 symbols=11 fixups=11 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=71 assembly=0 names=5 name_bytes=9 decls=1 types=6 fields=0 params=0 max_ast=8 max_ir=9 max_frame=48 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=7 max_args=0 max_params=0 text=356 data=0 objects=0 symbols=11 fixups=11 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 101,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "3c26a82526a8ddba9f061ad6740fdf33d8d1da979b95cf44d2579260c02fc88d"
+    },
+    {
+      "name": "assignment_order",
+      "source_sha256": {
+        "main.vt": "38ed33fc111d5305fcf446264e402fc7feaf6d32166aa30bd4f020e974c6cec6"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=299 assembly=0 names=8 name_bytes=30 decls=4 types=8 fields=0 params=0 max_ast=15 max_ir=19 max_frame=128 max_bindings=1 max_defers=0 max_loops=0 max_saved=8 max_slots=13 max_args=0 max_params=0 text=1060 data=0 objects=1 symbols=28 fixups=39 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=299 assembly=0 names=8 name_bytes=30 decls=4 types=8 fields=0 params=0 max_ast=15 max_ir=19 max_frame=128 max_bindings=1 max_defers=0 max_loops=0 max_saved=8 max_slots=13 max_args=0 max_params=0 text=1060 data=0 objects=1 symbols=28 fixups=39 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 12,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "06d3f9f79413011f660f8a4428404d071ce1db20d5bd0bf791fd8d0f690672bd"
+    },
+    {
+      "name": "zero_repeat",
+      "source_sha256": {
+        "main.vt": "de5e6fd1c0ddf38225f5d5b46b3b3aa3156da38dbe6201743803806de459670a"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=183 assembly=0 names=6 name_bytes=20 decls=3 types=8 fields=0 params=0 max_ast=10 max_ir=23 max_frame=128 max_bindings=1 max_defers=0 max_loops=0 max_saved=2 max_slots=14 max_args=0 max_params=0 text=704 data=0 objects=1 symbols=21 fixups=26 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=183 assembly=0 names=6 name_bytes=20 decls=3 types=8 fields=0 params=0 max_ast=10 max_ir=23 max_frame=128 max_bindings=1 max_defers=0 max_loops=0 max_saved=2 max_slots=14 max_args=0 max_params=0 text=704 data=0 objects=1 symbols=21 fixups=26 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "4ecff4cd397b944b55bae1e2ae2e719713d98384b3716b7cbe61920e868529db"
+    },
+    {
+      "name": "control",
+      "source_sha256": {
+        "main.vt": "ba40ef858acf1bca670e4e790c233b6a4e278001d9f658448aac77e44cc94d84"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=261 assembly=0 names=5 name_bytes=12 decls=1 types=6 fields=0 params=0 max_ast=38 max_ir=57 max_frame=192 max_bindings=2 max_defers=0 max_loops=1 max_saved=4 max_slots=29 max_args=0 max_params=0 text=856 data=0 objects=0 symbols=25 fixups=30 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=261 assembly=0 names=5 name_bytes=12 decls=1 types=6 fields=0 params=0 max_ast=38 max_ir=57 max_frame=192 max_bindings=2 max_defers=0 max_loops=1 max_saved=4 max_slots=29 max_args=0 max_params=0 text=856 data=0 objects=0 symbols=25 fixups=30 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "7fb0655056a60318893dc694776b167f7d248cb5c3595a28d7c83a6b3f394633"
+    },
+    {
+      "name": "cleanup",
+      "source_sha256": {
+        "main.vt": "4f44ff05d1ac2da514fc20d3bf6c28fdd47a9618ccfd299c2b48845b8b55f4c1"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=445 assembly=0 names=9 name_bytes=40 decls=4 types=8 fields=0 params=0 max_ast=18 max_ir=30 max_frame=176 max_bindings=1 max_defers=1 max_loops=0 max_saved=11 max_slots=20 max_args=0 max_params=0 text=1252 data=0 objects=1 symbols=26 fixups=34 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=445 assembly=0 names=9 name_bytes=40 decls=4 types=8 fields=0 params=0 max_ast=18 max_ir=30 max_frame=176 max_bindings=1 max_defers=1 max_loops=0 max_saved=11 max_slots=20 max_args=0 max_params=0 text=1252 data=0 objects=1 symbols=26 fixups=34 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 8,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "0ac64733dba87bae91e02f686b9770bca03f5fe4c2edd9c9025b2ffa6610f5ff"
+    },
+    {
+      "name": "defer_bad",
+      "source_sha256": {
+        "main.vt": "0aa950063ad6d22f17eb3e668debcc6a595db2ce483e32fe952186230a5c96bc"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=30\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=30\n"
+        }
+      ]
+    },
+    {
+      "name": "memory",
+      "source_sha256": {
+        "main.vt": "8eb3df66a30c525850c414bfca893699dad1bcadfc14ba8e4e35061b75604e2d"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=230 assembly=0 names=11 name_bytes=83 decls=1 types=14 fields=0 params=0 max_ast=30 max_ir=61 max_frame=448 max_bindings=3 max_defers=0 max_loops=0 max_saved=3 max_slots=51 max_args=0 max_params=0 text=1268 data=0 objects=0 symbols=26 fixups=42 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=230 assembly=0 names=11 name_bytes=83 decls=1 types=14 fields=0 params=0 max_ast=30 max_ir=61 max_frame=448 max_bindings=3 max_defers=0 max_loops=0 max_saved=3 max_slots=51 max_args=0 max_params=0 text=1268 data=0 objects=0 symbols=26 fixups=42 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 21,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "3198553194c40a1f9e824487e16885d3bb8524db2f86a2bc99339f36c97d2852"
+    },
+    {
+      "name": "unsafe_body_bad",
+      "source_sha256": {
+        "main.vt": "2e3a7e07d6725ff3fe1135b6d122b05488e3a7d056c4cf5ed00dce066c32113e"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PERMISSION file=1 byte=50\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PERMISSION file=1 byte=50\n"
+        }
+      ]
+    },
+    {
+      "name": "statics",
+      "source_sha256": {
+        "main.vt": "25f528b8fff2a7e146091d4f625db26ae5306e3f4665e07afbd6caa1a5d185f7"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=254 assembly=0 names=14 name_bytes=64 decls=5 types=10 fields=0 params=0 max_ast=14 max_ir=23 max_frame=176 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=19 max_args=0 max_params=0 text=668 data=34 objects=4 symbols=21 fixups=25 relocations=2 elf=12296\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=254 assembly=0 names=14 name_bytes=64 decls=5 types=10 fields=0 params=0 max_ast=14 max_ir=23 max_frame=176 max_bindings=1 max_defers=0 max_loops=0 max_saved=0 max_slots=19 max_args=0 max_params=0 text=668 data=34 objects=4 symbols=21 fixups=25 relocations=2 elf=12296\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "25a6772b4766e6d44847e286d56bac7a2c21d3f8da0bb4cc79df0e3779b7edfa"
+    },
+    {
+      "name": "constant_bad",
+      "source_sha256": {
+        "main.vt": "3caa41695aac95a2600da14fee60744583f3371e3644bdf6bcc7c20e4eeb9eb9"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=48\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=48\n"
+        }
+      ]
+    },
+    {
+      "name": "static_zero_bad",
+      "source_sha256": {
+        "main.vt": "422531a055b8589581849f8e9b400b1e0224f1842740a8043c4fc800e7b2072c"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=31\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=1 byte=31\n"
+        }
+      ]
+    },
+    {
+      "name": "ffi",
+      "source_sha256": {
+        "main.vt": "1eae50e9a6772a44222f10394d4e525f163bab94cc0effc3f97abb72e42435d8",
+        "answer.s0": "65ec9011b5b07ae753e67aa50e1194b4b5b57a63c9651cc671e1214736cd8572",
+        "program.blocking": "0632641983c0090a59d64c996d53496e8fe95075912948fd4d7192f43567a7f0"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=1 source=98 assembly=40 names=7 name_bytes=34 decls=2 types=5 fields=0 params=0 max_ast=6 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=1 max_args=0 max_params=0 text=220 data=0 objects=0 symbols=10 fixups=7 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=1 source=98 assembly=40 names=7 name_bytes=34 decls=2 types=5 fields=0 params=0 max_ast=6 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=1 max_args=0 max_params=0 text=220 data=0 objects=0 symbols=10 fixups=7 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "analysis.build",
+            "--blocking",
+            "program.blocking"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "Blocking scope: direct-call may-block analysis; not termination or IRQ safety\nBlocking assumes app::answer: nonblocking\nBlocking app::run: Verified\nB3 sources=1 imports=0 assembly_files=1 source=98 assembly=40 names=7 name_bytes=34 decls=2 types=5 fields=0 params=0 max_ast=6 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=1 max_args=0 max_params=0 text=220 data=0 objects=0 symbols=10 fixups=7 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "analysis.build",
+            "--blocking",
+            "program.blocking"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "Blocking scope: direct-call may-block analysis; not termination or IRQ safety\nBlocking app::run: Unknown\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "analysis.build",
+            "--blocking",
+            "program.blocking"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "Blocking scope: direct-call may-block analysis; not termination or IRQ safety\nBlocking assumes app::answer: may_block\nBlocking app::run: Violation\n"
+        }
+      ],
+      "elf_sha256": "43c355ca0fc2ce919f35c5f8d47e82c29192a4efd42def1d9bd312b18f8ca466",
+      "analysis_on_off_equal": true
+    },
+    {
+      "name": "lexemes",
+      "source_sha256": {
+        "main.vt": "8fe407a32c3161ad7e95e5de43e456340276fbe015d1ba443ced5d8fe69b7a64"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=203 assembly=0 names=13 name_bytes=49 decls=1 types=13 fields=0 params=0 max_ast=23 max_ir=40 max_frame=272 max_bindings=3 max_defers=0 max_loops=0 max_saved=0 max_slots=30 max_args=0 max_params=0 text=748 data=7 objects=2 symbols=18 fixups=22 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=203 assembly=0 names=13 name_bytes=49 decls=1 types=13 fields=0 params=0 max_ast=23 max_ir=40 max_frame=272 max_bindings=3 max_defers=0 max_loops=0 max_saved=0 max_slots=30 max_args=0 max_params=0 text=748 data=7 objects=2 symbols=18 fixups=22 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 8,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "860ee0005cbf0d6d6d6ba62e718a918657797f3f5f6d11acdacddb7b2f1f5744"
+    },
+    {
+      "name": "separators_bad",
+      "source_sha256": {
+        "main.vt": "42c9c75bc870791c3dbe757569161367ef319d87a7bb773f3398b3971a67679a"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=1 byte=27\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=1 byte=27\n"
+        }
+      ]
+    },
+    {
+      "name": "layout",
+      "source_sha256": {
+        "main.vt": "d572d307b872008dbf0479dc957a5b8a94108676cace1e1eeb2138e1965aa50f"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=154 assembly=0 names=9 name_bytes=32 decls=2 types=8 fields=2 params=0 max_ast=10 max_ir=10 max_frame=96 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=8 max_args=0 max_params=0 text=368 data=0 objects=0 symbols=12 fixups=12 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=154 assembly=0 names=9 name_bytes=32 decls=2 types=8 fields=2 params=0 max_ast=10 max_ir=10 max_frame=96 max_bindings=0 max_defers=0 max_loops=0 max_saved=0 max_slots=8 max_args=0 max_params=0 text=368 data=0 objects=0 symbols=12 fixups=12 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 48,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "a13156ae6d2bd274ebfa7ea93a218a9af44fe6f80d7e0e10312db24b38b1692c"
+    },
+    {
+      "name": "cleanup_snapshot",
+      "source_sha256": {
+        "main.vt": "18f5214b216458f2099da5e103cfa8351aae233ec3fe99341d145d62fd918afe"
+      },
+      "commands": [
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=241 assembly=0 names=7 name_bytes=26 decls=3 types=7 fields=0 params=0 max_ast=18 max_ir=24 max_frame=112 max_bindings=1 max_defers=1 max_loops=0 max_saved=18 max_slots=11 max_args=0 max_params=0 text=688 data=0 objects=1 symbols=20 fixups=23 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "/home/mii/code/konOSuba/biomiya/build/layout-seed-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "B3 sources=1 imports=0 assembly_files=0 source=241 assembly=0 names=7 name_bytes=26 decls=3 types=7 fields=0 params=0 max_ast=18 max_ir=24 max_frame=112 max_bindings=1 max_defers=1 max_loops=0 max_saved=18 max_slots=11 max_args=0 max_params=0 text=688 data=0 objects=1 symbols=20 fixups=23 relocations=0 elf=12289\n"
+        },
+        {
+          "arguments": [
+            "program.elf"
+          ],
+          "exit": 22,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "elf_sha256": "6ad4253ef99e739aca5b0a9a42e9c6bc4cd9eaae169d5ad20c33adfab2e32cb4"
+    }
+  ],
+  "passed": 22
+}

@@ -1,0 +1,116 @@
+// Boot-only stress acceptance: repeated failed creation and genuine per-space quota.
+module test::rollback_probe;
+import suba::abi;
+import kernel::boot_images;
+import suba::image as elf;
+import kernel::loader;
+import kernel::memory;
+import kernel::process;
+import kernel::space;
+import kernel::machine;
+
+unsafe fn reject_load(plan: elf::Plan, data: []const u8, pages: usize) -> bool {
+    unsafe {
+        match process::begin(plan) {
+            process::Create::Full => { return false; },
+            process::Create::Invalid => { return false; },
+            process::Create::NoMemory => { return false; },
+            process::Create::Ready(id) => {
+                var i: usize = 0;
+                while i <= pages {
+                    match process::load_request(id) {
+                        process::LoadRequest::Done => { return false; },
+                        process::LoadRequest::Invalid => { return false; },
+                        process::LoadRequest::Bytes(need) => {
+                            var view: []const u8 = core::slice_from_raw_parts(data.data, 0);
+                            if i < pages && need.bytes != 0_usize {
+                                view = core::slice_from_raw_parts(core::ptr_add(data.data, need.offset), need.bytes);
+                            }
+                            if i == pages {
+                                // A deliberately wrong chunk length must fail without publishing Ready.
+                                if need.bytes == 0_usize { view = core::slice_from_raw_parts(data.data, 1); }
+                            }
+                            match process::load_step(id, view) {
+                                loader::Step::Invalid => { if i != pages { return false; } },
+                                loader::Step::NoMemory => { return false; },
+                                loader::Step::Done => { return false; },
+                                loader::Step::More => { if i == pages { return false; } }
+                            }
+                        }
+                    }
+                    i = i + 1_usize;
+                }
+                loop {
+                    match process::reap_id(id) {
+                        space::Progress::Invalid => { return false; },
+                        space::Progress::More => {},
+                        space::Progress::Done => { if !process::publish_exit(id) { return false; } break; }
+                    }
+                }
+                match process::collect(id) {
+                    process::Collected::Invalid => { return false; },
+                    process::Collected::Pending => { return false; },
+                    process::Collected::Ready(exit) => { if exit.status != abi::INVALID { return false; } }
+                }
+                if process::valid(id) || process::terminate(id, 0) { return false; }
+                match process::collect(id) {
+                    process::Collected::Invalid => { return true; },
+                    process::Collected::Pending => { return false; },
+                    process::Collected::Ready(exit) => { return false; }
+                }
+            }
+        }
+    }
+}
+
+unsafe fn quota() -> bool {
+    unsafe {
+        match space::create() {
+            space::Create::Full => { return false; },
+            space::Create::NoMemory => { return false; },
+            space::Create::Ready(id) => {
+                var pages: usize = 0;
+                var exhausted: bool = false;
+                while pages < space::QUOTA_PAGES {
+                    match space::map_user(id, abi::USER_BASE + pages * abi::PAGE_BYTES,
+                        space::READ | space::WRITE) {
+                        space::MappingResult::Invalid => { return false; },
+                        space::MappingResult::NoMemory => { exhausted = true; break; },
+                        space::MappingResult::Ready(address) => {}
+                    }
+                    pages = pages + 1_usize;
+                }
+                if !exhausted || pages < 24000_usize { return false; }
+                loop {
+                    match space::reap_step(id) {
+                        space::Progress::Invalid => { return false; },
+                        space::Progress::More => {},
+                        space::Progress::Done => { break; }
+                    }
+                }
+                if space::token(id) != 0_usize { return false; }
+                return true;
+            }
+        }
+    }
+}
+
+pub unsafe fn run(source: boot_images::Source) -> bool {
+    unsafe {
+        let baseline: usize = memory::stats().free;
+        let data: []const u8 = boot_images::bytes(source);
+        match elf::inspect(data, data.len, false) {
+            elf::Inspect::Invalid => { return false; },
+            elf::Inspect::Ready(plan) => {
+                var i: usize = 0;
+                while i < 32_usize {
+                    if !reject_load(plan, data, i % 3_usize) || memory::stats().free != baseline { return false; }
+                    i = i + 1_usize;
+                }
+            }
+        }
+        if !quota() || memory::stats().free != baseline { return false; }
+        machine::text("suba K2: failed creation and quota reclaimed\n");
+        return true;
+    }
+}

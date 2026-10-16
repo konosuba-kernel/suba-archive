@@ -1,0 +1,30 @@
+// Linux test bridge: deserialize records without following their physical addresses.
+module test::boot_info;
+import platform::boot_info;
+import runtime::linux;
+static mut BYTES: [513]u8 = zero;
+
+pub fn run() -> u32 {
+    // SAFETY: test owns the fixed input buffer, descriptor zero is stdin. Each
+    // read view stays within the buffer; no physical address in the record is read.
+    unsafe {
+        var used: usize = 0;
+        loop {
+            if used == 513_usize { return 1; }
+            let part: []u8 = core::slice_from_raw_parts_mut(
+                core::ptr_add(core::slice_of_mut(BYTES).data, used), 513_usize - used);
+            match linux::read(0, part) {
+                linux::CountResult::Failed(error) => { return 2; },
+                linux::CountResult::Value(n) => {
+                    if n == 0_usize { break; }
+                    used = used + n;
+                },
+            }
+        }
+        let bytes: []const u8 = core::slice_from_raw_parts(core::slice_of(BYTES).data, used);
+        match boot_info::decode(bytes) {
+            boot_info::ReadResult::Ready(info) => { return 0; },
+            boot_info::ReadResult::Invalid => { return 1; },
+        }
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "node": "S",
+  "revision": "r1",
+  "baseline": "a86586e690685591bd219e20fe204303336d8d82",
+  "status": "frozen for root independent acceptance",
+  "files": {
+    "biomiya/core-s/next/q/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+    "biomiya/core-s/next/q/tests/k0-s0-encoding.s0": "2b63d6d8dc1e54b8a93fe12ff4c8043d05e0152ca5bbfe84ba72b20970372c9a",
+    "biomiya/core-s/next/q/tests/k0-s0-invalid.json": "fd40b43f420e28a672da8f5b60da42fd06fe7c190f21babab6c56c9a83b30efd",
+    "biomiya/core-s/next/q/tests/k0-s0-run.s0": "c952b809b7c376e6ad411fc6c7562f41adbbb47e679284189b8cf9956e542fdd",
+    "biomiya/core-s/next/q/tests/k0-s0-run.vt": "aa705e52cab6d21b71c5d316bb9c43ed7fa5e5efdc7bf27587ca356572b876d7",
+    "biomiya/core-s/tools/check_q_s0_system.py": "4b94094e6902b9c8c4f6b64a64e1ba1148366256b8ab602fc4f71f33abcdabda",
+    "suba/docs/workflows/k0/S-r1-build.json": "01aed19a926b5ccb7aa7cf7f53e800472c1f2ddf3a1506d210388fd5f27e98e8",
+    "suba/docs/workflows/k0/S-r1-control.json": "59595b9ef43c56eff1197f27cc07ecdd6532fab7478ae89353081734e9b1ac03",
+    "suba/docs/workflows/k0/S-r1-results.json": "b2768dd2a7e2ee62283eb989ded4800fc1bcd7b06c4ab10cce258557ab29de01",
+    "suba/docs/workflows/k0/S-r1-verification.json": "d05ec7daf47e6e6c53e9f7dcd7fdc8bb3979ffb8616f1edbcf09a62284ba7724",
+    "suba/docs/workflows/k0/S-r1.md": "c978f35e6f726b54099932d6fc2c94b2f0763d1fe90501c3cbea6822f487f99e"
+  },
+  "dependencies": {
+    "suba/CODE_STYLE.md": "980c0a8e13a63e990dd7800bca9315aeac30d892622c8ea28e227e12c949c968",
+    "suba/design/CONTRACTS.md": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f"
+  },
+  "compiler_path": "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-r1/compiler.elf",
+  "compiler_sha256": "3f29c54ea59f5fa27ef250fa5cf584d9989b1b843130bb24340da542afb11c8f"
+}

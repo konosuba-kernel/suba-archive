@@ -1,0 +1,3 @@
+// TEST ONLY: count reservations, including incomplete ones, without dereferencing VAs.
+pub unsafe fn k10_count(slot: usize) -> usize { unsafe { return TABLES[slot].count; } }
+pub unsafe fn k10_attached(slot: usize) -> usize { unsafe { if TABLES[slot].generation != 0_usize { return 1; } } return 0; }

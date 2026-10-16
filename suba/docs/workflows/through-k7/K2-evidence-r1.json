@@ -1,0 +1,179 @@
+{
+  "stage": "K2",
+  "revision": "r1",
+  "author": "/root/memory_resume",
+  "qemu_version": "11.1.1",
+  "runs": [
+    {
+      "path": "build/k2-freeze-basic/verification.json",
+      "sha256": "a3185dabfb61ff62f9419fca85b7b9c93ac4b7ebc3597c439cf813db1eeca98a",
+      "passed": true,
+      "serial_sha256": "3ee2aafefca325c6028c19e17958d49549618b0bb961d34a6dd08656c5172d56"
+    },
+    {
+      "path": "build/k2-final-registers/verification.json",
+      "sha256": "a8c777641db4bd462dc566727bc72db325adcec6dd5b246396b69c5e4c6c5d11",
+      "passed": true,
+      "serial_sha256": "74c5e85c6d8bcd3d9d3e53e6e37dcfcc44b42eb1484c7baf034e9764ceb00431"
+    },
+    {
+      "path": "build/k2-final-rollback/verification.json",
+      "sha256": "f974c99dabb2e2573385ea9256f7638982f6a15290e82ac4f7c25afa1e6e81c4",
+      "passed": true,
+      "serial_sha256": "244fb5e5520db4d03567c7286513b30c30c12881017cd2797ded80cf7b0d77b8"
+    },
+    {
+      "path": "build/k2-fault-null-1/verification.json",
+      "sha256": "ece8a6eb6c7c7d34a95d566c9a67ea218b5d2cc422c5b840cc6b138c4c295fa4",
+      "passed": true,
+      "serial_sha256": "d35ee11a6e0546781852ca81cca6e0746be468ff2fc8442c471c2e930adae394"
+    },
+    {
+      "path": "build/k2-fault-privileged-1/verification.json",
+      "sha256": "7f33dec97fd7a1a3ba6675fda901e7652c71915ad16a10178c9fa7a0eb50b1f9",
+      "passed": true,
+      "serial_sha256": "20271c0690e213c2d423f0bab742e766046186d15338ab1677cd694836dfb10d"
+    },
+    {
+      "path": "build/k2-fault-guard-1/verification.json",
+      "sha256": "cf2fc457cf529657376f8c0dccc281325597a24b6e0ae4975ef581e668ac0ff5",
+      "passed": true,
+      "serial_sha256": "6005a64713e72636aae800515abae06bd399c51bdef17a8c11b59ce908b2b322"
+    },
+    {
+      "path": "build/k2-fault-text-write-1/verification.json",
+      "sha256": "7b9e12c9c39e6f42e88cdce7070b7b233c742b6d81f436fb679f0e7b90d79b17",
+      "passed": true,
+      "serial_sha256": "d19823706dae0c231ff4f8adeca91209abfecd18544c6f130ae2f39ca320d34c"
+    },
+    {
+      "path": "build/k2-fault-ro-write-1/verification.json",
+      "sha256": "b2d119d49b27ef1ae05e1da3c9b4889708c5e08bfebb299248a6d76d1bb6436b",
+      "passed": true,
+      "serial_sha256": "7af2ba4033a7ee151e095bc952eff79cde65ffce4365c5df7e0879aa5658f44a"
+    },
+    {
+      "path": "build/k2-fault-nx-1/verification.json",
+      "sha256": "b8797e1702d2f2ad1c554e9586d8d151eda86e4c33594eb1fe0a1f0aca8be176",
+      "passed": true,
+      "serial_sha256": "c1da03d1c2bcbc603fcb50da6766748b341ce976727c25fb5e3b5fdb816678bc"
+    },
+    {
+      "path": "build/k2-fault-kernel-read-1/verification.json",
+      "sha256": "e94f335151f54d73c80f62c20cc9edcfbc4767b1682d8642d48f6b3999d88f01",
+      "passed": true,
+      "serial_sha256": "c498efaaea0002c821439a62c88e5d7b4a9fc218d5261df2ffa970c4eb1ed90b"
+    },
+    {
+      "path": "build/k2-final-s-firmware/verification.json",
+      "sha256": "7bd7d9c16d5dc660c6b8c24cc5567a247830b1ab6005f8ea8ce3b1c0c9b20e7b",
+      "passed": true,
+      "serial_sha256": "2117f8360baa6fb3522b016608cba21f59dc0574e72dab04ac49f41201ef94f7"
+    },
+    {
+      "path": "build/k2-final-s-text/verification.json",
+      "sha256": "de3679195fa9d2ac3cc9c7c9475d403f16eda00eeb64799d26feb0b732734f2d",
+      "passed": true,
+      "serial_sha256": "efcbfdf944fa17787550ee4af3783831eb5ee8cfddacd8ea45d9ffce2e672160"
+    },
+    {
+      "path": "build/k2-final-s-guard/verification.json",
+      "sha256": "6dba0ea05ff4bcc848e0a9289ea1f88ddba0ebf8ac1c8e79aaf25ba0efece8eb",
+      "passed": true,
+      "serial_sha256": "be75025d9af44689a36806f87f9aba6bbcb1aa06afb017d39a120f50328e88e9"
+    },
+    {
+      "path": "build/k2-final-restore-negative/verification.json",
+      "sha256": "d8e00df8efd72bd5baa38751902077d7231672afa508b14ae33d12eebb1fdfac",
+      "passed": true,
+      "serial_sha256": "756bde750fd56a27061be90394e9c91267b89c52f111d01d6a6bd47ac95ca95f"
+    },
+    {
+      "path": "build/k2-final-unknown-interrupt/verification.json",
+      "sha256": "aa2b05ea5c914204734f65af5c0b053f64be33bd098fc76401e67ef58ed577f0",
+      "passed": true,
+      "serial_sha256": "a04529b40253b024578a8dba02a392b671036213bf6bfc3f269227848c47ade6"
+    },
+    {
+      "path": "build/k2-final-bad-boot/verification.json",
+      "sha256": "f34f1b3065f308e263e4c3c27b4f1eed505e9255a183d9a51c253dc26fa9f30d",
+      "passed": true,
+      "serial_sha256": "a52d9828d64de276c26a015d4f6d2c5fa07a70c487491e441f746b77fc1b5773"
+    },
+    {
+      "path": "build/k2-final-bad-descriptor/verification.json",
+      "sha256": "0f1527fc80bd86c7a511222cddfa31b032536815d550f90da7b1ea256f80166b",
+      "passed": true,
+      "serial_sha256": "79376cc892b62b4cea28bcfa088d17ff2503f775f46558a84cccc7743e683b4b"
+    },
+    {
+      "path": "build/k2-final-bad-user-elf/verification.json",
+      "sha256": "1fd0115cfd5f832a6b2258a74c05d9a0905cd215621ba034b9aa3e2941550221",
+      "passed": true,
+      "serial_sha256": "2d189020dbe07389dc38f1cc227cfb2fcd887a3de95523234b2d2b6db57c7a1c"
+    },
+    {
+      "path": "build/k2-final-load-no-memory/verification.json",
+      "sha256": "f9058e0490315e08cc5d5c0e8b2155131750a6cd9522262548f692e7b3cd7f24",
+      "passed": true,
+      "serial_sha256": "a099822079af5fb9b93362a8c920c0db9208521c63ff7ae13b59ec7f5ebf634a"
+    },
+    {
+      "path": "build/k2-elf-2/verification.json",
+      "sha256": "a27798c4fb5c06f3284f22479eb4f36fab4a08d98ce65ca4e07499cc1b7aa527",
+      "passed": true,
+      "cases": 37
+    },
+    {
+      "path": "build/k2-cost-r1/verification.json",
+      "sha256": "56818ba459abd9cc35bcc6ff0f3b6cce37e8390be48c68570277dc96f95a09c3",
+      "passed": true,
+      "measured_bytes": {
+        "owned": 12,
+        "space_record": 32,
+        "process_record": 736,
+        "frame": 8
+      }
+    }
+  ],
+  "production_elf": {
+    "path": "build/k2-freeze-basic/build/kernel.elf",
+    "sha256": "76d0452c54b9d3542eb5f0e5e94dfd9a1e63bc7fada1550abf4b50ed30c3de7c",
+    "file_bytes": 352272,
+    "segments": [
+      {
+        "flags": 5,
+        "file_offset": 4096,
+        "address": 2151677952,
+        "file_bytes": 340908,
+        "memory_bytes": 340908,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "file_offset": 348160,
+        "address": 2152022016,
+        "file_bytes": 508,
+        "memory_bytes": 508,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "file_offset": 352256,
+        "address": 2152026112,
+        "file_bytes": 16,
+        "memory_bytes": 6448880,
+        "alignment": 4096
+      }
+    ]
+  },
+  "retained_failures": [
+    "build/k2-compile-1",
+    "build/k2-compile-2",
+    "build/k2-compile-3",
+    "build/k2-compile-4",
+    "build/k2-run-1",
+    "build/k2-registers-1"
+  ],
+  "note": "Fault suite predates only the reviewed ELF total bound / unknown-interrupt guard and comment cleanup; final positive/rollback/negative suites consume corrected behavior. Source snapshots and command records remain in each run directory."
+}

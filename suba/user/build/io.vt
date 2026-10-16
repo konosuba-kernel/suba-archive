@@ -1,0 +1,109 @@
+// User file operations. No hidden scheduler or global buffer.
+module user::build::io;
+import suba::abi;
+import suba::files;
+import libsuba::files as fs;
+import libsuba::syscall;
+pub enum Read { Ready(usize), Failed(usize) }
+
+// Caller owns the output; whole-file read holds one stable reader lease. The
+// extra byte detects a full buffer, so accepted input is strictly shorter.
+pub unsafe fn read(path: []const u8, buffer: []u8) -> Read {
+    unsafe {
+        let opened: syscall::Reply = fs::open(path, files::READ);
+        if opened.status != abi::OK { return Read::Failed(opened.status); }
+        let result: Read = read_handle(opened.value, buffer);
+        let closed: syscall::Reply = syscall::close(opened.value);
+        match result {
+            Read::Failed(error) => { return Read::Failed(error); },
+            Read::Ready(count) => {
+                if closed.status != abi::OK { return Read::Failed(closed.status); }
+                return Read::Ready(count);
+            }
+        }
+    }
+}
+unsafe fn read_handle(handle: usize, buffer: []u8) -> Read {
+    unsafe {
+        var offset: usize = 0;
+        while offset < buffer.len {
+            var bytes: usize = buffer.len - offset;
+            if bytes > abi::IO_BYTES_MAX { bytes = abi::IO_BYTES_MAX; }
+            let part: []u8 = core::slice_from_raw_parts_mut(core::ptr_add(buffer.data, offset), bytes);
+            let got: syscall::Reply = fs::read_at(handle, offset, part);
+            if got.status != abi::OK { return Read::Failed(got.status); }
+            if got.value > bytes { return Read::Failed(abi::IO); }
+            if got.value == 0_usize { return Read::Ready(offset); }
+            offset = offset + got.value;
+        }
+    }
+    return Read::Failed(abi::LIMIT);
+}
+
+// Exclusive, caller-owned transient; a killed process leaves kernel-owned
+// cleanup. seal=false keeps that ownership until a later atomic replacement.
+pub unsafe fn save_new(path: []const u8, data: []const u8, seal: bool) -> usize {
+    unsafe {
+        let opened: syscall::Reply = fs::open(path, files::WRITE | files::CREATE_NEW | files::TRANSIENT);
+        if opened.status != abi::OK { return opened.status; }
+        var error: usize = write_all(opened.value, 0, data);
+        if error == abi::OK { error = fs::sync(opened.value, seal).status; }
+        let closed: syscall::Reply = syscall::close(opened.value);
+        if error == abi::OK { error = closed.status; }
+        if error != abi::OK {
+            // Removal is best effort after the primary failure. An unsealed file
+            // remains attached to this process's kernel cleanup ledger.
+            let removed: syscall::Reply = fs::unlink(path);
+        }
+        return error;
+    }
+}
+
+pub unsafe fn write_all(handle: usize, offset: usize, data: []const u8) -> usize {
+    unsafe {
+        if offset > abi::FS_FILE_BYTES_MAX || data.len > abi::FS_FILE_BYTES_MAX - offset {
+            return abi::LIMIT;
+        }
+        var used: usize = 0;
+        while used < data.len {
+            var count: usize = data.len - used;
+            if count > abi::IO_BYTES_MAX { count = abi::IO_BYTES_MAX; }
+            let part: []const u8 = core::slice_from_raw_parts(core::ptr_add(data.data, used), count);
+            let wrote: syscall::Reply = fs::write_at(handle, offset + used, part);
+            if wrote.status != abi::OK { return wrote.status; }
+            if wrote.value == 0_usize || wrote.value > count { return abi::IO; }
+            used = used + wrote.value;
+        }
+    }
+    return abi::OK;
+}
+
+// Bounded concatenation into caller-owned disjoint storage, returning a borrowed
+// view that remains valid only until the next write of output.
+pub unsafe fn join(output: []u8, left: []const u8, right: []const u8) -> []const u8 {
+    if left.len > output.len || right.len > output.len - left.len { return ""; }
+    unsafe {
+        var i: usize = 0;
+        while i < left.len { output[i] = left[i]; i = i + 1_usize; }
+        i = 0;
+        while i < right.len { output[left.len + i] = right[i]; i = i + 1_usize; }
+        return core::slice_from_raw_parts(output.data, left.len + right.len);
+    }
+}
+
+// Path has already passed the manifest planner. Create only parent components;
+// existing components are resolved again by the actual subsequent file operation.
+pub unsafe fn directories(path: []const u8, first: usize) -> usize {
+    unsafe {
+        var i: usize = first;
+        while i < path.len {
+            if path[i] == 47_u8 {
+                let prefix: []const u8 = core::slice_from_raw_parts(path.data, i);
+                let made: syscall::Reply = fs::mkdir(prefix);
+                if made.status != abi::OK && made.status != abi::EXISTS { return made.status; }
+            }
+            i = i + 1_usize;
+        }
+    }
+    return abi::OK;
+}

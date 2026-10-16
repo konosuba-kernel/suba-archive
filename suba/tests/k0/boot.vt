@@ -1,0 +1,78 @@
+// K0-only RAM handoff fixture. QEMU preloads a separate compiled kernel ELF.
+// This is not stage0: no disk loader, slot validation, publication or reboot proof.
+module test::boot;
+import suba::abi;
+import kernel::machine;
+import test::config;
+import test::fw_cfg;
+static mut INFO: [512]u8 = zero;
+static mut DTB: [65536]u8 = zero;
+
+fn put(offset: usize, value: usize, width: usize) -> () {
+    var i: usize = 0;
+    // SAFETY: private INFO has fixed lifetime; all callers use fixed ABI offsets.
+    unsafe {
+        while i < width {
+            INFO[offset + i] = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+fn copy_dtb(address: usize) -> usize {
+    if address < abi::RAM_BASE || address - abi::RAM_BASE > abi::RAM_BYTES - 40_usize { return 0; }
+    // SAFETY: firmware-supplied DTB starts in readable platform RAM. Read the 40B
+    // header first, then validate the bounded payload before constructing its view.
+    unsafe {
+        let header: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)), 40);
+        if header[0_usize] != 208_u8 || header[1_usize] != 13_u8 || header[2_usize] != 254_u8 || header[3_usize] != 237_u8 { return 0; }
+        var count: usize = 0;
+        var i: usize = 4;
+        while i < 8_usize {
+            count = count * 256_usize + header[i] as usize;
+            i = i + 1_usize;
+        }
+        if count < 40_usize || count > 65536_usize || count > abi::RAM_BYTES - (address - abi::RAM_BASE) { return 0; }
+        let source: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)), count);
+        i = 0;
+        while i < count {
+            DTB[i] = source[i];
+            i = i + 1_usize;
+        }
+        return count;
+    }
+}
+
+pub fn start(hart: usize, dtb: usize) -> u32 {
+    machine::initialize();
+    if !fw_cfg::verify() { return panic(4); }
+    if hart != 0_usize { return panic(1); }
+    let dtb_bytes: usize = copy_dtb(dtb);
+    if dtb_bytes == 0_usize { return panic(2); }
+    put(abi::BOOT_INFO_MAGIC, config::MAGIC, 8);
+    put(abi::BOOT_INFO_VERSION, abi::VERSION as usize, 4);
+    put(abi::BOOT_INFO_LENGTH, abi::BOOT_INFO_BYTES, 4);
+    put(abi::BOOT_INFO_RAM_BASE, abi::RAM_BASE, 8);
+    put(abi::BOOT_INFO_RAM_BYTES, abi::RAM_BYTES, 8);
+    put(abi::BOOT_INFO_KERNEL_BASE, abi::KERNEL_BASE, 8);
+    put(abi::BOOT_INFO_KERNEL_END, config::KERNEL_END, 8);
+    put(abi::BOOT_INFO_DTB_BYTES, dtb_bytes, 8);
+    put(abi::BOOT_INFO_RESERVATION_COUNT, 1, 4);
+    put(abi::BOOT_INFO_RESERVATIONS, abi::BOOT_BASE, 8);
+    put(abi::BOOT_INFO_RESERVATIONS + 8_usize, abi::BOOT_BYTES, 8);
+    // SAFETY: kernel ELF is preloaded by the test harness. Both static records stay
+    // in the permanent boot window; destination entry creates its own private stack.
+    unsafe {
+        put(abi::BOOT_INFO_DTB_BASE, core::addr(core::slice_of(DTB).data), 8);
+        machine::text("suba K0 boot: entering kernel\n");
+        machine::enter(config::KERNEL_ENTRY, core::addr(core::slice_of(INFO).data));
+    }
+    return panic(3);
+}
+
+pub fn panic(reason: u32) -> u32 {
+    unsafe { machine::text("suba K0 boot panic\n"); }
+    machine::halt();
+    return reason;
+}

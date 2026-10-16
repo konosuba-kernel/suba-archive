@@ -1,0 +1,35 @@
+// Additional ABI v1 records for implemented syscall families. No preexisting number changes.
+module suba::syscalls;
+pub const SPAWN_BYTES: usize = 64;
+pub const SPAWN_VERSION: usize = 0;
+pub const SPAWN_LENGTH: usize = 4;
+pub const SPAWN_PATH: usize = 8;
+pub const SPAWN_PATH_BYTES: usize = 16;
+pub const SPAWN_ARGUMENTS: usize = 24;
+pub const SPAWN_ARGUMENT_BYTES: usize = 32;
+pub const SPAWN_STDOUT: usize = 40;
+pub const SPAWN_STDERR: usize = 48;
+pub const SPAWN_JOB: usize = 56;
+pub const WAIT_LIMIT: usize = 16;
+pub const WATCH_BYTES: usize = 16;
+pub const WATCH_HANDLE: usize = 0;
+pub const WATCH_EVENTS: usize = 8;
+pub const READABLE: usize = 1;
+pub const WRITABLE: usize = 2;
+pub const EXITED: usize = 4;
+pub const HANGUP: usize = 8;
+pub const EXIT_BYTES: usize = 40;
+pub const EXIT_VERSION: usize = 0;
+pub const EXIT_LENGTH: usize = 4;
+pub const EXIT_STATUS: usize = 8;
+pub const EXIT_CAUSE: usize = 16;
+pub const EXIT_VALUE: usize = 24;
+pub const EXIT_PC: usize = 32;
+pub const STREAM_PAIR_BYTES: usize = 16;
+pub const NONBLOCK: usize = 1;
+pub const PAGE_COUNT_MAX: usize = 16384;
+// SYS_STATS a0 selector; OK/a1 value. Fixed QEMU ticks run at 10 MHz.
+pub const STATS_FREE_PAGES: usize = 0;
+pub const STATS_TIME_TICKS: usize = 1;
+pub const STATS_SLICE_TICKS: usize = 2;
+pub const STATS_STREAMS: usize = 3;

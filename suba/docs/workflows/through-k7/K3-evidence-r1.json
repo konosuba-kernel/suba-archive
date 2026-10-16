@@ -1,0 +1,697 @@
+{
+  "stage": "K3",
+  "revision": "r1",
+  "author": "/root/memory_resume",
+  "records": [
+    {
+      "path": "build/k3-allocation-0/verification.json",
+      "sha256": "eb889c66a6f49445e02f8cfaa974abb8fef7a25a715767a95eecd8b9e1313a34",
+      "passed": true,
+      "case": "allocation_failure",
+      "mutation": "allocation-0",
+      "serial_sha256": "7e8e746b7d56d963202b67aa60cd9aa1dbef41668bc5150b63c60202715f52cd",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 21884"
+      ]
+    },
+    {
+      "path": "build/k3-allocation-1/verification.json",
+      "sha256": "4f6596422bd002455f54ecfc44867fce05a6e702a132693def9b4203fc7c3221",
+      "passed": true,
+      "case": "allocation_failure",
+      "mutation": "allocation-1",
+      "serial_sha256": "fed83ce3be33f58e114dbc99d7dba0c8a35a11db3f6dd6a3c17c7adf1d5e413e",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 76626"
+      ]
+    },
+    {
+      "path": "build/k3-allocation-2/verification.json",
+      "sha256": "2fc9d0a5ba8789a95735dd9ff9288c458b3825ccdc66aa8330721bf77aba6376",
+      "passed": true,
+      "case": "allocation_failure",
+      "mutation": "allocation-2",
+      "serial_sha256": "d992954f7a8f789dd460678fcf901f158291861f53fdc1855cbc286082d7b215",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 60221"
+      ]
+    },
+    {
+      "path": "build/k3-blocked-writer-1/verification.json",
+      "sha256": "e93939b209b6437f1e6d3005e4d87b6343f42bfeb90156e3c9e885d0497afa5f",
+      "passed": true,
+      "case": "blocked_writer",
+      "mutation": "late-token",
+      "serial_sha256": "dc18c446b74bcfbbc1af53e7d2fb08017c6736748d00ffa1b471e21af08f7922",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: late delivery revoked",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 95753",
+        "suba K3: max slice kind 103"
+      ]
+    },
+    {
+      "path": "build/k3-cancel-install/verification.json",
+      "sha256": "e495c284983b344204d76604f1d19d2d175d8d95c7d085900ec252a918918841",
+      "passed": true,
+      "case": "cancel_prepare",
+      "mutation": "cancel-install",
+      "serial_sha256": "f8f5d4dec43cf48d6c8ac718770601819e8d65d66529a1ac4aba06ccaf1c515a",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: uninstalled child reference cancelled",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 58746",
+        "suba K3: max slice kind 102"
+      ]
+    },
+    {
+      "path": "build/k3-cancel-install-final/verification.json",
+      "sha256": "89c0b3c7f85cec7ad7ace8697e164a4086377cb7acc21f69ffa29e6d4a764c4a",
+      "passed": true,
+      "case": "cancel_prepare",
+      "mutation": "cancel-install",
+      "serial_sha256": "7b8da5259b309e1acc02b89ff06a7c141d94144cde7a3157aa174311c6625ef8",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: uninstalled child reference cancelled",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 47225",
+        "suba K3: max slice kind 110"
+      ],
+      "timing": {
+        "timebase_hz": 10000000,
+        "target_ticks": 50000,
+        "max_dispatch_ticks": 47225,
+        "max_dispatch_kind": 110,
+        "dispatch_target_met": true,
+        "continuous_supervisor_residency_measured": false,
+        "irq_service_latency_measured": false,
+        "two_compiler_background_measured": false
+      }
+    },
+    {
+      "path": "build/k3-cancel-reservation/verification.json",
+      "sha256": "39cb8de32345a6c5d9337742072108d7f645eddbb26a3b7aee5049848558c981",
+      "passed": true,
+      "case": "cancel_prepare",
+      "mutation": "cancel-reservation",
+      "serial_sha256": "c2618ca7e9e44e2ba00ce69d7b42bfb70ad9cfe60a958f76e295a962422df656",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: unbound reservation cancelled",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 47766",
+        "suba K3: max slice kind 32"
+      ]
+    },
+    {
+      "path": "build/k3-compile-1/stderr.log",
+      "sha256": "ffbc087a95d01a489fb3c2f02c412af274750deb30e015d74c66d228b8454643",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-2/stderr.log",
+      "sha256": "8006ca2214970790bf55f1b45faf97ac6f10a902cb939f4531161f1e1773502b",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-2/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-3/stderr.log",
+      "sha256": "eca8c30493bf4060b09c19c207ab2ec3539486be7759066e94108722992b8818",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-3/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-4/stderr.log",
+      "sha256": "b62a139bdf22f0688a7483f637f8b147fab13b3f078cc05579b0ac819f43c39c",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-compile-4/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-cost-r1/verification.json",
+      "sha256": "3d5fcd713b6074a3076e1f588ce8bf81b27b192ed75fd512a6957d95fbb2de61",
+      "passed": true,
+      "case": null,
+      "mutation": null,
+      "bytes": {
+        "owned": 16,
+        "space_record": 56,
+        "process_record": 736,
+        "frame": 8,
+        "object_slot": 48,
+        "stream_state": 48,
+        "job_record": 24,
+        "child_record": 104,
+        "range_table": 1552,
+        "request_record": 312
+      }
+    },
+    {
+      "path": "build/k3-cost-r2/verification.json",
+      "sha256": "24b82666fe6cf4f2725bc9aa5638173c840be50db98c82c6c33a8b1900296d35",
+      "passed": true,
+      "case": null,
+      "mutation": null,
+      "bytes": {
+        "owned": 16,
+        "space_record": 56,
+        "process_record": 736,
+        "frame": 8,
+        "object_slot": 48,
+        "stream_state": 48,
+        "job_record": 24,
+        "child_record": 104,
+        "range_table": 1552,
+        "request_record": 312
+      }
+    },
+    {
+      "path": "build/k3-elf-final/verification.json",
+      "sha256": "028f7e3cd4bc7e570c8e054951e6a9437aa9fe693eea2f0c1f41baf6bf8457db",
+      "passed": true,
+      "case": null,
+      "mutation": null,
+      "case_count": 37
+    },
+    {
+      "path": "build/k3-handles-1/verification.json",
+      "sha256": "6e4e86db044635c75fb2835c6e656066adf1887b17fe7d4c00698bb9ccdca5eb",
+      "passed": true,
+      "case": "handles",
+      "mutation": "none",
+      "serial_sha256": "ba30b7d65be1942e5dbc4003300672e0513ea21a0d5c3a9b22505eb14554e34b",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 50631"
+      ]
+    },
+    {
+      "path": "build/k3-k2-guard-final/verification.json",
+      "sha256": "26a8349758f46feb2595a64eb523172d99adf4c3267346bc27e2fb79aa770b8a",
+      "passed": true,
+      "case": "guard",
+      "mutation": null,
+      "serial_sha256": "bf974cb417c2c2ec5cbd0082fdbab34c8e317c12697d518f9bce7143a0fe7325",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K2: user fault isolated",
+        "suba K2: exit 141 cause 13",
+        "suba K2: exit 0 cause 0",
+        "suba K2: all pages reclaimed"
+      ]
+    },
+    {
+      "path": "build/k3-k2-registers-1/verification.json",
+      "sha256": "bd26d5257ffc4692098f77f94aa9d4f7ed0faa8c04d4a9c37536a8daa0cd502a",
+      "passed": true,
+      "case": "registers",
+      "mutation": null,
+      "serial_sha256": "e57587daaca4b99c18107f7aedcc51d51550378224d5f575939951724266e417",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K2: full frame preempted twice",
+        "suba K2: full frame preempted twice",
+        "suba K2: exit 0 cause 0",
+        "suba K2: exit 0 cause 0",
+        "suba K2: all pages reclaimed"
+      ]
+    },
+    {
+      "path": "build/k3-k2-rollback-1/verification.json",
+      "sha256": "7814619a9d073a2616b4d3b8e76c757f81e4f201908ff08be1b55863ee947056",
+      "passed": true,
+      "case": "rollback",
+      "mutation": null,
+      "serial_sha256": "940177ae923a862d173c9e050605022b390de98b87a5a462c40035efd6dc2fe4",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K2: failed creation and quota reclaimed",
+        "suba K2: exit 0 cause 0",
+        "suba K2: exit 0 cause 0",
+        "suba K2: all pages reclaimed"
+      ]
+    },
+    {
+      "path": "build/k3-memory-1/verification.json",
+      "sha256": "3bc1a8bd25088ff35db60f7fcf0122103261f80a77178b36b2c6544806d980ed",
+      "passed": true,
+      "case": "memory",
+      "mutation": null,
+      "serial_sha256": "241ebef69d532f85e7e00d4b9381eecfe6abe737621fd4c262846adc500d0e55",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 32661"
+      ]
+    },
+    {
+      "path": "build/k3-negative-prune-1/verification.json",
+      "sha256": "1338a154f34ece2d75a0df8af47e607f00ce69c14dff051cfcdd14ebd6f5327c",
+      "passed": true,
+      "case": "memory",
+      "mutation": "omit-prune",
+      "serial_sha256": "608bb5a7b80980e237aa3fa1b4ddff9de37e75661668dfaa5a38c3dbdf47c188",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 15",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 34156",
+        "suba K3: max slice kind 107"
+      ]
+    },
+    {
+      "path": "build/k3-negative-token-1/verification.json",
+      "sha256": "58ec539bec58db2114f365c0196ba1b61fe711db028e976ee73ed52e98aa421c",
+      "passed": true,
+      "case": "waits",
+      "mutation": "omit-token-revocation",
+      "serial_sha256": "7e4f51c16ed19425f0a71844d7753b563d1b6476a069084b086a9ccb27983823",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba kernel panic reason=23"
+      ]
+    },
+    {
+      "path": "build/k3-negative-usercopy-1/verification.json",
+      "sha256": "30e7e991badeb7fcfcfeabfd469ced616e27949fffc4a8847c76b1d9717b65cc",
+      "passed": true,
+      "case": "streams",
+      "mutation": "prefix-only-usercopy",
+      "serial_sha256": "37949355ed729c67433b0f08c7d113baba60bc8fc2188331f67bcc258e1e6076",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba kernel panic reason=22"
+      ]
+    },
+    {
+      "path": "build/k3-orphan-tree-1/verification.json",
+      "sha256": "fc924b027aef9f2bda12bb20d31e7a95d1018559623f390ab0a41a5c860b4a11",
+      "passed": true,
+      "case": "orphan_tree",
+      "mutation": "none",
+      "serial_sha256": "eeef636e5695fb897dc3c619753e68ed3f30d0792f9054e6626945c567b3a3b6",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 164169"
+      ]
+    },
+    {
+      "path": "build/k3-process-limit/verification.json",
+      "sha256": "dbbc5041db4a5f8cdd95ffaad66c09ddecdaa648171a3c639aeb237b2e266e6c",
+      "passed": true,
+      "case": "process_limit",
+      "mutation": "none",
+      "serial_sha256": "b70b5753890dbd058e3ddb0ef73f9d88a7465f3a0f723c337a881aec03734e54",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 50154",
+        "suba K3: max slice kind 2"
+      ]
+    },
+    {
+      "path": "build/k3-production-r1/verification.json",
+      "sha256": "5efb6cb2915de17152697f822474f97b4c77beca34da4af7e784c720fdcd9da5",
+      "passed": true,
+      "case": null,
+      "mutation": null
+    },
+    {
+      "path": "build/k3-production-r2/verification.json",
+      "sha256": "6b53f85194bd1e305d47a74c04fb19b1a22414e2f1ca52b745c73283012461f6",
+      "passed": true,
+      "case": null,
+      "mutation": null
+    },
+    {
+      "path": "build/k3-rollback-1/verification.json",
+      "sha256": "a44a6a44fb1fa504e70e63d741c6e6fd3e65b6038cc34230353ddd23fbca89e6",
+      "passed": true,
+      "case": "rollback",
+      "mutation": null,
+      "serial_sha256": "cee6d9dbe8d9a6fd2e57ff19be2c745275b612b70cf101f9fa05868c4cc48c37",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 36161"
+      ]
+    },
+    {
+      "path": "build/k3-smoke-1/verification.json",
+      "sha256": "4e19005390deac04ed779c94c1a00a0dbc88646ebb1ef78b2a3d82b575b61ffb",
+      "passed": true,
+      "case": "smoke",
+      "mutation": null,
+      "serial_sha256": "abd64138a241e628089deaeb9e84153d73db30575ddd0e0b5ab8ed2233d34a5d",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 35424"
+      ]
+    },
+    {
+      "path": "build/k3-spawn-1/verification.json",
+      "sha256": "2c74bea678b46ca7329439952e2881d01c7d37636c746749dba142cc632ec663",
+      "passed": true,
+      "case": "spawn",
+      "mutation": null,
+      "serial_sha256": "e434f42542b8872e52c37c9a25f21123b728015a1ded6e1c9e221f92e75e0210",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 156858"
+      ]
+    },
+    {
+      "path": "build/k3-spawn-final/verification.json",
+      "sha256": "a6fe3c6f56750b632f94f22fd8e8b8bcbc536b0cc9be9782acb738504bfffaa3",
+      "passed": true,
+      "case": "spawn",
+      "mutation": "none",
+      "serial_sha256": "26555959d0281188b262b911358a02bf4d543cb8ceeef398bf5ac56738fb5c99",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 54773",
+        "suba K3: max slice kind 32"
+      ]
+    },
+    {
+      "path": "build/k3-spawn-invalid-1/verification.json",
+      "sha256": "5b8e36def70139baa93d5b9c9334197a23935cc2b3b17a645ff60f15001223ff",
+      "passed": false,
+      "case": "spawn_invalid",
+      "mutation": "none",
+      "serial_sha256": "81026da7e15a0a8f72a42624d25e5dd054ea15ca9a642fb800719e05de751567",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 124",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 51406",
+        "suba K3: max slice kind 32"
+      ]
+    },
+    {
+      "path": "build/k3-spawn-invalid-2/verification.json",
+      "sha256": "fdb1c81888cc8a4e7b6adcd964925d96f0c1392bc8d0794133e3be933889f103",
+      "passed": true,
+      "case": "spawn_invalid",
+      "mutation": "none",
+      "serial_sha256": "2ea1a678e7e6259efa5075496d83fe17de1ab4e29bff1b081ba05d916f6692e7",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 51186",
+        "suba K3: max slice kind 32"
+      ]
+    },
+    {
+      "path": "build/k3-spawn-sliced-1/verification.json",
+      "sha256": "63d64190f98536794d1ec1ddb3a54dcd10d3b5f04ded425a63337fc650002435",
+      "passed": true,
+      "case": "spawn",
+      "mutation": "none",
+      "serial_sha256": "9422c50492aa1dff9b7a1f03fcb0ad558f26f24308366cc296aee69c005ac12e",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 91403"
+      ]
+    },
+    {
+      "path": "build/k3-streams-1/verification.json",
+      "sha256": "118cb8df002afda0f4f84306ee2936d4495bf7917e82ac36fdcd492a11a9f5c3",
+      "passed": true,
+      "case": "streams",
+      "mutation": null,
+      "serial_sha256": "0500b57ecc5986e23a101ded709e05ef6c2817fc4f2dfce59baa7ef808f6e978",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 49666"
+      ]
+    },
+    {
+      "path": "build/k3-streams-final/verification.json",
+      "sha256": "1bc4b37ff1b348204464fdc3058068970888c8b911a3f0eb973a70d2c41e3a36",
+      "passed": true,
+      "case": "streams",
+      "mutation": "none",
+      "serial_sha256": "7a90b522773e75386811815c6dbca46c3627ba98977b42276d684bcdc5eb0a0e",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 60418",
+        "suba K3: max slice kind 105"
+      ]
+    },
+    {
+      "path": "build/k3-streams-sliced/verification.json",
+      "sha256": "1a811157d0700c31cc71e001ee9b853e95c8d4ac7a41c452c0385959098c9d53",
+      "passed": true,
+      "case": "streams",
+      "mutation": "none",
+      "serial_sha256": "b96cf7051cadd0e525098855f6dd1725e690a05538ba32f03cbeb12eb1c8ca7d",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 51355",
+        "suba K3: max slice kind 32"
+      ]
+    },
+    {
+      "path": "build/k3-tree-1/verification.json",
+      "sha256": "b7b449cc203266eb3f79e9512c4c233361b063ee8a43454eed0d95a7cf9e5aa8",
+      "passed": true,
+      "case": "tree",
+      "mutation": null,
+      "serial_sha256": "b39a076989d86fa093cb3d2c11c301278c22962443c0db520160dd52080d46a7",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 150792"
+      ]
+    },
+    {
+      "path": "build/k3-tree-final/verification.json",
+      "sha256": "b66d605d061e372984492a8519e8d5bf9a888cf8176ca187d48f93a81f1c6850",
+      "passed": true,
+      "case": "tree",
+      "mutation": "none",
+      "serial_sha256": "d05af4f44f82291546be6793529e9c4fa5df2e3a27897b8dab22004273031e9f",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 47593",
+        "suba K3: max slice kind 32"
+      ]
+    },
+    {
+      "path": "build/k3-tree-sliced-1/verification.json",
+      "sha256": "babfa4a94ffb13bd4e642b2fb1482fd8656dd312c3acf30fd3748f346a707252",
+      "passed": true,
+      "case": "tree",
+      "mutation": "none",
+      "serial_sha256": "e73e37cf0272a3aac1cbb9277682a6cd031f1082fd0246263e44836471f02d97",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 95162",
+        "suba K3: max slice kind 103"
+      ]
+    },
+    {
+      "path": "build/k3-tree-sliced-1/isolated-three.json",
+      "sha256": "337967ca3e01510176e8c30a4ba777beb61c958540f9752203629855d1ef4e77",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-tree-sliced-2/verification.json",
+      "sha256": "44a21ee3142827d53b6a63ade3aa1201168c75b8937ebf35fe4758bd66e96da0",
+      "passed": true,
+      "case": "tree",
+      "mutation": "none",
+      "serial_sha256": "a0ac320c596b9e6664e28faaa1a402804a77c8e67bb79c3ec2faf93f8e392f7d",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 76974",
+        "suba K3: max slice kind 103"
+      ]
+    },
+    {
+      "path": "build/k3-tree-sliced-3/verification.json",
+      "sha256": "fd6c6483b1a0eb1d17b10f07a2426cc8ee02a6cd04c20f5457cd2e217290bded",
+      "passed": true,
+      "case": "tree",
+      "mutation": "none",
+      "serial_sha256": "5b831add871a3ba78403ad1dc65e9d62338e2fe38528acce4672c950392848a9",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 57110",
+        "suba K3: max slice kind 110"
+      ]
+    },
+    {
+      "path": "build/k3-tree-sliced-4/verification.json",
+      "sha256": "e363775d234e38c4ee51cb8bee6621544fd9499c563c1309c9458abb5a1c6052",
+      "passed": true,
+      "case": "tree",
+      "mutation": "none",
+      "serial_sha256": "75eb942301dd5a623c638d6fb9b7d19ac2eac8f7d779b43a116e547e4c4a8ee2",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 53184",
+        "suba K3: max slice kind 110"
+      ]
+    },
+    {
+      "path": "build/k3-tree-sliced-4/isolated-three.json",
+      "sha256": "b704f0ff9b897b1645a2523f6d804da7ab1898cf38166c1d9c953f2b4f5b9109",
+      "kind": "preserved-raw-log"
+    },
+    {
+      "path": "build/k3-tree-sliced-5/verification.json",
+      "sha256": "4799658685a1af97ab8be76651afada29ae4fd9550c65081ba3d1bb715c15013",
+      "passed": true,
+      "case": "tree",
+      "mutation": "none",
+      "serial_sha256": "85308d0589bde4d66fef99cae115481e9d56f2a1b604ca71661085974dc1cbf8",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 51448",
+        "suba K3: max slice kind 110"
+      ]
+    },
+    {
+      "path": "build/k3-waits-1/verification.json",
+      "sha256": "ef1bfd29ddd0fae31708d2c3cd775af24ddea4efaacccf90e9f8cb060f0ba07f",
+      "passed": true,
+      "case": "waits",
+      "mutation": null,
+      "serial_sha256": "4145e3979f5c7e8d8186042ea68e6e08195459fea90d82bdf888bf37d14aa68d",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 135132"
+      ]
+    },
+    {
+      "path": "build/k3-waits-final/verification.json",
+      "sha256": "8bae7d011355a2360fa5aa6d7ce259c664ac4e0b7f7b6986cdc16da513159747",
+      "passed": true,
+      "case": "waits",
+      "mutation": "late-token",
+      "serial_sha256": "8048f6b8509f982cfa4db53b82ca75519f4c8548d20a6e63d54068f41015a04f",
+      "markers": [
+        "suba K2: Sv39 active",
+        "suba K3: late delivery revoked",
+        "suba K3: late delivery revoked",
+        "suba K3: root exit 0",
+        "suba K3: reclaimed",
+        "suba K3: max slice ticks 52288",
+        "suba K3: max slice kind 32"
+      ]
+    }
+  ],
+  "production": {
+    "record": "build/k3-production-r2/verification.json",
+    "record_sha256": "6b53f85194bd1e305d47a74c04fb19b1a22414e2f1ca52b745c73283012461f6",
+    "elf": "build/k3-production-r2/build/kernel.elf",
+    "elf_sha256": "d186379f2df7717d0a42628df03fcd001f8168a211f07dc5c9f07a290e70a80c",
+    "compiler_counters": "S-next-0.1 sources=30 imports=68 assembly_files=2 source=217442 assembly=5181 names=3310 name_bytes=68913 decls=665 types=347 fields=361 params=423 max_ast=767 max_ir=995 max_frame=9344 max_bindings=18 max_defers=0 max_loops=2 max_slots=606 max_args=96 max_params=6 text=687844 data=466 objects=86 symbols=9973 fixups=19567 relocations=0 elf=696336",
+    "segments": [
+      {
+        "flags": 5,
+        "address": 2151677952,
+        "file_bytes": 687844,
+        "memory_bytes": 687844
+      },
+      {
+        "flags": 4,
+        "address": 2152366080,
+        "file_bytes": 454,
+        "memory_bytes": 454
+      },
+      {
+        "flags": 6,
+        "address": 2152370176,
+        "file_bytes": 16,
+        "memory_bytes": 11336192
+      }
+    ],
+    "bss_bytes": 11336176,
+    "span_bytes": 12028416,
+    "layouts": {
+      "owned": 16,
+      "space_record": 56,
+      "process_record": 736,
+      "frame": 8,
+      "object_slot": 48,
+      "stream_state": 48,
+      "job_record": 24,
+      "child_record": 104,
+      "range_table": 1552,
+      "request_record": 312
+    }
+  },
+  "interpretation": "passed describes functional assertions or exact expected negative-control failure. No general 5ms/continuous S residency/IRQ service/two compiler background performance pass is claimed. Intermediate source snapshots remain individually identified in their raw records."
+}

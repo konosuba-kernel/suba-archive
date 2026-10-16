@@ -1,0 +1,58 @@
+{
+  "files": {
+    "abi/contract.vt": {
+      "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+      "matches": true
+    },
+    "abi/README.md": {
+      "sha256": "e91fa33a2b211724842acb8007894b895e89d1b02e666142e938227617105328",
+      "matches": true
+    },
+    "platform/README.md": {
+      "sha256": "ab3f12a9de907c3947e8014ad0e1886ad2d3f1bed09a7abe13897b47ffbc3345",
+      "matches": true
+    },
+    "platform/environment.json": {
+      "sha256": "b14033bcef9f58990c76d3f6584d8dffbad649b9b896b34a11fd2f4443f64501",
+      "matches": true
+    },
+    "tests/k0/abi.vt": {
+      "sha256": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+      "matches": true
+    },
+    "tools/check_abi.py": {
+      "sha256": "4ac3af5dc17ac4097f0c131c41fd2965db3c276be90b416dc40499490a4d524f",
+      "matches": true
+    }
+  },
+  "environment": {
+    "qemu-system-riscv64": {
+      "sha256": "a1cfcceb6c688f9b0a290d512211ed08cf465b92b26a04cfb032280a53625718",
+      "matches": true
+    },
+    "qemu-riscv64": {
+      "sha256": "f9937664b4107120a6b0a9727f27a2c215de3af57c467f7c575d1a13303b0bd2",
+      "matches": true
+    },
+    "clang": {
+      "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+      "matches": true
+    },
+    "firmware": {
+      "sha256": "894e2aef99590fc07ec6c60ab00282b8bc5d5d5bb2a1d0c6ada0c52df24274c0",
+      "matches": true
+    }
+  },
+  "constants": {
+    "syscall_unique": true,
+    "errors_unique": true,
+    "reservation_fits": true,
+    "nodes_fit": true,
+    "fat_fits": true,
+    "node_name_fits": true,
+    "frame_content": true,
+    "image_ram": true,
+    "boot_kernel_adjacent": true
+  },
+  "syscall_count": 38
+}

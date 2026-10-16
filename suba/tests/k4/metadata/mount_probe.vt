@@ -1,0 +1,39 @@
+module test::mount_probe;
+import kernel::fs::codec;
+import kernel::fs::mount_check;
+import test::transport;
+static mut INPUT: [790529]u8 = zero;
+static mut FAT: [65536]u32 = zero;
+static mut NODES: [4096]codec::Node = zero;
+static mut MARKS: [48896]u32 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        if transport::read(core::slice_of_mut(INPUT)) != 790528_usize { return 80; }
+        let input: []const u8 = core::slice_of(INPUT);
+        if !codec::super_valid(core::slice_from_raw_parts(input.data, 4096)) { return 1; }
+        var i: usize = 0;
+        while i < 65536_usize { FAT[i] = transport::get(input, 4096_usize + i * 4_usize) as u32; i = i + 1_usize; }
+        i = 0;
+        while i < 4096_usize {
+            let data: []const u8 = core::slice_from_raw_parts(core::ptr_add(input.data, 266240_usize + i * 128_usize), 128);
+            match codec::node_read(data, i) {
+                codec::NodeRead::Invalid => { return 2; },
+                codec::NodeRead::Value(node) => { NODES[i] = node; },
+            }
+            i = i + 1_usize;
+        }
+        var walker: mount_check::Walker = mount_check::begin();
+        var calls: usize = 0;
+        loop {
+            calls = calls + 1_usize;
+            match mount_check::step(core::addr_of_mut(walker), core::slice_of(FAT), core::slice_of(NODES), core::slice_of_mut(MARKS)) {
+                mount_check::Progress::More => {},
+                mount_check::Progress::Valid => { if !transport::word(calls) { return 82; } return 0; },
+                mount_check::Progress::Invalid(fault) => {
+                    if !transport::word(fault.kind) || !transport::word(fault.index) { return 82; } return 3;
+                },
+            }
+            if calls > 200000_usize { return 83; }
+        }
+    }
+}

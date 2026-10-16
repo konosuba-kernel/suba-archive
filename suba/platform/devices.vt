@@ -1,0 +1,11 @@
+// Fixed QEMU virt device addresses. Kernel aliases are supervisor-only NX; pending is read-only.
+module platform::devices;
+pub const MMIO_OFFSET: usize = 0x40000000;
+pub const UART: usize = 0x10000000;
+pub const FW_CFG: usize = 0x10100000;
+pub const VIRTIO_BASE: usize = 0x10000000;
+pub const VIRTIO_SLOTS: usize = 8;
+pub const PLIC_PRIORITY: usize = 0x0c000000;
+pub const PLIC_PENDING: usize = 0x0c001000;
+pub const PLIC_ENABLE: usize = 0x0c002000;
+pub const PLIC_CONTEXT: usize = 0x0c201000;

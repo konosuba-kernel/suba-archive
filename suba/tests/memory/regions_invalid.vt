@@ -1,0 +1,89 @@
+module test::memory;
+import kernel::memory;
+import test::memory_support;
+
+unsafe fn rejected(origin: usize, span: usize, regions: []const memory::Region) -> bool {
+    // SAFETY: descriptors are live; invalid numeric ranges must be rejected
+    // without accessing their addresses or changing allocator state.
+    unsafe {
+        match memory::initialize_regions(origin, span, regions) {
+            memory::InitResult::Ready => { return false; },
+            memory::InitResult::AlreadyInitialized => { return false; },
+            memory::InitResult::Invalid => {}
+        }
+        let state: memory::Stats = memory::stats();
+        if state.capacity != 0_usize || state.free != 0_usize ||
+            state.allocated != 0_usize || state.retired != 0_usize { return false; }
+        match memory::allocate() {
+            memory::Allocation::NotReady => { return true; },
+            memory::Allocation::Exhausted => { return false; },
+            memory::Allocation::Ready(frame) => { return false; }
+        }
+    }
+}
+
+pub fn run() -> u32 {
+    // SAFETY: descriptors are local immutable during each call. Only the final
+    // accepted donation grants actual RAM; all earlier calls are rejection probes.
+    unsafe {
+        let storage: []u8 = memory_support::prepare();
+        let base: usize = core::addr(storage.data);
+        let page: usize = memory::PAGE_BYTES;
+        var regions: [3]memory::Region = [
+            make memory::Region { base: base, bytes: page },
+            make memory::Region { base: base + page, bytes: page },
+            make memory::Region { base: base + page * 2_usize, bytes: page }
+        ];
+        let list: []const memory::Region = core::slice_of(regions);
+        if !rejected(0, storage.len, list) { return 1; }
+        if !rejected(base + 1_usize, storage.len, list) { return 2; }
+        if !rejected(base, 0, list) { return 3; }
+        if !rejected(base, storage.len - 1_usize, list) { return 4; }
+        if !rejected(0xfffffffffffff000, page, list) { return 5; }
+        if !rejected(base, (memory::PAGE_CAPACITY + 1_usize) * page, list) { return 6; }
+        if !rejected(base, storage.len,
+            core::slice_from_raw_parts(list.data, 0)) { return 7; }
+        regions[1] = make memory::Region { base: base - page, bytes: page };
+        if !rejected(base, storage.len, list) { return 8; }
+        regions[1] = make memory::Region { base: base + page, bytes: 0 };
+        if !rejected(base, storage.len, list) { return 9; }
+        regions[1] = make memory::Region { base: base + page, bytes: page - 1_usize };
+        if !rejected(base, storage.len, list) { return 10; }
+        regions[1] = make memory::Region { base: base + page + 1_usize, bytes: page };
+        if !rejected(base, storage.len, list) { return 11; }
+        regions[1] = make memory::Region { base: base + storage.len, bytes: page };
+        if !rejected(base, storage.len, list) { return 12; }
+        regions[1] = make memory::Region { base: base + page, bytes: storage.len };
+        if !rejected(base, storage.len, list) { return 13; }
+        regions[1] = make memory::Region { base: 0xfffffffffffff000, bytes: page };
+        if !rejected(base, storage.len, list) { return 14; }
+        regions[1] = make memory::Region { base: base + page * 2_usize, bytes: page };
+        regions[2] = make memory::Region { base: base + page, bytes: page };
+        if !rejected(base, storage.len, list) { return 15; }
+        regions[1] = make memory::Region { base: base, bytes: page };
+        if !rejected(base, storage.len, list) { return 16; }
+        regions[0].bytes = page * 2_usize;
+        regions[1] = make memory::Region { base: base + page, bytes: page };
+        if !rejected(base, storage.len, list) { return 17; }
+        if !memory_support::all(core::slice_const(storage), 173) ||
+            !memory_support::guards() { return 18; }
+        regions[0].bytes = page;
+        regions[2] = make memory::Region { base: base + page * 2_usize, bytes: page };
+        match memory::initialize_regions(base, storage.len, list) {
+            memory::InitResult::Ready => {},
+            memory::InitResult::AlreadyInitialized => { return 19; },
+            memory::InitResult::Invalid => { return 20; }
+        }
+        match memory::initialize(storage) {
+            memory::InitResult::AlreadyInitialized => {},
+            memory::InitResult::Invalid => { return 21; },
+            memory::InitResult::Ready => { return 22; }
+        }
+        let state: memory::Stats = memory::stats();
+        if state.capacity != 3_usize || state.free != 3_usize ||
+            state.allocated != 0_usize || state.retired != 0_usize { return 23; }
+        if !memory_support::all(core::slice_const(storage), 173) ||
+            !memory_support::guards() { return 24; }
+    }
+    return 0;
+}

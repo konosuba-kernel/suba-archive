@@ -1,0 +1,3521 @@
+{
+  "schema": "q-s0-system-v1",
+  "passed": false,
+  "input_sha256": {
+    "k0-s0-encoding.s0": "2b63d6d8dc1e54b8a93fe12ff4c8043d05e0152ca5bbfe84ba72b20970372c9a",
+    "k0-s0-invalid.json": "fd40b43f420e28a672da8f5b60da42fd06fe7c190f21babab6c56c9a83b30efd",
+    "k0-s0-run.vt": "aa705e52cab6d21b71c5d316bb9c43ed7fa5e5efdc7bf27587ca356572b876d7",
+    "k0-s0-run.s0": "c952b809b7c376e6ad411fc6c7562f41adbbb47e679284189b8cf9956e542fdd",
+    "tool.py": "4b94094e6902b9c8c4f6b64a64e1ba1148366256b8ab602fc4f71f33abcdabda",
+    "compiler.elf": "8051f3599704a6bf180496b14632691c3463f1239946893641f65aae21969904"
+  },
+  "tools": {
+    "qemu-riscv64": {
+      "path": "/usr/bin/qemu-riscv64",
+      "sha256": "f9937664b4107120a6b0a9727f27a2c215de3af57c467f7c575d1a13303b0bd2"
+    },
+    "clang": {
+      "path": "/usr/bin/clang-23",
+      "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae"
+    }
+  },
+  "cases": [
+    {
+      "name": "encodings",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=97\n"
+        }
+      ],
+      "passed": false,
+      "failure": "Q rejected valid S0"
+    },
+    {
+      "name": "align_4",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=55\n"
+        }
+      ],
+      "passed": false,
+      "failure": "Q rejected valid S0"
+    },
+    {
+      "name": "align_8",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=55\n"
+        }
+      ],
+      "passed": false,
+      "failure": "Q rejected valid S0"
+    },
+    {
+      "name": "align_16",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=55\n"
+        }
+      ],
+      "passed": false,
+      "failure": "Q rejected valid S0"
+    },
+    {
+      "name": "align_256",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=55\n"
+        }
+      ],
+      "passed": false,
+      "failure": "Q rejected valid S0"
+    },
+    {
+      "name": "align_4096",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=55\n"
+        }
+      ],
+      "passed": false,
+      "failure": "Q rejected valid S0"
+    },
+    {
+      "name": "invalid_000",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, -1, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_001",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, 4096, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_002",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, 0x1000, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_003",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, 99999999999999999999999999999999999, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_004",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, 0x, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_005",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, sstatus, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_006",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, +1, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_007",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x32, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_008",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x-1, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_009",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw a0, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_010",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_011",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x99999999999999999, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_012",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, 256, x1, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_013",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1, 256",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_014",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x1 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_015",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, -1, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_016",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, 4096, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_017",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, 0x1000, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_018",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, 99999999999999999999999999999999999, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_019",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, 0x, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_020",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, sstatus, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_021",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, +1, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_022",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x32, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_023",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x-1, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_024",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs a0, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_025",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_026",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x99999999999999999, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_027",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, 256, x1, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_028",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1, 256",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_029",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x1 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_030",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, -1, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_031",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, 4096, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_032",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, 0x1000, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_033",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, 99999999999999999999999999999999999, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_034",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, 0x, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_035",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, sstatus, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_036",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, +1, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_037",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x32, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_038",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x-1, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_039",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc a0, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_040",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_041",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x99999999999999999, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_042",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, 256, x1, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_043",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1, 256",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_044",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x1 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_045",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, -1, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_046",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, 4096, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_047",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, 0x1000, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_048",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, 99999999999999999999999999999999999, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_049",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, 0x, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_050",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, sstatus, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_051",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, +1, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_052",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x32, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_053",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x-1, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_054",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi a0, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_055",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_056",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x99999999999999999, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_057",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, 256, 1, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_058",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1, 256",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_059",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x1 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_060",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, -1, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_061",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, 4096, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_062",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, 0x1000, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_063",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, 99999999999999999999999999999999999, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_064",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, 0x, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_065",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, sstatus, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_066",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, +1, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_067",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x32, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_068",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x-1, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_069",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi a0, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_070",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_071",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x99999999999999999, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_072",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, 256, 1, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_073",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1, 256",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_074",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x1 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_075",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, -1, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_076",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, 4096, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_077",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, 0x1000, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_078",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, 99999999999999999999999999999999999, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_079",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, 0x, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_080",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, sstatus, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_081",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, +1, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_082",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x32, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_083",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x-1, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_084",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci a0, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_085",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_086",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x99999999999999999, 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_087",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, 256, 1, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_088",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1, 256",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_089",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x1 256, 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_090",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x0, 256, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_091",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x0, 256, 32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_092",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x0, 256, 0x20",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_093",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x0, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_094",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x0, 256, 99999999999999999999999999999",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_095",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrwi x0, 256, 0x",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_096",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x0, 256, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_097",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x0, 256, 32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_098",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x0, 256, 0x20",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_099",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x0, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_100",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x0, 256, 99999999999999999999999999999",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_101",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrsi x0, 256, 0x",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_102",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x0, 256, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_103",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x0, 256, 32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_104",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x0, 256, 0x20",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_105",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x0, 256, x1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_106",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x0, 256, 99999999999999999999999999999",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_107",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrci x0, 256, 0x",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_108",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x0, 256, x32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_109",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x0, 256, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_110",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x0, 256, 32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_111",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrw x0, 256, x-1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_112",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x0, 256, x32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_113",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x0, 256, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_114",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x0, 256, 32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_115",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrs x0, 256, x-1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_116",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x0, 256, x32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_117",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x0, 256, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_118",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x0, 256, 32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_119",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "csrrc x0, 256, x-1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_120",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sret x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_121",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sret 0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_122",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sret,",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_123",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "wfi x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_124",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "wfi 0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_125",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "wfi,",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_126",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "fence x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_127",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "fence 0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_128",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "fence,",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_129",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "fence.i x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_130",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "fence.i 0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_131",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "fence.i,",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_132",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sfence.vma",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_133",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sfence.vma x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_134",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sfence.vma x32, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_135",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sfence.vma x0, x32",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_136",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sfence.vma x0, -1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_137",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sfence.vma x0, x0, x0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_138",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sh x32, 0(x1)",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_139",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sh x1, 0(x32)",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_140",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sh x1, -2049(x2)",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_141",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sh x1, 2048(x2)",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_142",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "sh x1, 0(x2), x3",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_143",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 0",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_144",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 1",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_145",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 2",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_146",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 3",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_147",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 5",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_148",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 4095",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_149",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 4097",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_150",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 8192",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_151",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align -4",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_152",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 0x",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_153",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align x4",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_154",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 4,",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_155",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 4 8",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_156",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=0\n"
+        }
+      ],
+      "passed": false,
+      "assembly": "align 99999999999999999999999999",
+      "failure": "invalid operand accepted/wrong error"
+    },
+    {
+      "name": "invalid_157",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "addi x1, x2, 2048"
+    },
+    {
+      "name": "invalid_158",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "slli x1, x2, 64"
+    },
+    {
+      "name": "invalid_159",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sd x1, -2049(x2)"
+    },
+    {
+      "name": "halfword_execution",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s-old-control-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "I_UNSUPPORTED file=2 byte=276\n"
+        }
+      ],
+      "passed": false,
+      "failure": "sh execution fixture failed to compile"
+    }
+  ]
+}

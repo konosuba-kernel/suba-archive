@@ -1,0 +1,29 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut ARGS: [4096]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        if files::mkdir("cwd").status != abi::OK { return 100; }
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work/cwd") { return 101; }
+        let child: syscall::Reply = services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0);
+        if child.status != abi::OK { return 102; }
+        if files::unlink("cwd").status != abi::BUSY { return 103; }
+        if syscall::kill_child(child.value).status != abi::OK { return 104; }
+        var watches: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED };1];
+        let now: syscall::Reply = services::stats(1);
+        if services::wait(core::slice_of(watches), now.value + 50000000_usize, false).value != 1_usize { return 105; }
+        match services::collect(child.value) {
+            services::Collected::Failed(status) => { return 106; },
+            services::Collected::Ready(exit) => { if exit.status != abi::CANCELLED { return 107; } }
+        }
+        if files::unlink("cwd").status != abi::OK { return 108; }
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work/missing") { return 109; }
+        if services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0).status != abi::NOT_FOUND { return 110; }
+        return 0;
+    }
+}

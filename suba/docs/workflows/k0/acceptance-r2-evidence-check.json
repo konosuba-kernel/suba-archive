@@ -1,0 +1,9 @@
+{
+  "record_mismatches": [],
+  "record_count": 23,
+  "cost_mismatches": [],
+  "suba_verification_lines": 344,
+  "e3_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "old_real_counterexample_terminal_matches": false,
+  "old_real_counterexample_forbidden": true
+}

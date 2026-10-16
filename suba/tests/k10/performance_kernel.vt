@@ -1,0 +1,89 @@
+// Test snapshot only: O(1) timing/counter reads and two explicit Child lookups.
+// No resource-table scans and no production syscall additions.
+module kernel::dispatch;
+static mut PERF_ACTIVE: bool = false;
+static mut PERF_STARTED: usize = 0;
+static mut PERF_MAX: usize = 0;
+static mut PERF_SAMPLES: usize = 0;
+static mut PERF_BASE_PAGES: usize = 0;
+static mut PERF_PEAK_PAGES: usize = 0;
+static mut PERF_CHILD: [2]process::Id = zero;
+pub unsafe fn perf_begin(ticks: usize) -> () {
+    unsafe { if PERF_ACTIVE { PERF_STARTED = ticks; } }
+    return ();
+}
+pub unsafe fn perf_end() -> () {
+    unsafe {
+        if PERF_ACTIVE && PERF_STARTED != 0_usize {
+            let elapsed: usize = machine::time() - PERF_STARTED;
+            if elapsed > PERF_MAX { PERF_MAX = elapsed; }
+            PERF_SAMPLES = PERF_SAMPLES + 1_usize;
+            PERF_STARTED = 0;
+        }
+    }
+    return ();
+}
+pub unsafe fn perf_reset() -> () {
+    unsafe { PERF_ACTIVE = true; PERF_MAX = 0; PERF_SAMPLES = 0;
+        PERF_STARTED = machine::time(); PERF_BASE_PAGES = memory::stats().allocated;
+        PERF_PEAK_PAGES = PERF_BASE_PAGES; SLICE_MAX = 0; SLICE_KIND = 0; }
+    return ();
+}
+pub unsafe fn perf_pages() -> () {
+    unsafe { let pages: usize = memory::stats().allocated;
+        if PERF_ACTIVE && pages > PERF_PEAK_PAGES { PERF_PEAK_PAGES = pages; } }
+    return ();
+}
+unsafe fn perf_bind(owner: process::Id, token: usize, index: usize) -> bool {
+    unsafe {
+        match handle(owner, token, objects::COLLECT) {
+            objects::LookupResult::BadHandle => {}, objects::LookupResult::Denied => {},
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Child(child) => {
+                        match children::target(child) {
+                            children::Target::Ready(id) => { PERF_CHILD[index] = id; return true; },
+                            children::Target::Finished => {}, children::Target::Invalid => {}
+                        }
+                    },
+                    objects::Object::Empty => {}, objects::Object::File(value) => {},
+                    objects::Object::Job(value) => {}, objects::Object::Window(value) => {},
+                    objects::Object::Desktop(value) => {}, objects::Object::StreamRead(value) => {},
+                    objects::Object::StreamWrite(value) => {}
+                }
+            }
+        }
+    }
+    return false;
+}
+// Codes match process's diagnostic convention. Invalid/stale identity is zero;
+// only Ready/Running/Blocked (2/3/4) count as overlapping live workloads.
+unsafe fn perf_state(index: usize) -> usize {
+    unsafe {
+        let id: process::Id = PERF_CHILD[index];
+        if !process::valid(id) { return 0; }
+        match process::state(id) {
+            process::State::Vacant => { return 0; }, process::State::Loading => { return 1; },
+            process::State::Ready => { return 2; }, process::State::Running => { return 3; },
+            process::State::Blocked => { return 4; }, process::State::Dying => { return 5; },
+            process::State::Exited => { return 6; }, process::State::Prepared => { return 7; }
+        }
+    }
+}
+unsafe fn perf_states() -> () {
+    unsafe { machine::text(" states "); number(perf_state(0)); machine::text(" "); number(perf_state(1)); }
+    return ();
+}
+pub unsafe fn perf_report() -> () {
+    unsafe {
+        perf_pages(); perf_end(); PERF_ACTIVE = false;
+        machine::text("PERF S "); number(PERF_MAX);
+        machine::text(" samples "); number(PERF_SAMPLES);
+        machine::text(" baseline "); number(PERF_BASE_PAGES);
+        machine::text(" pages "); number(memory::stats().allocated);
+        machine::text(" peak "); number(PERF_PEAK_PAGES);
+        machine::text(" slice "); number(max_slice_ticks());
+        machine::text("\n");
+    }
+    return ();
+}

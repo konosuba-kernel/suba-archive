@@ -1,0 +1,76 @@
+// Fixed-platform PLIC owner. Serialized S-mode, global SIE off; no IRQ recursion.
+// At most eight claims per pass. Driver completion never calls the scheduler.
+module kernel::device::hub;
+import platform::devices;
+import kernel::device::io;
+import kernel::device::virtio;
+import kernel::device::block;
+import kernel::device::input;
+static mut ENABLED: u32 = 0;
+static mut BLOCK_IRQ: u32 = 0;
+static mut CLAIMS: usize = 0;
+static mut USER_TRAPS: usize = 0;
+static mut LAST_SOURCE: u32 = 0;
+
+pub unsafe fn enable(irq: u32) -> bool {
+    if irq < 1_u32 || irq > devices::VIRTIO_SLOTS as u32 { return false; }
+    unsafe {
+        let bit: u32 = 1_u32 << irq;
+        if (ENABLED & bit) != 0_u32 { return false; }
+        io::write32(devices::MMIO_OFFSET + devices::PLIC_PRIORITY + (irq as usize) * 4_usize, 1);
+        ENABLED = ENABLED | bit;
+        io::write32(devices::MMIO_OFFSET + devices::PLIC_ENABLE + 0x80_usize, ENABLED);
+        io::write32(devices::MMIO_OFFSET + devices::PLIC_CONTEXT, 0);
+        return true;
+    }
+}
+pub unsafe fn initialize() -> bool {
+    unsafe {
+        var slot: usize = 1;
+        while slot <= devices::VIRTIO_SLOTS {
+            match virtio::probe(devices::MMIO_OFFSET + devices::VIRTIO_BASE + slot * 4096_usize, slot) {
+                virtio::DeviceRead::Missing => {},
+                virtio::DeviceRead::Invalid => { return false; },
+                virtio::DeviceRead::Ready(device) => {
+                    if virtio::id(device) == 18_u32 {
+                        if !input::initialize(device) || !enable(virtio::irq(device)) { return false; }
+                    }
+                    if virtio::id(device) == 2_u32 {
+                        if BLOCK_IRQ != 0_u32 || !block::initialize(device) { return false; }
+                        BLOCK_IRQ = virtio::irq(device);
+                        if !enable(BLOCK_IRQ) { return false; }
+                    }
+                }
+            }
+            slot = slot + 1_usize;
+        }
+        return BLOCK_IRQ != 0_u32 && input::configured();
+    }
+}
+// Used rings are read only in a claimed IRQ's concrete driver, never polled for progress.
+pub unsafe fn service() -> bool {
+    unsafe {
+        var count: usize = 0;
+        while count < devices::VIRTIO_SLOTS {
+            let source: u32 = io::read32(devices::MMIO_OFFSET + devices::PLIC_CONTEXT + 4_usize);
+            if source == 0_u32 { return true; }
+            LAST_SOURCE = source;
+            if source == BLOCK_IRQ { if !block::interrupt() { return false; } }
+            else { if !input::interrupt(source) { return false; } }
+            io::write32(devices::MMIO_OFFSET + devices::PLIC_CONTEXT + 4_usize, source);
+            CLAIMS = CLAIMS + 1_usize;
+            count = count + 1_usize;
+        }
+        return true;
+    }
+}
+pub unsafe fn user_trap() -> () { unsafe { USER_TRAPS = USER_TRAPS + 1_usize; } return (); }
+pub unsafe fn claims() -> usize { unsafe { return CLAIMS; } }
+pub unsafe fn user_traps() -> usize { unsafe { return USER_TRAPS; } }
+
+// Failure-only snapshot. Reading pending bits does not claim or acknowledge IRQs.
+pub struct Diagnostic { pub source: u32, pub pending: u32, pub enabled: u32 }
+pub unsafe fn diagnostic() -> Diagnostic {
+    unsafe { return make Diagnostic { source: LAST_SOURCE, enabled: ENABLED,
+        pending: io::read32(devices::MMIO_OFFSET + devices::PLIC_PENDING) }; }
+}

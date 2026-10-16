@@ -1,0 +1,87 @@
+{
+  "accepted": true,
+  "requires_p4_proof": true,
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "sources": {
+    "experiments/system/README.md": "89a064494e1db9b6e0e435f83412a9b13404c3eec0da2741064c408369db1d50",
+    "experiments/system/check_monitor.py": "c781187a3a7776b1577053270820cfa70aa1ef6a4d5e0b181a5cfd8ef5241bcc",
+    "experiments/system/check_system.py": "cec95e48510e736fe307c968fa105c116c810a4c86c49ccf5ba8551e66b42a73",
+    "experiments/system/file_rollback.build": "dbb4ce403c5e0059569654ab7b17a039b4df7d4217c59c298eb874a492f37fef",
+    "experiments/system/file_rollback.vt": "b1888032148ee1624fbb66b7efcba4043a69ba6ac7f9e553476cf19d256680b5",
+    "experiments/system/linux.s0": "df5aaf3d07f866176d801633ac9120634d09ffd9fa1253a0e79d779dd4b44abc",
+    "experiments/system/machine.s0": "a7caba828cd00f1fc35abb7b50494ec09aff4e45a623428203e2489c2cd5bc1a",
+    "experiments/system/monitor.S": "59172bb1ea329f5fb409c2fb9dbb4e674b971058b01bf46fbd162b66d0c5b6a4",
+    "experiments/system/monitor.ld": "777f039735ec6f8215dd0e99366043853f754110200b321367d2dea2ae630b3d",
+    "experiments/system/probe.build": "c2b34662d7d596da70bd2098a0fc0f6a6a21c0462da1f9aed0ea5d1fbe060589",
+    "experiments/system/probe.vt": "1b54590376e11c6c10e6b20e75b1a4b789f5b1815db2c948fe8cba90196962c5",
+    "experiments/system/run_system.py": "45b8ba3ed5fbed42dc362566b6f312927da3c3cb93f631a7149d4549c0f79b68",
+    "experiments/system/system.build": "4d877cacc86526c54af9f70a62568a8a5431ee8c25de43d6549560012675bdb7",
+    "experiments/system/system.vt": "6d07c0d7fc1f491dc32eece97f8553c172adfa71d5b5e8a87eb60f5485af5e57"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/k0-p4-r2/e3.elf",
+        "build",
+        "build/layout-system-r1/system.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=4267 assembly=354 names=95 name_bytes=1289 decls=17 types=20 fields=8 params=11 max_ast=163 max_ir=228 max_frame=896 max_bindings=5 max_defers=2 max_loops=1 max_slots=128 max_args=14 max_params=2 text=9484 data=0 objects=0 symbols=180 fixups=292 relocations=0 elf=20481\n"
+    },
+    {
+      "argv": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/k0-p4-r2/e3.elf",
+        "build",
+        "build/layout-system-r1/file_rollback.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=2524 assembly=206 names=72 name_bytes=953 decls=13 types=19 fields=6 params=10 max_ast=58 max_ir=96 max_frame=464 max_bindings=2 max_defers=1 max_loops=0 max_slots=51 max_args=7 max_params=1 text=5260 data=10 objects=4 symbols=103 fixups=160 relocations=0 elf=16385\n"
+    },
+    {
+      "argv": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-system-r1/file_rollback.elf"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/mii/miniconda3/bin/python3",
+        "/home/mii/code/konOSuba/biomiya/experiments/system/run_system.py",
+        "/home/mii/code/konOSuba/biomiya/build/layout-system-r1/system.elf",
+        "--out",
+        "/home/mii/code/konOSuba/biomiya/build/layout-system-r1/machine"
+      ],
+      "exit": 0,
+      "stdout": "/home/mii/code/konOSuba/biomiya/build/layout-system-r1/machine/verification.json\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/mii/miniconda3/bin/python3",
+        "/home/mii/code/konOSuba/biomiya/experiments/system/check_monitor.py",
+        "--compiler",
+        "/home/mii/code/konOSuba/biomiya/build/k0-p4-r2/e3.elf",
+        "--out",
+        "/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative"
+      ],
+      "exit": 0,
+      "stdout": "/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/reserved-slot/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/invalid-flags/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/misaligned-page/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/reserved-high-bit/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/reserved-low-bit/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/ppn-high-bit/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/below-ram/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/ram-upper-bound/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/unmapped-read/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/explicit-failure/machine/verification.json\n/home/mii/code/konOSuba/biomiya/build/layout-system-r1/negative/verification.json\n",
+      "stderr": ""
+    }
+  ],
+  "system_sha256": "1a8d21b73ca624d1ec38f3358c9396510b14dfa67187ccff91c1039ec6a6cf51",
+  "file_rollback_sha256": "7749d479e7b59d229e16da8568d231ca7fafa5ce2131f055254da56ff66ee276"
+}

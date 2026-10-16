@@ -1,0 +1,108 @@
+module test::editor;
+import test::transport;
+import user::edit::buffer;
+static mut INPUT: [8388608]u8 = zero;
+static mut BACKING: [buffer::MAX_BYTES]u8 = zero;
+static mut SAVED: [buffer::MAX_BYTES]u8 = zero;
+
+fn code(result: buffer::Edit) -> usize {
+    match result {
+        buffer::Edit::Done => { return 0; }, buffer::Edit::InvalidUtf8(offset) => { return 1; },
+        buffer::Edit::InvalidPosition => { return 2; }, buffer::Edit::Limit => { return 3; },
+        buffer::Edit::NoMemory => { return 4; }, buffer::Edit::Aliased => { return 5; },
+        buffer::Edit::VersionLimit => { return 6; },
+    }
+}
+
+unsafe fn publish(document: *const buffer::Document, result: usize) -> bool {
+    // SAFETY: serialized test owns all state; snapshot writes to a separate buffer.
+    unsafe {
+        let state: buffer::State = buffer::state(document);
+        if !transport::word(result) || !transport::word(state.version) ||
+            !transport::word(state.cursor) || !transport::word(state.anchor) || !transport::word(state.bytes) {
+            return false;
+        }
+        match buffer::snapshot(document, core::slice_of_mut(SAVED)) {
+            buffer::Copy::Done(bytes) => {
+                return transport::write(core::slice_from_raw_parts(core::slice_of(SAVED).data, bytes));
+            },
+            buffer::Copy::NoMemory => { return false; }, buffer::Copy::Aliased => { return false; },
+        }
+    }
+}
+
+unsafe fn actions(document: *buffer::Document, input: []const u8, start: usize) -> u32 {
+    var cursor: usize = start;
+    // SAFETY: each operation field/subview is bounded before use; unknown protocol is rejected.
+    unsafe {
+        while cursor < input.len {
+            let tag: u8 = input[cursor];
+            cursor = cursor + 1_usize;
+            var result: buffer::Edit = buffer::Edit::Done;
+            match tag {
+                1 => {
+                    if input.len - cursor < 8_usize { return 80; }
+                    result = buffer::select(document, transport::get(input, cursor), transport::get(input, cursor + 4_usize));
+                    cursor = cursor + 8_usize;
+                },
+                2 => {
+                    if input.len - cursor < 4_usize { return 80; }
+                    let bytes: usize = transport::get(input, cursor);
+                    cursor = cursor + 4_usize;
+                    if bytes > input.len - cursor { return 80; }
+                    result = buffer::replace(document, core::slice_from_raw_parts(core::ptr_add(input.data, cursor), bytes));
+                    cursor = cursor + bytes;
+                },
+                3 => {
+                    if input.len - cursor < 2_usize { return 80; }
+                    var motion: buffer::Motion = buffer::Motion::Left;
+                    match input[cursor] {
+                        0 => {}, 1 => { motion = buffer::Motion::Right; },
+                        2 => { motion = buffer::Motion::LineStart; }, 3 => { motion = buffer::Motion::LineEnd; },
+                        4 => { motion = buffer::Motion::Start; }, 5 => { motion = buffer::Motion::End; },
+                        _ => { return 80; },
+                    }
+                    result = buffer::move(document, motion, input[cursor + 1_usize] != 0_u8);
+                    cursor = cursor + 2_usize;
+                },
+                4 => {
+                    if cursor == input.len { return 80; }
+                    result = buffer::erase(document, input[cursor] != 0_u8);
+                    cursor = cursor + 1_usize;
+                },
+                5 => {
+                    if input.len - cursor < 2_usize { return 80; }
+                    result = buffer::vertical(document, input[cursor] != 0_u8, input[cursor + 1_usize] != 0_u8);
+                    cursor = cursor + 2_usize;
+                },
+                _ => { return 80; },
+            }
+            if !publish(core::ptr_const(document), code(result)) { return 81; }
+        }
+    }
+    return 0;
+}
+
+pub fn run() -> u32 {
+    // SAFETY: process owns fixed test buffers; protocol checks precede all field/subslice accesses.
+    unsafe {
+        let count: usize = transport::read(core::slice_of_mut(INPUT));
+        if count < 8_usize || count >= 8388608_usize { return 80; }
+        let input: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+        let capacity: usize = transport::get(input, 0);
+        let bytes: usize = transport::get(input, 4);
+        if capacity > buffer::MAX_BYTES || bytes > count - 8_usize { return 80; }
+        match buffer::open(core::slice_from_raw_parts_mut(core::slice_of_mut(BACKING).data, capacity),
+            core::slice_from_raw_parts(core::ptr_add(input.data, 8), bytes)) {
+            buffer::Open::InvalidUtf8(offset) => { let sent: bool = transport::word(1); return 0; },
+            buffer::Open::Limit => { let sent: bool = transport::word(3); return 0; },
+            buffer::Open::NoMemory => { let sent: bool = transport::word(4); return 0; },
+            buffer::Open::Aliased => { return 85; },
+            buffer::Open::Ready(value) => {
+                var document: buffer::Document = value;
+                if !publish(core::addr_of(document), 0) { return 81; }
+                return actions(core::addr_of_mut(document), input, 8_usize + bytes);
+            },
+        }
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "node": "K6",
+  "revision": "r1",
+  "verdict": "accepted",
+  "author": "/root/ram_fdt",
+  "reviewer": "/root",
+  "candidate_sha256": "d2880fa1ce5e72978042ee51910f0c35f3741880e0121ebf17752dcd209d3760",
+  "verification": {
+    "path": "build/k6-root-review/verification.json",
+    "sha256": "4e33ecd5a6673d1b1f925e2220a91f7f04ed25c9548403d096aaa3602f31cfd2",
+    "passed_cases": 348
+  },
+  "independent": {
+    "path": "build/k6-root-review/independent.json",
+    "sha256": "221b2193f87163ed2fbf57540705b632d3a62971e48112360561a30a6ba8d8dc",
+    "passed_cases": 4
+  }
+}

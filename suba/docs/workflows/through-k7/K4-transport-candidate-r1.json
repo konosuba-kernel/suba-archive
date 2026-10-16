@@ -1,0 +1,28 @@
+{
+  "artifact": "K4 shared transport/io r1",
+  "status": "frozen-for-independent-acceptance",
+  "author": "/root",
+  "reviewer": "/root/ram_acceptance",
+  "baseline": "6162887",
+  "compiler_commit": "bd73055",
+  "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+  "owned_files": {
+    "kernel/device/io.vt": "efa3db9a2c4c7a3bbbb616bfaba833155019ec9f6ee65e56360ae7ec2e9885ff",
+    "kernel/device/io.s0": "1981585b645bea2317e5428fb26a75c324d8818ac21722ea2d93b6a8c0fcb0d7",
+    "kernel/device/virtio.vt": "a2476058e09054c055eeafd19f4f9376e7b2ba9bf360fa6aa008783f9f898b2d",
+    "tools/check_transport.py": "3ba30ffca567bd24c6dac0fc599b0bb9db04270a88148cf19c742ca02820496e",
+    "tests/k4/transport/block_probe.vt": "141041d71c4921ab0f4cb99c7e4964a3ab67be85c5879d5b4f254a166aa85203",
+    "tests/k4/transport/probe.vt": "15571b5f5d37f2b4ea324c4cd4b61271ec16940a997a523078b829355d2fd9d8",
+    "tests/k4/transport/irq.s0": "2caa5cc8309b67462795b3fca91fc62a026a5d7c633a4ba33651d07dd8647407",
+    "tests/k4/transport/shutdown.s0": "ef993bb8cd216c12dc48533d1d902d3fa69a24409a213ce642f7532478726088"
+  },
+  "inputs": {
+    "kernel/machine.vt": "5cb303c104789037885b0123b086e1ce3f8e6aae0447aa1574790fe170dfb937",
+    "kernel/machine.s0": "b1a102676fdd077fefb61a5dc23bb76df61d2f2db2f6c10879105245517b30bd"
+  },
+  "scope": "Only generic modern MMIO transport and fenced scalar machine access; production IRQ dispatch, DMA allocation/cancel, FS and K5 input not accepted by this artifact.",
+  "evidence": [
+    "build/k4-transport-r1/verification.json",
+    "build/k4-transport-negative-r1/verification.json"
+  ]
+}

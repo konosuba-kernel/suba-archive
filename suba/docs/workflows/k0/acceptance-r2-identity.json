@@ -1,0 +1,41 @@
+{
+  "candidate_sha256": "d0c6a1ad2872ba0aea0fa5603e3aef0027632ce63e1b3fc37da705b7b64701f9",
+  "files": 443,
+  "changed": [
+    "biomiya/docs/k0-toolchain.json",
+    "biomiya/tools/check_next.py",
+    "suba/docs/K0.md",
+    "suba/tools/check_kernel_entry.py",
+    "suba/tools/check_kernel_observer.py"
+  ],
+  "new": [
+    "suba/docs/workflows/k0/I-candidate-r1.json",
+    "suba/docs/workflows/k0/I-concurrent-tool-cleanup.json",
+    "suba/docs/workflows/k0/I-cost-r3.json",
+    "suba/docs/workflows/k0/I-results-r2.json",
+    "suba/docs/workflows/k0/I-summary-r2.md",
+    "suba/docs/workflows/k0/acceptance-r1-bootstrap-check.json",
+    "suba/docs/workflows/k0/acceptance-r1-evidence.json",
+    "suba/docs/workflows/k0/acceptance-r1-identity.json",
+    "suba/docs/workflows/k0/acceptance-r1-migration.json",
+    "suba/docs/workflows/k0/acceptance-r1-post-marker-fault.json",
+    "suba/docs/workflows/k0/acceptance-r1-run-1.json",
+    "suba/docs/workflows/k0/acceptance-r1-run-2.json",
+    "suba/docs/workflows/k0/acceptance-r1-run-3.json",
+    "suba/docs/workflows/k0/acceptance-r1-run-4.json",
+    "suba/docs/workflows/k0/acceptance-r1.md",
+    "suba/docs/workflows/k0/evidence/k0-entry-r2-final-failed.json",
+    "suba/docs/workflows/k0/evidence/k0-entry-r2-finalb.json",
+    "suba/docs/workflows/k0/evidence/k0-observer-r2-finalb.json",
+    "suba/docs/workflows/k0/revisions/i-r1/biomiya/docs/k0-toolchain.json",
+    "suba/docs/workflows/k0/revisions/i-r1/biomiya/tools/check_next.py",
+    "suba/docs/workflows/k0/revisions/i-r1/suba/docs/K0.md",
+    "suba/docs/workflows/k0/revisions/i-r1/suba/tools/check_kernel_entry.py",
+    "suba/docs/workflows/k0/revisions/i-r1/suba/tools/check_kernel_observer.py"
+  ],
+  "mismatches": [],
+  "inputs_mismatches": [],
+  "historical_mismatches": [],
+  "check_next_ast_equal": true,
+  "check_next_diff": "--- \n+++ \n@@ -61,7 +61,7 @@\n               if line.startswith((\"source \", \"assembly \"))]\n     sources = {name: (CORE / name).read_bytes() for name in inputs}\n     tracked = {str(p.relative_to(CORE)): p.read_bytes() for folder in (NEXT, CORE / \"tests/language\") for p in folder.rglob(\"*\")\n-               if p.is_file() \n+               if p.is_file()\n                and p.suffix in [\".vt\", \".s0\", \".json\", \".build\", \".blocking\"]}\n     tracked.update({\"tools/check_next.py\": Path(__file__).read_bytes()})\n     for obsolete in [b\"begin_capture\", b\"end_capture\", b\"instantiate\", b\"struct Fragment\", b\"max_saved\"]:\n"
+}

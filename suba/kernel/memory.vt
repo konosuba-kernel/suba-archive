@@ -1,0 +1,215 @@
+// Owns donated ordinary-RAM regions and their private physical-offset identities.
+// All operations require one serialized, non-reentrant kernel context. No waits.
+// initialize is boot-only; the caller proves lifetime, exclusivity and physical
+// accessibility. This module does not parse BootInfo/FDT or discover usable RAM.
+module kernel::memory;
+import suba::abi;
+
+pub const PAGE_BYTES: usize = abi::PAGE_BYTES;
+pub const PAGE_CAPACITY: usize = abi::RAM_BYTES / PAGE_BYTES;
+const REGION_CAPACITY: usize = 64;
+const END: u32 = PAGE_CAPACITY as u32;
+const GENERATION_MAX: u32 = 0xffffffff;
+const ADDRESS_MAX: usize = 0xffffffffffffffff;
+
+pub struct Region {
+    pub base: usize,
+    pub bytes: usize
+}
+
+pub struct Frame {
+    index: u32,
+    generation: u32
+}
+
+pub enum InitResult { Ready, Invalid, AlreadyInitialized }
+pub enum Allocation { Ready(Frame), Exhausted, NotReady }
+pub enum ReleaseResult { Released, Invalid }
+pub enum AddressResult { Value(usize), Invalid }
+
+pub struct Stats {
+    pub capacity: usize,
+    pub free: usize,
+    pub allocated: usize,
+    pub retired: usize
+}
+
+// Free: allocated=false, generation<MAX, next is the next free slot or END.
+// Owned: allocated=true, next=END. Retired: false, generation=MAX, next=END.
+// Only donated free slots occur in the list; free+allocated+retired equals COUNT.
+// Hole slots stay unallocated and never enter the list; their addresses are unused.
+struct Slot {
+    generation: u32,
+    next: u32,
+    allocated: bool
+}
+
+static mut SLOTS: [PAGE_CAPACITY]Slot = zero;
+static mut BASE: usize = 0;
+static mut COUNT: usize = 0;
+static mut SPAN_PAGES: usize = 0;
+static mut HEAD: u32 = END;
+static mut FREE: usize = 0;
+static mut OWNED: usize = 0;
+static mut RETIRED: usize = 0;
+static mut READY: bool = false;
+
+// Caller grants a live, readable region list during this call. Region addresses
+// are not dereferenced here. All arithmetic checks precede the first state write.
+unsafe fn regions_valid(origin: usize, span: usize, regions: []const Region) -> bool {
+    if origin == 0_usize || origin % PAGE_BYTES != 0_usize { return false; }
+    if span == 0_usize || span % PAGE_BYTES != 0_usize { return false; }
+    if span > ADDRESS_MAX - origin || span / PAGE_BYTES > PAGE_CAPACITY { return false; }
+    if regions.len == 0_usize || regions.len > REGION_CAPACITY { return false; }
+    var previous_end: usize = origin;
+    var region: usize = 0;
+    // SAFETY: caller owns the readable list; at most REGION_CAPACITY entries.
+    unsafe {
+        while region < regions.len {
+            let base: usize = regions[region].base;
+            let bytes: usize = regions[region].bytes;
+            if base < previous_end || base % PAGE_BYTES != 0_usize { return false; }
+            if bytes == 0_usize || bytes % PAGE_BYTES != 0_usize { return false; }
+            let offset: usize = base - origin;
+            if offset > span || bytes > span - offset { return false; }
+            previous_end = base + bytes;
+            region = region + 1_usize;
+        }
+    }
+    return true;
+}
+
+// Caller permanently transfers only the listed live, exclusive, writable RAM.
+// Exclude live kernel state, metadata, firmware, DTB, MMIO and other owners.
+// Holes inside origin/span need not be accessible and are never dereferenced.
+// The list is borrowed only for this call; it must stay immutable during validation
+// and installation. Serialize all calls. Rejection changes no allocator state.
+// Boot-only: <=64 validation entries plus <=PAGE_CAPACITY metadata entries; no RAM
+// page clearing. Success is final and cannot reset existing identities.
+pub unsafe fn initialize_regions(origin: usize, span: usize,
+    regions: []const Region) -> InitResult {
+    // SAFETY: caller serializes state and keeps the region list alive/immutable.
+    unsafe {
+        if READY { return InitResult::AlreadyInitialized; }
+        if !regions_valid(origin, span, regions) { return InitResult::Invalid; }
+        var head: u32 = END;
+        var tail: u32 = END;
+        var count: usize = 0;
+        var region: usize = 0;
+        while region < regions.len {
+            var index: usize = (regions[region].base - origin) / PAGE_BYTES;
+            let end: usize = index + regions[region].bytes / PAGE_BYTES;
+            while index < end {
+                SLOTS[index] = make Slot { generation: 0, next: END, allocated: false };
+                if tail == END { head = index as u32; }
+                if tail != END { SLOTS[tail as usize].next = index as u32; }
+                tail = index as u32;
+                count = count + 1_usize;
+                index = index + 1_usize;
+            }
+            region = region + 1_usize;
+        }
+        BASE = origin;
+        COUNT = count;
+        SPAN_PAGES = span / PAGE_BYTES;
+        HEAD = head;
+        FREE = count;
+        READY = true;
+    }
+    return InitResult::Ready;
+}
+
+// Single-extent convenience, with the same permanent donation and serialization
+// obligations as initialize_regions. Dedicated kernel-owned backing is allowed.
+pub unsafe fn initialize(storage: []u8) -> InitResult {
+    let base: usize = core::addr(storage.data);
+    let regions: [1]Region = [make Region { base: base, bytes: storage.len }];
+    // SAFETY: caller owns the storage; the local descriptor lives through the call.
+    unsafe {
+        return initialize_regions(base, storage.len, core::slice_of(regions));
+    }
+}
+
+// SAFETY: caller of allocate provides serialization; index is an existing free
+// slot within a permanently donated region. Each call writes exactly one page.
+unsafe fn clear_page(index: usize) -> () {
+    unsafe {
+        let words: *usize = core::ptr::<usize>(BASE + index * PAGE_BYTES);
+        var word: usize = 0;
+        while word < PAGE_BYTES / 8_usize {
+            *core::ptr_add(words, word) = 0_usize;
+            word = word + 1_usize;
+        }
+    }
+    return ();
+}
+
+// Transfers one zero-filled page to the caller. O(1) list work + 512 word stores.
+// Exhaustion, including retired slots, returns without changing state.
+pub unsafe fn allocate() -> Allocation {
+    // SAFETY: caller serializes access; initialize established the bounded list.
+    unsafe {
+        if !READY { return Allocation::NotReady; }
+        if HEAD == END { return Allocation::Exhausted; }
+        let index: usize = HEAD as usize;
+        HEAD = SLOTS[index].next;
+        clear_page(index);
+        SLOTS[index].generation = SLOTS[index].generation + 1_u32;
+        SLOTS[index].next = END;
+        SLOTS[index].allocated = true;
+        FREE = FREE - 1_usize;
+        OWNED = OWNED + 1_usize;
+        return Allocation::Ready(make Frame {
+            index: index as u32,
+            generation: SLOTS[index].generation
+        });
+    }
+}
+
+unsafe fn valid(frame: Frame) -> bool {
+    // SAFETY: serialized access; bounds are checked before private table lookup.
+    unsafe {
+        if !READY || frame.index as usize >= SPAN_PAGES { return false; }
+        let index: usize = frame.index as usize;
+        return SLOTS[index].allocated && SLOTS[index].generation == frame.generation;
+    }
+}
+
+// Caller first ends every external access: user mappings, DMA and borrowed views.
+// A Frame is copyable, not a linear type. Duplicate/stale release changes nothing.
+// O(1); a page released at its final generation retires instead of wrapping.
+pub unsafe fn release(frame: Frame) -> ReleaseResult {
+    // SAFETY: caller has ended external access and serializes allocator operations.
+    unsafe {
+        if !valid(frame) { return ReleaseResult::Invalid; }
+        let index: usize = frame.index as usize;
+        SLOTS[index].allocated = false;
+        OWNED = OWNED - 1_usize;
+        if SLOTS[index].generation == GENERATION_MAX {
+            RETIRED = RETIRED + 1_usize;
+            return ReleaseResult::Released;
+        }
+        SLOTS[index].next = HEAD;
+        HEAD = frame.index;
+        FREE = FREE + 1_usize;
+    }
+    return ReleaseResult::Released;
+}
+
+// O(1) checked address lookup, not a new ownership reference. The returned
+// physical/identity-mapped address expires at release; the caller owns its uses.
+pub unsafe fn address(frame: Frame) -> AddressResult {
+    // SAFETY: caller serializes access; valid establishes the index bound.
+    unsafe {
+        if !valid(frame) { return AddressResult::Invalid; }
+        return AddressResult::Value(BASE + frame.index as usize * PAGE_BYTES);
+    }
+}
+
+// O(1) snapshot; all zero before initialization. No table or writable view escapes.
+pub unsafe fn stats() -> Stats {
+    // SAFETY: caller serializes reads with all allocator changes.
+    unsafe {
+        return make Stats { capacity: COUNT, free: FREE, allocated: OWNED, retired: RETIRED };
+    }
+}

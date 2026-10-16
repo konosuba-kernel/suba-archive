@@ -1,0 +1,386 @@
+// Trusted U-mode compositor. Only its boot capability authorizes management;
+// screen pixels are a private borrowed mapping, app pixels arrive by checked copy.
+// One backbuffer, coalesced damage and a 30Hz ceiling; idle uses the ordinary wait.
+module user::desktop;
+import suba::abi;
+import suba::windows;
+import suba::syscalls;
+import libsuba::window_api;
+import libsuba::services;
+import libsuba::arguments;
+import libsuba::argument_builder;
+import libsuba::syscall;
+import user::draw;
+static mut BACK: [windows::SCREEN_BYTES / 4]u32 = zero;
+static mut SNAPSHOT: [65536]u8 = zero;
+static mut LIST: window_api::List = zero;
+static mut CAPABILITY: usize = 0;
+static mut EDITORS: [2]usize = zero;
+static mut LAUNCH_ARGUMENTS: [4096]u8 = zero;
+static mut DAMAGE: draw::Rect = zero;
+static mut DIRTY: bool = false;
+static mut POINTER_X: usize = 0;
+static mut POINTER_Y: usize = 0;
+static mut BUTTONS: usize = 0;
+static mut CONTROL_KEYS: usize = 0;
+static mut ALT_KEYS: usize = 0;
+static mut DRAGGING: bool = false;
+static mut DRAG: window_api::Id = zero;
+static mut DRAG_X: usize = 0;
+static mut DRAG_Y: usize = 0;
+const TITLE: usize = 24;
+const FRAME_TICKS: usize = 333334;
+
+fn fail(status: usize) -> u32 { syscall::exit(status as u32); return status as u32; }
+fn same(left: window_api::Id, right: window_api::Id) -> bool {
+    return left.slot == right.slot && left.generation == right.generation;
+}
+fn area(window: window_api::Window) -> draw::Rect {
+    return draw::clip(make draw::Rect { x: window.x, y: window.y,
+        width: window.width, height: window.height }, windows::SCREEN_WIDTH, windows::SCREEN_HEIGHT);
+}
+unsafe fn mark(rect: draw::Rect) -> () {
+    let clipped: draw::Rect = draw::clip(rect, windows::SCREEN_WIDTH, windows::SCREEN_HEIGHT);
+    if clipped.width == 0_usize || clipped.height == 0_usize { return (); }
+    unsafe {
+        if !DIRTY { DAMAGE = clipped; DIRTY = true; return (); }
+        var end_x: usize = DAMAGE.x + DAMAGE.width;
+        var end_y: usize = DAMAGE.y + DAMAGE.height;
+        if clipped.x + clipped.width > end_x { end_x = clipped.x + clipped.width; }
+        if clipped.y + clipped.height > end_y { end_y = clipped.y + clipped.height; }
+        if clipped.x < DAMAGE.x { DAMAGE.x = clipped.x; }
+        if clipped.y < DAMAGE.y { DAMAGE.y = clipped.y; }
+        DAMAGE.width = end_x - DAMAGE.x;
+        DAMAGE.height = end_y - DAMAGE.y;
+    }
+    return ();
+}
+
+unsafe fn refresh() -> bool {
+    unsafe {
+        let previous: window_api::List = LIST;
+        if window_api::list(CAPABILITY, core::addr_of_mut(LIST)) != abi::OK { return false; }
+        var i: usize = 0;
+        while i < previous.count {
+            let before: window_api::Window = previous.items[i];
+            var matched: bool = false;
+            var j: usize = 0;
+            while j < LIST.count {
+                let after: window_api::Window = LIST.items[j];
+                if same(before.id, after.id) {
+                    matched = true;
+                    if before.x != after.x || before.y != after.y || before.rank != after.rank ||
+                        before.damage != after.damage || before.focused != after.focused {
+                        mark(area(before)); mark(area(after));
+                    }
+                }
+                j = j + 1_usize;
+            }
+            if !matched { mark(area(before)); if DRAGGING && same(DRAG, before.id) { DRAGGING = false; } }
+            i = i + 1_usize;
+        }
+        i = 0;
+        while i < LIST.count {
+            var found: bool = false;
+            var j: usize = 0;
+            while j < previous.count {
+                if same(LIST.items[i].id, previous.items[j].id) { found = true; }
+                j = j + 1_usize;
+            }
+            if !found { mark(area(LIST.items[i])); }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+unsafe fn hit(x: usize, y: usize) -> usize {
+    unsafe {
+        var selected: usize = windows::WINDOW_CAPACITY;
+        var rank: usize = 0;
+        var i: usize = 0;
+        while i < LIST.count {
+            let box: draw::Rect = area(LIST.items[i]);
+            if x >= box.x && y >= box.y && x - box.x < box.width && y - box.y < box.height {
+                if selected == windows::WINDOW_CAPACITY || LIST.items[i].rank > rank {
+                    selected = i; rank = LIST.items[i].rank;
+                }
+            }
+            i = i + 1_usize;
+        }
+        return selected;
+    }
+}
+
+unsafe fn focused() -> usize {
+    unsafe {
+        var i: usize = 0;
+        while i < LIST.count { if LIST.items[i].focused { return i; } i = i + 1_usize; }
+    }
+    return windows::WINDOW_CAPACITY;
+}
+
+unsafe fn move_drag(x: usize, y: usize) -> bool {
+    unsafe {
+        var into_x: usize = 0;
+        var into_y: usize = 0;
+        if x >= DRAG_X { into_x = x - DRAG_X; }
+        if y >= DRAG_Y { into_y = y - DRAG_Y; }
+        if into_x > windows::SCREEN_WIDTH - TITLE { into_x = windows::SCREEN_WIDTH - TITLE; }
+        if into_y > windows::SCREEN_HEIGHT - TITLE { into_y = windows::SCREEN_HEIGHT - TITLE; }
+        let result: syscall::Reply = window_api::layout(CAPABILITY, DRAG, LIST.layout, into_x, into_y, true);
+        if result.status != abi::OK && result.status != abi::BUSY && result.status != abi::BAD_HANDLE { return false; }
+        if result.status == abi::BAD_HANDLE { DRAGGING = false; }
+        return refresh();
+    }
+}
+
+unsafe fn pointer(event: window_api::Event) -> bool {
+    unsafe {
+        mark(make draw::Rect { x: POINTER_X, y: POINTER_Y, width: 12, height: 12 });
+        POINTER_X = event.a; POINTER_Y = event.b;
+        mark(make draw::Rect { x: POINTER_X, y: POINTER_Y, width: 12, height: 12 });
+        let pressed: usize = event.c & (0xffffffffffffffff_usize ^ BUTTONS);
+        BUTTONS = event.c;
+        if DRAGGING {
+            if (BUTTONS & 1_usize) == 0_usize { DRAGGING = false; }
+            else { return move_drag(event.a, event.b); }
+        }
+        let target: usize = hit(event.a, event.b);
+        if target != windows::WINDOW_CAPACITY && (pressed & 3_usize) != 0_usize {
+            let window: window_api::Window = LIST.items[target];
+            let x: usize = event.a - window.x;
+            let y: usize = event.b - window.y;
+            if y < TITLE && window.width >= TITLE && x >= window.width - TITLE {
+                let result: syscall::Reply = window_api::close_app(CAPABILITY, window.id, (pressed & 2_usize) != 0_usize);
+                if result.status != abi::OK && result.status != abi::BAD_HANDLE { return false; }
+                return refresh();
+            }
+            let result: syscall::Reply = window_api::layout(CAPABILITY, window.id, LIST.layout, window.x, window.y, true);
+            if result.status != abi::OK && result.status != abi::BUSY && result.status != abi::BAD_HANDLE { return false; }
+            if !refresh() { return false; }
+            if y < TITLE && (pressed & 1_usize) != 0_usize && result.status == abi::OK {
+                DRAGGING = true; DRAG = window.id; DRAG_X = x; DRAG_Y = y;
+                return true;
+            }
+        }
+        let focus: usize = focused();
+        if focus == windows::WINDOW_CAPACITY { return true; }
+        let routed: syscall::Reply = window_api::route(CAPABILITY, LIST.items[focus].id, LIST.layout, LIST.focus, event.sequence);
+        return routed.status == abi::OK || routed.status == abi::BUSY || routed.status == abi::BAD_HANDLE;
+    }
+}
+
+// Track both sides independently: releasing one modifier must not erase the other.
+unsafe fn key_event(event: window_api::Event) -> bool {
+    unsafe {
+        var control: usize = 0;
+        var alt: usize = 0;
+        if event.a == 29_usize { control = 1; }
+        if event.a == 97_usize { control = 2; }
+        if event.a == 56_usize { alt = 1; }
+        if event.a == 100_usize { alt = 2; }
+        if event.b == 0_usize {
+            CONTROL_KEYS = CONTROL_KEYS & (0xffffffffffffffff_usize ^ control);
+            ALT_KEYS = ALT_KEYS & (0xffffffffffffffff_usize ^ alt);
+        } else {
+            CONTROL_KEYS = CONTROL_KEYS | control;
+            ALT_KEYS = ALT_KEYS | alt;
+        }
+        if event.a == 18_usize && event.b == 1_usize && CONTROL_KEYS != 0_usize && ALT_KEYS != 0_usize {
+            var i: usize = 0;
+            while i < 2_usize {
+                if EDITORS[i] == 0_usize { launch_editor(i, "hello.vt"); return refresh(); }
+                i = i + 1_usize;
+            }
+            return true;
+        }
+        let focus: usize = focused();
+        if focus == windows::WINDOW_CAPACITY { return true; }
+        if event.a == 1_usize && event.b == 1_usize && CONTROL_KEYS != 0_usize && ALT_KEYS != 0_usize {
+            let killed: syscall::Reply = window_api::close_app(CAPABILITY, LIST.items[focus].id, true);
+            if killed.status != abi::OK && killed.status != abi::BAD_HANDLE { return false; }
+            return refresh();
+        }
+        let result: syscall::Reply = window_api::route(CAPABILITY, LIST.items[focus].id, LIST.layout, LIST.focus, event.sequence);
+        return result.status == abi::OK || result.status == abi::BUSY || result.status == abi::BAD_HANDLE;
+    }
+}
+
+unsafe fn event_one(event: window_api::Event) -> bool {
+    unsafe {
+        if event.kind == windows::EVENT_RESET {
+            BUTTONS = 0; DRAGGING = false; CONTROL_KEYS = 0; ALT_KEYS = 0;
+            return refresh();
+        }
+        if event.kind == windows::EVENT_CHANGED { return refresh(); }
+        if event.kind == abi::EVENT_POINTER { return pointer(event); }
+        if event.kind == abi::EVENT_KEY { return key_event(event); }
+    }
+    return false;
+}
+
+unsafe fn paint_window(canvas: draw::Canvas, window: window_api::Window, damage: draw::Rect) -> bool {
+    unsafe {
+        let clipped: draw::Rect = draw::intersect(area(window), damage);
+        if clipped.width == 0_usize || clipped.height == 0_usize { return true; }
+        var row: usize = 0;
+        while row < clipped.height {
+            var rows: usize = 65536_usize / (clipped.width * 4_usize);
+            if rows > clipped.height - row { rows = clipped.height - row; }
+            let count: usize = clipped.width * rows * 4_usize;
+            let pixels: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SNAPSHOT).data, count);
+            let rect: window_api::Rect = make window_api::Rect { x: clipped.x - window.x,
+                y: clipped.y - window.y + row, width: clipped.width, height: rows };
+            let copied: syscall::Reply = window_api::copy(CAPABILITY, window.id, rect, clipped.width * 4_usize, pixels);
+            if copied.status != abi::OK { return false; }
+            if !draw::blit(canvas, make draw::Rect { x: clipped.x, y: clipped.y + row,
+                width: clipped.width, height: rows }, core::slice_from_raw_parts(pixels.data, count)) { return false; }
+            row = row + rows;
+        }
+        var color: u32 = 0x64748b;
+        if window.focused { color = 0x1d4ed8; }
+        draw::fill(canvas, draw::intersect(make draw::Rect { x: window.x, y: window.y,
+            width: window.width, height: TITLE }, clipped), color);
+        if window.width >= TITLE {
+            draw::fill(canvas, draw::intersect(make draw::Rect { x: window.x + window.width - TITLE,
+                y: window.y, width: TITLE, height: TITLE }, clipped), 0xc2413c);
+        }
+    }
+    return true;
+}
+
+unsafe fn render() -> bool {
+    unsafe {
+        let canvas: draw::Canvas = make draw::Canvas { address: core::addr(core::slice_of_mut(BACK).data),
+            width: windows::SCREEN_WIDTH, height: windows::SCREEN_HEIGHT, stride: windows::SCREEN_STRIDE };
+        let front: draw::Canvas = make draw::Canvas { address: abi::DISPLAY_BASE,
+            width: windows::SCREEN_WIDTH, height: windows::SCREEN_HEIGHT, stride: windows::SCREEN_STRIDE };
+        draw::fill(canvas, DAMAGE, 0x182532);
+        var previous_rank: usize = 0;
+        var painted: usize = 0;
+        while painted < LIST.count {
+            var selected: usize = windows::WINDOW_CAPACITY;
+            var rank: usize = 0xffffffffffffffff;
+            var i: usize = 0;
+            while i < LIST.count {
+                let item: window_api::Window = LIST.items[i];
+                if item.rank >= previous_rank && item.rank < rank { selected = i; rank = item.rank; }
+                i = i + 1_usize;
+            }
+            if selected == windows::WINDOW_CAPACITY { return false; }
+            if !paint_window(canvas, LIST.items[selected], DAMAGE) { return false; }
+            previous_rank = rank + 1_usize;
+            painted = painted + 1_usize;
+        }
+        draw::fill(canvas, draw::intersect(make draw::Rect { x: POINTER_X, y: POINTER_Y, width: 3, height: 12 }, DAMAGE), 0xffffff);
+        draw::fill(canvas, draw::intersect(make draw::Rect { x: POINTER_X, y: POINTER_Y, width: 12, height: 3 }, DAMAGE), 0xffffff);
+        draw::present(canvas, front, DAMAGE);
+        DIRTY = false;
+    }
+    return true;
+}
+
+fn boot_capability() -> usize {
+    match arguments::argument(1) {
+        arguments::BytesResult::Invalid => { return 0; },
+        arguments::BytesResult::Value(bytes) => {
+            if bytes.len == 0_usize || bytes.len > 20_usize { return 0; }
+            var result: usize = 0;
+            var i: usize = 0;
+            unsafe {
+                while i < bytes.len {
+                    if bytes[i] < 48_u8 || bytes[i] > 57_u8 { return 0; }
+                    let digit: usize = (bytes[i] - 48_u8) as usize;
+                    if result > (0xffffffffffffffff_usize - digit) / 10_usize { return 0; }
+                    result = result * 10_usize + digit;
+                    i = i + 1_usize;
+                }
+            }
+            return result;
+        }
+    }
+}
+
+// Desktop starts ordinary applications from the real filesystem. Missing startup
+// files leave an empty desktop; malformed/failed ordinary apps do not gain trust.
+unsafe fn launch_editor(index: usize, source: []const u8) -> () {
+    unsafe {
+        let page: []u8 = core::slice_of_mut(LAUNCH_ARGUMENTS);
+        if !argument_builder::initialize(page, "/work") || !argument_builder::append(page, "edit") ||
+            !argument_builder::append(page, source) || !argument_builder::append(page, "program.build") { return (); }
+        let child: syscall::Reply = services::spawn("/sys/edit.elf", core::slice_of(LAUNCH_ARGUMENTS), 0, 0, 0);
+        if child.status == abi::OK { EDITORS[index] = child.value; }
+    }
+    return ();
+}
+unsafe fn collect_editors() -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < 2_usize {
+            if EDITORS[i] != 0_usize {
+                match services::collect(EDITORS[i]) {
+                    services::Collected::Ready(exit) => { EDITORS[i] = 0; },
+                    services::Collected::Failed(error) => {
+                        if error != abi::WOULD_BLOCK { let stopped: u32 = fail(7); }
+                    }
+                }
+            }
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub fn main() -> u32 {
+    unsafe {
+        CAPABILITY = boot_capability();
+        if CAPABILITY == 0_usize || !refresh() { return fail(1); }
+        launch_editor(0, "hello.vt");
+        launch_editor(1, "notes.txt");
+        mark(make draw::Rect { x: 0, y: 0, width: windows::SCREEN_WIDTH, height: windows::SCREEN_HEIGHT });
+        var deadline: usize = 1;
+        loop {
+            collect_editors();
+            var count: usize = 0;
+            while count < 16_usize {
+                match window_api::event(CAPABILITY, true) {
+                    window_api::EventRead::Failed(status) => {
+                        if status != abi::WOULD_BLOCK { return fail(2); }
+                        break;
+                    },
+                    window_api::EventRead::Ready(event) => { if !event_one(event) { return fail(3); } }
+                }
+                count = count + 1_usize;
+            }
+            let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+            if now.status != abi::OK { return fail(4); }
+            if DIRTY && now.value >= deadline {
+                if !render() {
+                    if !refresh() { return fail(5); }
+                    mark(make draw::Rect { x: 0, y: 0, width: windows::SCREEN_WIDTH, height: windows::SCREEN_HEIGHT });
+                }
+                // Missed frames are skipped; no catch-up burst after slow composition.
+                let after: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+                deadline = after.value + FRAME_TICKS;
+            }
+            var wait_until: usize = 0;
+            if DIRTY { wait_until = deadline; }
+            var watches: [3]services::Watch = zero;
+            watches[0] = make services::Watch { handle: CAPABILITY, events: syscalls::READABLE };
+            var watched: usize = 1;
+            var i: usize = 0;
+            while i < 2_usize {
+                if EDITORS[i] != 0_usize {
+                    watches[watched] = make services::Watch { handle: EDITORS[i], events: syscalls::EXITED };
+                    watched = watched + 1_usize;
+                }
+                i = i + 1_usize;
+            }
+            let active: []const services::Watch = core::slice_from_raw_parts(core::slice_of(watches).data, watched);
+            let waited: syscall::Reply = services::wait(active, wait_until, false);
+            if waited.status != abi::OK { return fail(6); }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,109 @@
+// Clipped rectangles and row spans. Caller owns target RAM; all drawing stays in
+// preemptible U-mode. Opaque packed XRGB8888 pixels use the fixed ramfb byte order.
+module user::draw;
+pub struct Rect { pub x: usize, pub y: usize, pub width: usize, pub height: usize }
+pub struct Canvas { pub address: usize, pub width: usize, pub height: usize, pub stride: usize }
+
+pub fn clip(rect: Rect, width: usize, height: usize) -> Rect {
+    if rect.x >= width || rect.y >= height { return zero; }
+    var result: Rect = rect;
+    if result.width > width - result.x { result.width = width - result.x; }
+    if result.height > height - result.y { result.height = height - result.y; }
+    return result;
+}
+
+pub fn intersect(left: Rect, right: Rect) -> Rect {
+    var x: usize = left.x;
+    var y: usize = left.y;
+    if right.x > x { x = right.x; }
+    if right.y > y { y = right.y; }
+    // Rectangles supplied here are bounded screen coordinates, not raw user scalars.
+    var end_x: usize = left.x + left.width;
+    var end_y: usize = left.y + left.height;
+    if right.x + right.width < end_x { end_x = right.x + right.width; }
+    if right.y + right.height < end_y { end_y = right.y + right.height; }
+    if x >= end_x || y >= end_y { return zero; }
+    return make Rect { x: x, y: y, width: end_x - x, height: end_y - y };
+}
+
+// Both ranges are live ordinary RAM, do not overlap and cover bytes. Aligned
+// native words are an optimization only; differently aligned views use bytes.
+unsafe fn copy_row(source: usize, destination: usize, bytes: usize) -> () {
+    unsafe {
+        var at: usize = 0;
+        if source % 8_usize == destination % 8_usize {
+            while at < bytes && (destination + at) % 8_usize != 0_usize {
+                *core::ptr::<u8>(destination + at) = *core::ptr::<u8>(source + at);
+                at = at + 1_usize;
+            }
+            while bytes - at >= 8_usize {
+                *core::ptr::<usize>(destination + at) = *core::ptr::<usize>(source + at);
+                at = at + 8_usize;
+            }
+        }
+        while at < bytes {
+            *core::ptr::<u8>(destination + at) = *core::ptr::<u8>(source + at);
+            at = at + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub unsafe fn fill(canvas: Canvas, rect: Rect, color: u32) -> () {
+    let area: Rect = clip(rect, canvas.width, canvas.height);
+    // SAFETY: caller owns u32-aligned canvas rows; clip bounds every store.
+    unsafe {
+        let pair: usize = ((color as usize) << 32_usize) | color as usize;
+        var y: usize = 0;
+        while y < area.height {
+            let row: usize = canvas.address + (area.y + y) * canvas.stride + area.x * 4_usize;
+            var x: usize = 0;
+            if row % 8_usize != 0_usize && area.width != 0_usize {
+                *core::ptr::<u32>(row) = color;
+                x = 1;
+            }
+            while area.width - x >= 2_usize {
+                *core::ptr::<usize>(row + x * 4_usize) = pair;
+                x = x + 2_usize;
+            }
+            if x < area.width { *core::ptr::<u32>(row + x * 4_usize) = color; }
+            y = y + 1_usize;
+        }
+    }
+    return ();
+}
+
+// Source is tightly packed for rect, and must cover rect.width*rect.height*4 bytes.
+pub unsafe fn blit(canvas: Canvas, rect: Rect, source: []const u8) -> bool {
+    let area: Rect = clip(rect, canvas.width, canvas.height);
+    if area.width != rect.width || area.height != rect.height || rect.width > 1024_usize || rect.height > 768_usize {
+        return false;
+    }
+    if source.len != rect.width * rect.height * 4_usize { return false; }
+    // SAFETY: checked source length; clipped rows lie in caller-owned canvas.
+    unsafe {
+        var y: usize = 0;
+        while y < rect.height {
+            copy_row(core::addr(source.data) + y * rect.width * 4_usize,
+                canvas.address + (rect.y + y) * canvas.stride + rect.x * 4_usize,
+                rect.width * 4_usize);
+            y = y + 1_usize;
+        }
+    }
+    return true;
+}
+
+pub unsafe fn present(source: Canvas, destination: Canvas, rect: Rect) -> () {
+    let area: Rect = clip(clip(rect, source.width, source.height), destination.width, destination.height);
+    // SAFETY: caller supplies distinct live canvases; both row ranges are clipped.
+    unsafe {
+        var y: usize = 0;
+        while y < area.height {
+            copy_row(source.address + (area.y + y) * source.stride + area.x * 4_usize,
+                destination.address + (area.y + y) * destination.stride + area.x * 4_usize,
+                area.width * 4_usize);
+            y = y + 1_usize;
+        }
+    }
+    return ();
+}

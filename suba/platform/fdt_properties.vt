@@ -1,0 +1,174 @@
+// Memory semantics are separate from token traversal. Unknown devices never supply RAM.
+module platform::fdt;
+
+const ADDRESS_SEEN: u32 = 1;
+const SIZE_SEEN: u32 = 2;
+const TYPE_SEEN: u32 = 4;
+const REG_SEEN: u32 = 8;
+const RANGES_SEEN: u32 = 16;
+const STATUS_SEEN: u32 = 32;
+const NO_MAP_SEEN: u32 = 64;
+const REUSABLE_SEEN: u32 = 128;
+
+unsafe fn once(node: *Node, flag: u32) -> bool {
+    // SAFETY: node points to the current exclusive local stack entry.
+    unsafe {
+        if ((*node).seen & flag) != 0_u32 { return false; }
+        (*node).seen = (*node).seen | flag;
+    }
+    return true;
+}
+
+unsafe fn cells(node: *Node, value: []const u8, flag: u32) -> Check {
+    // SAFETY: node and value are live local/borrowed state; width is checked before decode.
+    unsafe {
+        if !once(node, flag) || value.len != 4_usize { return Check::Invalid; }
+        if be32(value, 0) != 2_usize { return Check::Unsupported; }
+    }
+    return Check::Good;
+}
+
+unsafe fn status(node: *Node, value: []const u8) -> Check {
+    // SAFETY: node and value are live for the current traversal.
+    unsafe {
+        if !once(node, STATUS_SEEN) { return Check::Invalid; }
+        if !equal(value, "okay\0") && !equal(value, "ok\0") { return Check::Unsupported; }
+    }
+    return Check::Good;
+}
+
+unsafe fn memory_property(node: *Node, name: []const u8, value: []const u8,
+    output: *Description) -> Check {
+    // SAFETY: all arguments are current local state or bounded immutable blob views.
+    unsafe {
+        if equal(name, "device_type") {
+            if !once(node, TYPE_SEEN) { return Check::Invalid; }
+            if !equal(value, "memory\0") { return Check::Unsupported; }
+        }
+        if equal(name, "reg") {
+            if !once(node, REG_SEEN) { return Check::Invalid; }
+            if value.len != 16_usize { return Check::Unsupported; }
+            if be64(value, 0) != abi::RAM_BASE || be64(value, 8) != abi::RAM_BYTES {
+                return Check::Unsupported;
+            }
+            (*output).ram_base = abi::RAM_BASE;
+            (*output).ram_bytes = abi::RAM_BYTES;
+        }
+        if equal(name, "status") { return status(node, value); }
+        if equal(name, "linux,usable-memory") || equal(name, "linux,usable-memory-range") {
+            return Check::Unsupported;
+        }
+    }
+    return Check::Good;
+}
+
+unsafe fn reserved_property(node: *Node, name: []const u8, value: []const u8) -> Check {
+    // SAFETY: current stack entry and checked property views are live for this call.
+    unsafe {
+        if equal(name, "#address-cells") { return cells(node, value, ADDRESS_SEEN); }
+        if equal(name, "#size-cells") { return cells(node, value, SIZE_SEEN); }
+        if equal(name, "status") { return status(node, value); }
+        if equal(name, "ranges") {
+            if !once(node, RANGES_SEEN) { return Check::Invalid; }
+            if value.len != 0_usize { return Check::Unsupported; }
+        }
+        if equal(name, "reg") || equal(name, "size") || equal(name, "alloc-ranges") {
+            return Check::Unsupported;
+        }
+    }
+    return Check::Good;
+}
+
+unsafe fn reservation_registers(node: *Node, value: []const u8,
+    output: *Description) -> Check {
+    // SAFETY: each 16-byte pair is within the checked property; append checks physical ranges.
+    unsafe {
+        if !once(node, REG_SEEN) { return Check::Invalid; }
+        if value.len == 0_usize || value.len % 16_usize != 0_usize { return Check::Invalid; }
+        var offset: usize = 0;
+        while offset < value.len {
+            match append_region(output, be64(value, offset), be64(value, offset + 8_usize)) {
+                Check::Good => {},
+                Check::Invalid => { return Check::Invalid; },
+                Check::Unsupported => { return Check::Unsupported; },
+                Check::Limit => { return Check::Limit; },
+            }
+            offset = offset + 16_usize;
+        }
+    }
+    return Check::Good;
+}
+
+unsafe fn reservation_property(node: *Node, name: []const u8, value: []const u8,
+    output: *Description) -> Check {
+    // SAFETY: same checked views and exclusive local state as property().
+    unsafe {
+        if equal(name, "reg") { return reservation_registers(node, value, output); }
+        if equal(name, "status") { return status(node, value); }
+        if equal(name, "size") || equal(name, "alignment") || equal(name, "alloc-ranges") ||
+            equal(name, "ranges") || equal(name, "#address-cells") || equal(name, "#size-cells") {
+            return Check::Unsupported;
+        }
+        if equal(name, "no-map") {
+            if !once(node, NO_MAP_SEEN) || value.len != 0_usize { return Check::Invalid; }
+        }
+        if equal(name, "reusable") {
+            if !once(node, REUSABLE_SEEN) || value.len != 0_usize { return Check::Invalid; }
+        }
+        if ((*node).seen & (NO_MAP_SEEN | REUSABLE_SEEN)) == (NO_MAP_SEEN | REUSABLE_SEEN) {
+            return Check::Invalid;
+        }
+    }
+    return Check::Good;
+}
+
+unsafe fn property(node: *Node, name: []const u8, value: []const u8,
+    output: *Description) -> Check {
+    // SAFETY: read_property constructed bounded live views and an exclusive current stack entry.
+    unsafe {
+        match (*node).kind {
+            NodeKind::Memory => { return memory_property(node, name, value, output); },
+            NodeKind::Root => {}, NodeKind::Reserved => {}, NodeKind::Reservation => {},
+            NodeKind::Chosen => {}, NodeKind::Other => {},
+        }
+        if equal(name, "device_type") && equal(value, "memory\0") { return Check::Unsupported; }
+        match (*node).kind {
+            NodeKind::Memory => {},
+            NodeKind::Root => {
+                if equal(name, "#address-cells") { return cells(node, value, ADDRESS_SEEN); }
+                if equal(name, "#size-cells") { return cells(node, value, SIZE_SEEN); }
+            },
+            NodeKind::Reserved => { return reserved_property(node, name, value); },
+            NodeKind::Reservation => { return reservation_property(node, name, value, output); },
+            NodeKind::Chosen => {
+                if equal(name, "linux,usable-memory-range") { return Check::Unsupported; }
+            },
+            NodeKind::Other => {},
+        }
+    }
+    return Check::Good;
+}
+
+fn finish_node(node: Node) -> Check {
+    match node.kind {
+        NodeKind::Root => {
+            if node.seen & (ADDRESS_SEEN | SIZE_SEEN) != (ADDRESS_SEEN | SIZE_SEEN) {
+                return Check::Unsupported;
+            }
+        },
+        NodeKind::Memory => {
+            if node.seen & (TYPE_SEEN | REG_SEEN) != (TYPE_SEEN | REG_SEEN) {
+                return Check::Unsupported;
+            }
+        },
+        NodeKind::Reserved => {
+            let required: u32 = ADDRESS_SEEN | SIZE_SEEN | RANGES_SEEN;
+            if node.seen & required != required { return Check::Unsupported; }
+        },
+        NodeKind::Reservation => {
+            if node.seen & REG_SEEN == 0_u32 { return Check::Unsupported; }
+        },
+        NodeKind::Other => {}, NodeKind::Chosen => {},
+    }
+    return Check::Good;
+}

@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "name": "stable-marker",
+      "expected_passed": true,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True); time.sleep(2)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 500,
+        "observer_stopped_after_marker": true,
+        "returncode": -15,
+        "log": "READY\n",
+        "passed": true
+      }
+    },
+    {
+      "name": "late-failure",
+      "expected_passed": false,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True); time.sleep(.05); print('PANIC', flush=True); time.sleep(2)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 0,
+        "observer_stopped_after_marker": false,
+        "returncode": -15,
+        "log": "READY\nPANIC\n",
+        "passed": false
+      }
+    },
+    {
+      "name": "early-exit",
+      "expected_passed": false,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 0,
+        "observer_stopped_after_marker": false,
+        "returncode": 0,
+        "log": "READY\n",
+        "passed": false
+      }
+    }
+  ],
+  "observer_sha256": "72b5d97ecce06d3e9862e3d482aea80c2c7599db435a25edecc962d78835a4b9"
+}

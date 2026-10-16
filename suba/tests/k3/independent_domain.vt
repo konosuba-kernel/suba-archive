@@ -1,0 +1,40 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+unsafe fn verify(job: usize, pair: services::StreamPair) -> u32 {
+    unsafe {
+        if job != 257_usize || pair.read != 258_usize || pair.write != 259_usize { return 201; }
+        let child: syscall::Reply = common::spawn("domain", pair.write, 0, job);
+        if child.status != abi::OK || child.value != 260_usize { return 202; }
+        var one: [1]u8 = zero;
+        let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(one), false);
+        if read.status != abi::OK || read.value != 1_usize || one[0_usize] != 68_u8 { return 203; }
+        if !common::collect(child.value, 0) { return 204; }
+        // If the child's same-valued token ended this parent's Job, this spawn fails.
+        let next: syscall::Reply = common::spawn("sleep", 0, 0, job);
+        if next.status != abi::OK { return 205; }
+        let end: syscall::Reply = services::job_end(job);
+        if end.status != abi::OK || !common::collect(next.value, abi::CANCELLED) { return 206; }
+        let closed: syscall::Reply = syscall::close(pair.write);
+        let eof: syscall::Reply = services::read(pair.read, core::slice_of_mut(one), false);
+        if closed.status != abi::OK || eof.status != abi::OK || eof.value != 0_usize { return 207; }
+        // More than16 watches must reject without reading even an invalid supplied pointer.
+        let too_many: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0xffffffffffffffff, 17, 0, 0, 0, 0);
+        if too_many.status != abi::LIMIT { return 208; }
+        let released: syscall::Reply = syscall::close(pair.read);
+        let job_closed: syscall::Reply = syscall::close(job);
+        if released.status != abi::OK || job_closed.status != abi::OK { return 209; }
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    let job: syscall::Reply = services::job_create();
+    if job.status != abi::OK { return 200; }
+    match services::streams() {
+        services::Streams::Failed(status) => { return 210; },
+        services::Streams::Ready(pair) => { unsafe { return verify(job.value, pair); } }
+    }
+}

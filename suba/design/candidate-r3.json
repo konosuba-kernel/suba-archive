@@ -1,0 +1,28 @@
+{
+  "candidate": "C-r3",
+  "date": "2026-10-14",
+  "inputs": {
+    "A": "r2",
+    "B": "r1"
+  },
+  "contributors": [
+    "/root",
+    "/root/suba_platform",
+    "/root/suba_toolchain"
+  ],
+  "files": {
+    "README.md": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17",
+    "REQUIREMENTS.md": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a",
+    "design/ARCHITECTURE.md": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b",
+    "design/CONTRACTS.md": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f",
+    "design/IMPLEMENTATION.md": "502c9afc65287399f2e18ccbf63d39cabee770c14b0a01851accbe998e527770",
+    "design/research/platform.md": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb",
+    "design/research/toolchain.md": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245",
+    "design/research/toolchain-evidence.json": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039"
+  },
+  "supersedes": "C-r2",
+  "changes": [
+    "Correct current start emission order against main.vt; keep required boot entry contract",
+    "Add narrowly scoped S0 sh/MMIO16 for actual fw_cfg selector requirement"
+  ]
+}

@@ -1,0 +1,137 @@
+module test::k7_kernel;
+pub fn images() -> u32 {
+    unsafe {
+        let baseline: usize = services::stats(wire::STATS_FS_FILES).value;
+        if spawn("/boot/1", "normal", "/work", 0).status != abi::NOT_FOUND { return 1; }
+        if spawn("/sys/bad", "normal", "/work", 0).status != abi::INVALID { return 2; }
+        if spawn("/sys/rwx", "normal", "/work", 0).status != abi::INVALID { return 3; }
+        if spawn("/sys/worker", "normal", "/work/missing", 0).status != abi::NOT_FOUND { return 4; }
+        var i: usize = 0;
+        while i < 10_usize {
+            let child: syscall::Reply = spawn("worker", "normal", "/work", 0);
+            if child.status != abi::OK || !collected(child.value, 42) { return 5; }
+            if services::stats(wire::STATS_FS_FILES).value != baseline { return 6; }
+            i = i + 1_usize;
+        }
+    }
+    return 0;
+}
+pub fn publication() -> u32 {
+    unsafe {
+        let old: syscall::Reply = files::open("target", wire::READ);
+        if old.status != abi::OK { return 10; }
+        let temp: syscall::Reply = create("temporary", "new", true);
+        if temp.status != abi::OK || files::sync(temp.value, false).status != abi::OK { return 11; }
+        if files::replace("temporary", "target").status != abi::BUSY { return 12; }
+        if syscall::close(temp.value).status != abi::OK || files::replace("temporary", "target").status != abi::OK { return 13; }
+        if files::read_at(old.value, 0, core::slice_of_mut(BUFFER)).value != 3_usize || BUFFER[0_usize] != 111_u8 { return 14; }
+        if syscall::close(old.value).status != abi::OK { return 15; }
+        let current: syscall::Reply = files::open("target", wire::READ);
+        if current.status != abi::OK { return 16; }
+        if files::read_at(current.value, 0, core::slice_of_mut(BUFFER)).value != 3_usize || BUFFER[0_usize] != 110_u8 { return 17; }
+        if syscall::close(current.value).status != abi::OK || files::sync_all().status != abi::OK { return 18; }
+    }
+    return 0;
+}
+pub fn job() -> u32 {
+    unsafe {
+        let legacy: syscall::Reply = services::job_create();
+        if legacy.status != abi::OK || services::freeze_inputs(legacy.value, 0).status != abi::UNSUPPORTED ||
+            services::job_end(legacy.value).status != abi::OK || syscall::close(legacy.value).status != abi::OK { return 112; }
+        if syscall::invoke(abi::SYS_JOB_CREATE, 1, 64, 0, 0, 0, 0).status != abi::INVALID { return 113; }
+        let nodes: usize = services::stats(wire::STATS_FS_FREE_NODES).value;
+        let blocks: usize = services::stats(wire::STATS_FS_FREE_BLOCKS).value;
+        let created: syscall::Reply = syscall::invoke(abi::SYS_JOB_CREATE, core::addr(core::slice_of_mut(INFO).data), 64, 0, 0, 0, 0);
+        if created.status != abi::OK { return 20; }
+        let info: []const u8 = core::slice_of(INFO);
+        ROOT_BYTES = argument_wire::word(info, wire::JOB_PATH_BYTES, 4);
+        if ROOT_BYTES == 0_usize || ROOT_BYTES > 31_usize { return 21; }
+        var i: usize = 0;
+        while i < ROOT_BYTES { ROOT[i] = INFO[wire::JOB_PATH + i]; i = i + 1_usize; }
+        let epoch: usize = argument_wire::word(info, wire::JOB_SOURCE_EPOCH, 8);
+        let boot: usize = argument_wire::word(info, wire::JOB_BOOT_ID, 8);
+        let input: syscall::Reply = create(path("/src/input"), "frozen", false);
+        if input.status != abi::OK || services::stats(wire::STATS_SOURCE_EPOCH).value != epoch { return 22; }
+        if files::mkdir(path("/src/nested")).status != abi::OK { return 23; }
+        if !foreign(path("/src/input")) { return 114; }
+        let transient: syscall::Reply = create(path("/src/hidden"), "hidden", true);
+        if transient.status != abi::OK || syscall::close(transient.value).status != abi::OK { return 119; }
+        let sealed_reader: syscall::Reply = files::open(path("/src/hidden"), wire::READ);
+        if sealed_reader.status != abi::OK { return 119; }
+        let output_writer: syscall::Reply = create(path("/out/held"), "held", true);
+        if output_writer.status != abi::OK { return 122; }
+        if syscall::invoke(abi::SYS_JOB_FREEZE, created.value, epoch, boot + 1_usize, 0, 0, 0).status != abi::BUSY { return 24; }
+        let bump: syscall::Reply = create("bump", "edit", false);
+        if bump.status != abi::OK || syscall::close(bump.value).status != abi::OK { return 25; }
+        if syscall::invoke(abi::SYS_JOB_FREEZE, created.value, epoch, boot, 0, 0, 0).status != abi::BUSY { return 26; }
+        if files::unlink("bump").status != abi::OK { return 27; }
+        let current: usize = services::stats(wire::STATS_SOURCE_EPOCH).value;
+        if syscall::invoke(abi::SYS_JOB_FREEZE, created.value, current, boot, 0, 0, 0).status != abi::OK { return 28; }
+        if files::sync(sealed_reader.value, true).status != abi::DENIED { return 120; }
+        if files::sync(output_writer.value, true).status != abi::DENIED ||
+            files::write_at(output_writer.value, 0, "x").status != abi::DENIED { return 123; }
+        if syscall::close(output_writer.value).status != abi::OK ||
+            syscall::close(sealed_reader.value).status != abi::OK { return 121; }
+        if files::write_at(input.value, 0, "x").status != abi::DENIED { return 29; }
+        match files::stat(input.value) { files::Stated::Ready(value) => { return 30; },
+            files::Stated::Failed(status) => { if status != abi::DENIED { return 31; } } }
+        if files::sync(input.value, false).status != abi::DENIED { return 32; }
+        if files::mkdir(path("/src/late")).status != abi::DENIED || files::unlink(path("/src/input")).status != abi::DENIED { return 33; }
+        if files::replace(path("/src/input"), "denied").status != abi::DENIED ||
+            files::open(path("/out/creator-write"), wire::WRITE | wire::CREATE_NEW).status != abi::DENIED ||
+            !foreign(path("/src/input")) { return 115; }
+        let cwd: []const u8 = core::slice_from_raw_parts(core::slice_of(ROOT).data, ROOT_BYTES);
+        if spawn("/sys/worker", "normal", cwd, 0).status != abi::DENIED { return 116; }
+        let child: syscall::Reply = spawn("/sys/worker", "restricted", cwd, created.value);
+        if child.status != abi::OK || !collected(child.value, 0) { return 34; }
+        let output: syscall::Reply = files::open(path("/out/result"), wire::READ);
+        if output.status != abi::OK || syscall::close(output.value).status != abi::OK { return 35; }
+        if services::job_end(created.value).status != abi::OK { return 36; }
+        let watches: [1]services::Watch = [make services::Watch { handle: created.value, events: syscalls::EXITED }];
+        let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+        if services::wait(core::slice_of(watches), until, false).value != 1_usize { return 37; }
+        if services::stats(wire::STATS_FS_FREE_NODES).value != nodes || services::stats(wire::STATS_FS_FREE_BLOCKS).value != blocks { return 38; }
+        let reused: syscall::Reply = create("reused", "ordinary", false);
+        if reused.status != abi::OK { return 39; }
+        if files::read_at(input.value, 0, core::slice_of_mut(BUFFER)).status != abi::DENIED { return 40; }
+        if syscall::close(input.value).status != abi::OK || syscall::close(reused.value).status != abi::OK ||
+            files::unlink("reused").status != abi::OK || syscall::close(created.value).status != abi::OK { return 41; }
+    }
+    return 0;
+}
+fn gate(mode: usize) -> u32 {
+    let baseline: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+    var result: u32 = 0;
+    if mode == 0_usize { result = images(); }
+    if mode == 1_usize { result = job(); }
+    if mode == 2_usize { result = publication(); }
+    if mode == 3_usize { result = death(); }
+    if mode == 4_usize { result = cancellation(false); }
+    if mode == 5_usize { result = cancellation(true); }
+    if mode == 6_usize { result = job_owner_death(); }
+    if mode == 7_usize { unsafe { result = remount(); } }
+    if mode == 8_usize { unsafe { result = recovered(); } }
+    if mode == 9_usize { unsafe { result = historical(); } }
+    if result == 0_u32 && services::stats(syscalls::STATS_FREE_PAGES).value != baseline { result = 90; }
+    unsafe {
+        // Only this designated test desktop has the display grant. The fixture's
+        // children are loaded by ordinary spawn and have no mapping at this address.
+        var color: u32 = 0x0000ff00;
+        if result != 0_u32 { color = 0x00ff0000_u32 | result; }
+        var diagnostic: usize = 0;
+        while diagnostic < 4_usize {
+            *core::ptr::<u32>(abi::DISPLAY_BASE + 4_usize + diagnostic * 4_usize) = COLLECT_DIAG[diagnostic] as u32;
+            diagnostic = diagnostic + 1_usize;
+        }
+        *core::ptr::<u32>(abi::DISPLAY_BASE) = color;
+        let empty: [1]services::Watch = zero;
+        loop {
+            let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 1000000_usize;
+            let waited: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(empty).data, 0), until, false);
+        }
+    }
+    return 0;
+}
+pub fn images_gate() -> u32 { return gate(0); }
+pub fn job_gate() -> u32 { return gate(1); }
+pub fn publication_gate() -> u32 { return gate(2); }

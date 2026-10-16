@@ -1,0 +1,16 @@
+module test::user;
+static mut BSS: [8193]u8 = zero;
+static mut VALUE: usize = 0x1122334455667788;
+static MESSAGE: []const u8 = "read-only";
+pub fn run() -> u32 {
+    unsafe {
+        var i: usize = 0;
+        while i < 8193_usize {
+            if BSS[i] != 0_u8 { return 41; }
+            BSS[i] = (i % 251_usize) as u8;
+            i = i + 1_usize;
+        }
+        if VALUE != 0x1122334455667788_usize || MESSAGE.len != 9_usize { return 42; }
+        return 0;
+    }
+}

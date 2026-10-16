@@ -1,0 +1,32 @@
+{
+  "mutation": "clear only 511/512 words; last word must be detected",
+  "source_sha256": "eec41f75329e073709173586031b81a6f444d66d15a15c713f3664a7247fe375",
+  "candidate_sha256": "0f9583c4c5ada9749c7d601f2e6ac74eec2d93de84a50166d6b029ef0add76b0",
+  "commands": [
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=22422 assembly=0 names=627 name_bytes=11964 decls=220 types=37 fields=19 params=18 max_ast=536 max_ir=582 max_frame=2384 max_bindings=9 max_defers=0 max_loops=1 max_slots=345 max_args=46 max_params=3 text=28588 data=4 objects=9 symbols=488 fixups=917 relocations=0 elf=36868\n"
+    },
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/suba/build/k2-memory-root-tail-negative/probe.elf"
+      ],
+      "exit": 24,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

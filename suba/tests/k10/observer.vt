@@ -1,0 +1,163 @@
+// TEST ONLY appended to dispatch_call in a frozen copy. Reads states, never
+// changes scheduling, references, request tokens, or owner lifecycle.
+unsafe fn k10_state(id: process::Id, token: usize) -> usize {
+    unsafe {
+        match handle(id, token, objects::KILL) {
+            objects::LookupResult::BadHandle => { return 0; },
+            objects::LookupResult::Denied => { return 0; },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Child(child) => {
+                        match children::target(child) {
+                            children::Target::Invalid => { return 0; }, children::Target::Finished => { return 0; },
+                            children::Target::Ready(target) => {
+                                match process::state(target) {
+                                    process::State::Ready => { return 1; },
+                                    process::State::Blocked => {
+                                        match request::peek(process::slot(target)) {
+                                            request::Peek::Empty => { return 0; },
+                                            request::Peek::Ready(work) => {
+                                                match work.operation {
+                                                    request::Operation::Write(value) => { return 2; },
+                                                    request::Operation::Idle => {}, request::Operation::Job(value) => {},
+                                                    request::Operation::File(value) => {}, request::Operation::Read(value) => {},
+                                                    request::Operation::Wait(value) => {}, request::Operation::Preparing(value) => {},
+                                                    request::Operation::Installing(value) => {}, request::Operation::Loading(value) => {},
+                                                    request::Operation::Pages(value) => {}, request::Operation::WindowCreate(value) => {},
+                                                    request::Operation::WindowCopy(value) => {}
+                                                }
+                                            }
+                                        }
+                                    },
+                                    process::State::Vacant => {}, process::State::Loading => {}, process::State::Prepared => {},
+                                    process::State::Running => {}, process::State::Dying => {}, process::State::Exited => {}
+                                }
+                            }
+                        }
+                    },
+                    objects::Object::Desktop(value) => {}, objects::Object::Empty => {}, objects::Object::Job(value) => {},
+                    objects::Object::File(value) => {}, objects::Object::Window(value) => {},
+                    objects::Object::StreamRead(value) => {}, objects::Object::StreamWrite(value) => {}
+                }
+            }
+        }
+    }
+    return 0;
+}
+unsafe fn k10_record(round: usize, state: usize) -> () {
+    unsafe {
+        machine::text("K10 round "); number(round); machine::text(" state "); number(state);
+        machine::text(" pages "); number(memory::stats().free);
+        machine::text(" streams "); number(stream::live_count());
+        machine::text(" children "); number(children::live_count());
+        machine::text(" jobs "); number(jobs::live_count());
+        var selector: usize = files::STATS_FS_FREE_BLOCKS;
+        while selector <= files::STATS_FS_DETACHED {
+            machine::text(" ");
+            if selector == files::STATS_BLOCK_STATE { number(fs::k10_block_state()); }
+            else { number(fs::resource(selector)); }
+            selector = selector + 1_usize;
+        }
+        machine::text("\n");
+    }
+    return ();
+}
+static mut K10_BASE: [304]usize = zero;
+static mut K10_NOW: [304]usize = zero;
+static mut K10_HAS_BASE: bool = false;
+// The snapshot and UART duration are separate. Neither is production timing.
+unsafe fn k10_snapshot(controller: process::Id) -> bool {
+    unsafe {
+        K10_NOW = zero;
+        let current: usize = process::slot(controller);
+        let controller_space: usize = process::k10_space(current);
+        if current >= 16_usize || controller_space >= 16_usize { return false; }
+        let total: memory::Stats = memory::stats();
+        K10_NOW[0_usize] = total.free; K10_NOW[1_usize] = total.allocated;
+        K10_NOW[2_usize] = total.retired;
+        let kernel_pages: usize = space::k10_kernel_pages();
+        if kernel_pages == 0xffffffffffffffff_usize { return false; }
+        K10_NOW[3_usize] = kernel_pages;
+        K10_NOW[6_usize] = stream::live_count(); K10_NOW[7_usize] = children::live_count();
+        K10_NOW[8_usize] = jobs::live_count();
+        var i: usize = 0;
+        while i < 6_usize {
+            if i == 4_usize { K10_NOW[9_usize + i] = fs::k10_block_state(); }
+            else { K10_NOW[9_usize + i] = fs::resource(files::STATS_FS_FREE_BLOCKS + i); }
+            i = i + 1_usize;
+        }
+        K10_NOW[15_usize] = process::k10_borrowed_display();
+        K10_NOW[16_usize] = current; K10_NOW[17_usize] = controller_space;
+        K10_NOW[18_usize] = objects::k10_handles(current);
+        K10_NOW[19_usize] = space::k10_pages(controller_space);
+        K10_NOW[20_usize] = window::k10_owner_pages(current);
+        K10_NOW[21_usize] = request::k10_pending(current);
+        K10_NOW[22_usize] = request::k10_watches(current);
+        K10_NOW[23_usize] = ranges::k10_count(current);
+        let pins: fs::K10Pins = fs::k10_pins();
+        K10_NOW[25_usize] = pins.readers; K10_NOW[26_usize] = pins.writers;
+        K10_NOW[27_usize] = pins.cwd; K10_NOW[28_usize] = pins.file_refs;
+        K10_NOW[29_usize] = pins.domains; K10_NOW[30_usize] = pins.grants;
+        K10_NOW[31_usize] = pins.clients;
+        var external: usize = 0;
+        i = 0;
+        while i < 16_usize {
+            let pages: usize = space::k10_pages(i);
+            let surface: usize = window::k10_surface(i);
+            if pages == 0xffffffffffffffff_usize || surface == 0xffffffffffffffff_usize { return false; }
+            K10_NOW[4_usize] = K10_NOW[4_usize] + pages;
+            K10_NOW[5_usize] = K10_NOW[5_usize] + surface;
+            external = external + space::k10_external(i);
+            if i != current {
+                let at: usize = 32_usize + 11_usize * i;
+                K10_NOW[at] = process::k10_state(i);
+                K10_NOW[at + 1_usize] = objects::k10_handles(i);
+                K10_NOW[at + 2_usize] = objects::k10_attached(i);
+                K10_NOW[at + 3_usize] = request::k10_pending(i);
+                K10_NOW[at + 4_usize] = request::k10_watches(i);
+                K10_NOW[at + 5_usize] = request::k10_owner(i);
+                K10_NOW[at + 6_usize] = ranges::k10_count(i);
+                K10_NOW[at + 7_usize] = ranges::k10_attached(i);
+                K10_NOW[at + 8_usize] = window::k10_owner_pages(i);
+                K10_NOW[at + 9_usize] = image_reads::k10_live(i);
+                let owned: usize = process::k10_space(i);
+                if owned < 16_usize { K10_NOW[at + 10_usize] = owned + 1_usize; }
+            }
+            if i != controller_space {
+                let at: usize = 208_usize + 3_usize * i;
+                K10_NOW[at] = space::k10_live(i); K10_NOW[at + 1_usize] = pages;
+                K10_NOW[at + 2_usize] = space::k10_external(i);
+            }
+            let at: usize = 256_usize + 3_usize * i;
+            K10_NOW[at] = window::k10_state(i); K10_NOW[at + 1_usize] = surface;
+            K10_NOW[at + 2_usize] = window::k10_reference(i);
+            i = i + 1_usize;
+        }
+        K10_NOW[24_usize] = external;
+        if total.allocated != kernel_pages + K10_NOW[4_usize] + K10_NOW[5_usize] { return false; }
+        // Only sampled after collect/settling: no partly-created surface charge.
+        if external != K10_NOW[5_usize] + K10_NOW[15_usize] { return false; }
+        return true;
+    }
+}
+unsafe fn k10_ledger(controller: process::Id, round: usize, baseline: bool) -> bool {
+    unsafe {
+        let began: usize = machine::time();
+        if !k10_snapshot(controller) { machine::text("K10 ledger invariant failed\n"); return false; }
+        let ticks: usize = machine::time() - began;
+        var equal: bool = true;
+        var i: usize = 0;
+        if baseline { K10_BASE = K10_NOW; K10_HAS_BASE = true; }
+        else {
+            if !K10_HAS_BASE { return false; }
+            while i < 304_usize { if K10_NOW[i] != K10_BASE[i] { equal = false; } i = i + 1_usize; }
+        }
+        let output: usize = machine::time();
+        machine::text("K10 ledger "); number(round); machine::text(" ticks "); number(ticks);
+        i = 0;
+        while i < 304_usize { machine::text(" "); number(K10_NOW[i]); i = i + 1_usize; }
+        machine::text("\nK10 ledger UART ticks "); number(machine::time() - output); machine::text("\n");
+        if !equal { machine::text("K10 ledger differs from baseline\n"); }
+        return equal;
+    }
+}

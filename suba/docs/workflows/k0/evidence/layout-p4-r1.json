@@ -1,0 +1,1256 @@
+{
+  "format": 1,
+  "stage": "P4",
+  "mechanical_checks_passed": true,
+  "independently_accepted": false,
+  "language_cases_required": true,
+  "guest_stack_bytes": 1048576,
+  "stages": [
+    {
+      "name": "e0",
+      "compiler_sha256": "90c9523de43bebbd0a6932e74abc8cd670b60478c3b4f0fc1eff74fbf4cfb686",
+      "mode": "build",
+      "input_sha256": {
+        "bootstrap/frozen/core-s/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+        "bootstrap/frozen/core-s/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+        "bootstrap/frozen/core-s/runtime/linux.vt": "5c51d33ec7e61939238dd36a856a8dfa72247dabd4373e7df9d09af2134b6d78",
+        "bootstrap/transition/blocking.vt": "85ed19281e7e61bece91584fd06d732eab551a74a6e19fc7b7bd08c72febf545",
+        "bootstrap/transition/check.vt": "78118af31df5a194fa7056da2258d9c323dbd25ad66cf4b72beb453da4fea901",
+        "bootstrap/transition/image.vt": "541aa72d9d62c17fc227e568696aed629672d0f239f39bc53bafc4d37e3067cc",
+        "bootstrap/transition/init.vt": "0162d4c2d22bc77d7a060a2383fd02be836ecef42225c16cceb5da356e24558b",
+        "bootstrap/transition/input.vt": "bd3bb2b379e656f85b3837870f0c6430de4441ae615b5c1046c3b2f2b21079e5",
+        "bootstrap/transition/ir.vt": "9aa979d858b19cdeaa1bb2d7949e2a34c2667784152fbee0e8e4b8d198161776",
+        "bootstrap/transition/lex.vt": "e3ab3720efd55f7aeaff98c89fc95eefbca4e791ebe38eeb2ce901d11799f07b",
+        "bootstrap/transition/main.vt": "95b34d02148fe47af54ea8e4a08163d223619cb4255831f671690ea775ef8cd9",
+        "bootstrap/transition/model.vt": "f4e5d37141fbd14cf657f24f69a78b9a33a05209c3ea92c2d96f54c82cc85c46",
+        "bootstrap/transition/parse.vt": "f92b7fb793a2229a5ac1607b20a6b8c964f0edfdb4801b3710ad5babaf5e8256",
+        "bootstrap/transition/rules.vt": "c880ca4d0c6f3e943741ea14227359785335f1bee9e4d9323ddda14fd884f103",
+        "bootstrap/transition/rv64.vt": "db0ecd1620bc11e31d5a2f83123510480d2f770466af131b2716741867f63ee4",
+        "bootstrap/transition/s0.vt": "3fa1bb7690ad64ff59cdece20169a056e73222957a460f3e2796d9ac46a90480",
+        "bootstrap/transition/types.vt": "156de7550487c35498b94c65d0f4f03bf4b60971d984abebc5cb7efa8ffbdd0c",
+        "compiler.build": "32493bf64c802daf4371bedbdb7965e19b038d5384eb6dfae5883fcf9e687836"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/e0.strace",
+        "driver.elf",
+        "build",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-on2pwr6s",
+      "exit": 0,
+      "elapsed_seconds": 40.34393675299907,
+      "stdout": "",
+      "stderr": "B3 sources=16 imports=41 assembly_files=1 source=257708 assembly=345 names=2847 name_bytes=57169 decls=686 types=218 fields=153 params=533 max_ast=781 max_ir=1464 max_frame=25744 max_bindings=19 max_defers=0 max_loops=3 max_saved=182 max_slots=991 max_args=180 max_params=7 text=861360 data=200558 objects=538 symbols=11611 fixups=22264 relocations=8281 elf=1071176\n",
+      "statistics": {
+        "sources": 16,
+        "imports": 41,
+        "assembly_files": 1,
+        "source": 257708,
+        "assembly": 345,
+        "names": 2847,
+        "name_bytes": 57169,
+        "decls": 686,
+        "types": 218,
+        "fields": 153,
+        "params": 533,
+        "max_ast": 781,
+        "max_ir": 1464,
+        "max_frame": 25744,
+        "max_bindings": 19,
+        "max_defers": 0,
+        "max_loops": 3,
+        "max_saved": 182,
+        "max_slots": 991,
+        "max_args": 180,
+        "max_params": 7,
+        "text": 861360,
+        "data": 200558,
+        "objects": 538,
+        "symbols": 11611,
+        "fixups": 22264,
+        "relocations": 8281,
+        "elf": 1071176
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/model.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/rules.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/lex.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/input.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/types.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/parse.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/init.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/ir.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/check.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/image.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/rv64.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/s0.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/blocking.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/transition/main.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/frozen/core-s/runtime/bytes.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/frozen/core-s/runtime/linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "bootstrap/frozen/core-s/runtime/linux.s0",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler.elf",
+            "flags": "O_WRONLY|O_CREAT|O_EXCL",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 19,
+          "read": 92,
+          "close": 19,
+          "write": 115,
+          "fchmod": 1,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      },
+      "output": {
+        "sha256": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+        "elf_bytes": 1071176,
+        "memory": {
+          "rw_bytes": 54044724,
+          "image_span_bytes": 54913076
+        }
+      }
+    },
+    {
+      "name": "e1",
+      "compiler_sha256": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+      "mode": "build",
+      "input_sha256": {
+        "compiler.build": "753b74d9fa1a8ee2e5a7e027a9d361876a9f46329889acaeedd43b9ef7430039",
+        "compiler/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+        "compiler/check.vt": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0",
+        "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+        "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+        "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+        "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+        "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+        "compiler/main.vt": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+        "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+        "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+        "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+        "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+        "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+        "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+        "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+        "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+        "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+        "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+        "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/e1.strace",
+        "driver.elf",
+        "build",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-xwr13bp0",
+      "exit": 0,
+      "elapsed_seconds": 140.494912614,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=18 imports=57 assembly_files=1 source=351556 assembly=345 names=4347 name_bytes=87489 decls=843 types=435 fields=383 params=651 max_ast=1173 max_ir=1429 max_frame=25808 max_bindings=18 max_defers=0 max_loops=3 max_slots=1033 max_args=185 max_params=5 text=1027200 data=2236 objects=589 symbols=13204 fixups=28755 relocations=6 elf=1036432\n",
+      "statistics": {
+        "sources": 18,
+        "imports": 57,
+        "assembly_files": 1,
+        "source": 351556,
+        "assembly": 345,
+        "names": 4347,
+        "name_bytes": 87489,
+        "decls": 843,
+        "types": 435,
+        "fields": 383,
+        "params": 651,
+        "max_ast": 1173,
+        "max_ir": 1429,
+        "max_frame": 25808,
+        "max_bindings": 18,
+        "max_defers": 0,
+        "max_loops": 3,
+        "max_slots": 1033,
+        "max_args": 185,
+        "max_params": 5,
+        "text": 1027200,
+        "data": 2236,
+        "objects": 589,
+        "symbols": 13204,
+        "fixups": 28755,
+        "relocations": 6,
+        "elf": 1036432
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/model.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/target.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rules.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/lex.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/input.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/types.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/parse.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/init.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/ir.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/check.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/image.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rv64.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/s0.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/blocking.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/main.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/bytes.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/host_linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.s0",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler.elf",
+            "flags": "O_WRONLY|O_CREAT|O_EXCL",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 21,
+          "read": 117,
+          "close": 21,
+          "write": 111,
+          "fchmod": 1,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      },
+      "output": {
+        "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+        "elf_bytes": 1036432,
+        "memory": {
+          "rw_bytes": 55135836,
+          "image_span_bytes": 56168028
+        }
+      }
+    },
+    {
+      "name": "e2",
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "mode": "build",
+      "input_sha256": {
+        "compiler.build": "753b74d9fa1a8ee2e5a7e027a9d361876a9f46329889acaeedd43b9ef7430039",
+        "compiler/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+        "compiler/check.vt": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0",
+        "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+        "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+        "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+        "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+        "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+        "compiler/main.vt": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+        "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+        "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+        "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+        "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+        "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+        "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+        "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+        "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+        "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+        "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+        "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/e2.strace",
+        "driver.elf",
+        "build",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-6lib_8a8",
+      "exit": 0,
+      "elapsed_seconds": 161.39448135100065,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=18 imports=57 assembly_files=1 source=351556 assembly=345 names=4347 name_bytes=87489 decls=843 types=435 fields=383 params=651 max_ast=1173 max_ir=1429 max_frame=25808 max_bindings=18 max_defers=0 max_loops=3 max_slots=1033 max_args=185 max_params=5 text=1027200 data=2236 objects=589 symbols=13204 fixups=28755 relocations=6 elf=1036432\n",
+      "statistics": {
+        "sources": 18,
+        "imports": 57,
+        "assembly_files": 1,
+        "source": 351556,
+        "assembly": 345,
+        "names": 4347,
+        "name_bytes": 87489,
+        "decls": 843,
+        "types": 435,
+        "fields": 383,
+        "params": 651,
+        "max_ast": 1173,
+        "max_ir": 1429,
+        "max_frame": 25808,
+        "max_bindings": 18,
+        "max_defers": 0,
+        "max_loops": 3,
+        "max_slots": 1033,
+        "max_args": 185,
+        "max_params": 5,
+        "text": 1027200,
+        "data": 2236,
+        "objects": 589,
+        "symbols": 13204,
+        "fixups": 28755,
+        "relocations": 6,
+        "elf": 1036432
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/model.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/target.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rules.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/lex.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/input.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/types.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/parse.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/init.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/ir.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/check.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/image.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rv64.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/s0.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/blocking.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/main.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/bytes.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/host_linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.s0",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler.elf",
+            "flags": "O_WRONLY|O_CREAT|O_EXCL",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 21,
+          "read": 117,
+          "close": 21,
+          "write": 111,
+          "fchmod": 1,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      },
+      "output": {
+        "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+        "elf_bytes": 1036432,
+        "memory": {
+          "rw_bytes": 55135836,
+          "image_span_bytes": 56168028
+        }
+      }
+    },
+    {
+      "name": "e3",
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "mode": "build",
+      "input_sha256": {
+        "compiler.build": "753b74d9fa1a8ee2e5a7e027a9d361876a9f46329889acaeedd43b9ef7430039",
+        "compiler/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+        "compiler/check.vt": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0",
+        "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+        "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+        "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+        "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+        "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+        "compiler/main.vt": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+        "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+        "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+        "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+        "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+        "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+        "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+        "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+        "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+        "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+        "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+        "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/e3.strace",
+        "driver.elf",
+        "build",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-ydqmkdx3",
+      "exit": 0,
+      "elapsed_seconds": 149.40684536799927,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=18 imports=57 assembly_files=1 source=351556 assembly=345 names=4347 name_bytes=87489 decls=843 types=435 fields=383 params=651 max_ast=1173 max_ir=1429 max_frame=25808 max_bindings=18 max_defers=0 max_loops=3 max_slots=1033 max_args=185 max_params=5 text=1027200 data=2236 objects=589 symbols=13204 fixups=28755 relocations=6 elf=1036432\n",
+      "statistics": {
+        "sources": 18,
+        "imports": 57,
+        "assembly_files": 1,
+        "source": 351556,
+        "assembly": 345,
+        "names": 4347,
+        "name_bytes": 87489,
+        "decls": 843,
+        "types": 435,
+        "fields": 383,
+        "params": 651,
+        "max_ast": 1173,
+        "max_ir": 1429,
+        "max_frame": 25808,
+        "max_bindings": 18,
+        "max_defers": 0,
+        "max_loops": 3,
+        "max_slots": 1033,
+        "max_args": 185,
+        "max_params": 5,
+        "text": 1027200,
+        "data": 2236,
+        "objects": 589,
+        "symbols": 13204,
+        "fixups": 28755,
+        "relocations": 6,
+        "elf": 1036432
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/model.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/target.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rules.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/lex.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/input.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/types.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/parse.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/init.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/ir.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/check.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/image.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rv64.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/s0.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/blocking.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/main.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/bytes.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/host_linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.s0",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler.elf",
+            "flags": "O_WRONLY|O_CREAT|O_EXCL",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 21,
+          "read": 117,
+          "close": 21,
+          "write": 111,
+          "fchmod": 1,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      },
+      "output": {
+        "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+        "elf_bytes": 1036432,
+        "memory": {
+          "rw_bytes": 55135836,
+          "image_span_bytes": 56168028
+        }
+      }
+    },
+    {
+      "name": "baseline-check",
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "mode": "check",
+      "input_sha256": {
+        "compiler.build": "215cf200209fbe041dfff6ef7a0325be103168ea7302ad42c378939695ecfbde",
+        "sample.vt": "79640d8b23fb0fc4803822b850dbf23b2e23a68088f117dbd09bcbfd18e58c3c"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/baseline-check.strace",
+        "driver.elf",
+        "check",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-mil20eer",
+      "exit": 0,
+      "elapsed_seconds": 0.04772015400158125,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=53 assembly=0 names=6 name_bytes=48 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n",
+      "statistics": {
+        "sources": 1,
+        "imports": 0,
+        "assembly_files": 0,
+        "source": 53,
+        "assembly": 0,
+        "names": 6,
+        "name_bytes": 48,
+        "decls": 1,
+        "types": 5,
+        "fields": 0,
+        "params": 0,
+        "max_ast": 3,
+        "max_ir": 3,
+        "max_frame": 32,
+        "max_bindings": 0,
+        "max_defers": 0,
+        "max_loops": 0,
+        "max_slots": 1,
+        "max_args": 0,
+        "max_params": 0,
+        "text": 208,
+        "data": 0,
+        "objects": 0,
+        "symbols": 9,
+        "fixups": 6,
+        "relocations": 0,
+        "elf": 12289
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "sample.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 2,
+          "read": 4,
+          "close": 2,
+          "write": 110,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      }
+    },
+    {
+      "name": "perturbed",
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "mode": "build",
+      "input_sha256": {
+        "compiler.build": "753b74d9fa1a8ee2e5a7e027a9d361876a9f46329889acaeedd43b9ef7430039",
+        "compiler/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+        "compiler/check.vt": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0",
+        "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+        "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+        "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+        "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+        "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+        "compiler/main.vt": "f1acbcba725e275de883a6eedaa56230a7a4e1253a7788098a891855967b7d33",
+        "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+        "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+        "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+        "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+        "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+        "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+        "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+        "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+        "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+        "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+        "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/perturbed.strace",
+        "driver.elf",
+        "build",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-28ytfvo6",
+      "exit": 0,
+      "elapsed_seconds": 147.46569650699894,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=18 imports=57 assembly_files=1 source=351578 assembly=345 names=4347 name_bytes=87511 decls=843 types=435 fields=383 params=651 max_ast=1173 max_ir=1429 max_frame=25808 max_bindings=18 max_defers=0 max_loops=3 max_slots=1033 max_args=185 max_params=5 text=1027200 data=2258 objects=589 symbols=13204 fixups=28755 relocations=6 elf=1036432\n",
+      "statistics": {
+        "sources": 18,
+        "imports": 57,
+        "assembly_files": 1,
+        "source": 351578,
+        "assembly": 345,
+        "names": 4347,
+        "name_bytes": 87511,
+        "decls": 843,
+        "types": 435,
+        "fields": 383,
+        "params": 651,
+        "max_ast": 1173,
+        "max_ir": 1429,
+        "max_frame": 25808,
+        "max_bindings": 18,
+        "max_defers": 0,
+        "max_loops": 3,
+        "max_slots": 1033,
+        "max_args": 185,
+        "max_params": 5,
+        "text": 1027200,
+        "data": 2258,
+        "objects": 589,
+        "symbols": 13204,
+        "fixups": 28755,
+        "relocations": 6,
+        "elf": 1036432
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/model.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/target.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rules.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/lex.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/input.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/types.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/parse.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/init.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/ir.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/check.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/image.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/rv64.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/s0.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/blocking.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/main.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/bytes.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/host_linux.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler/runtime/linux.s0",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "compiler.elf",
+            "flags": "O_WRONLY|O_CREAT|O_EXCL",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 21,
+          "read": 117,
+          "close": 21,
+          "write": 111,
+          "fchmod": 1,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      },
+      "output": {
+        "sha256": "2b1e69839e4c6a6d8638dd6475478b6b32a35bf2f416bd10ecff66e38a80e2b9",
+        "elf_bytes": 1036432,
+        "memory": {
+          "rw_bytes": 55135836,
+          "image_span_bytes": 56168028
+        }
+      }
+    },
+    {
+      "name": "perturbed-check",
+      "compiler_sha256": "2b1e69839e4c6a6d8638dd6475478b6b32a35bf2f416bd10ecff66e38a80e2b9",
+      "mode": "check",
+      "input_sha256": {
+        "compiler.build": "215cf200209fbe041dfff6ef7a0325be103168ea7302ad42c378939695ecfbde",
+        "sample.vt": "79640d8b23fb0fc4803822b850dbf23b2e23a68088f117dbd09bcbfd18e58c3c"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "-strace",
+        "-D",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/logs/perturbed-check.strace",
+        "driver.elf",
+        "check",
+        "compiler.build"
+      ],
+      "environment": {
+        "PATH": ""
+      },
+      "cwd": "/tmp/snext-p4-vx8zj9ed",
+      "exit": 0,
+      "elapsed_seconds": 0.049969649000559,
+      "stdout": "",
+      "stderr": "S-next-P4-PERTURBED-1fd5f5ff2118 sources=1 imports=0 assembly_files=0 source=53 assembly=0 names=6 name_bytes=48 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n",
+      "statistics": {
+        "sources": 1,
+        "imports": 0,
+        "assembly_files": 0,
+        "source": 53,
+        "assembly": 0,
+        "names": 6,
+        "name_bytes": 48,
+        "decls": 1,
+        "types": 5,
+        "fields": 0,
+        "params": 0,
+        "max_ast": 3,
+        "max_ir": 3,
+        "max_frame": 32,
+        "max_bindings": 0,
+        "max_defers": 0,
+        "max_loops": 0,
+        "max_slots": 1,
+        "max_args": 0,
+        "max_params": 0,
+        "text": 208,
+        "data": 0,
+        "objects": 0,
+        "symbols": 9,
+        "fixups": 6,
+        "relocations": 0,
+        "elf": 12289
+      },
+      "access": {
+        "opens": [
+          {
+            "path": "compiler.build",
+            "flags": "O_RDONLY",
+            "result": 4
+          },
+          {
+            "path": "sample.vt",
+            "flags": "O_RDONLY",
+            "result": 4
+          }
+        ],
+        "syscalls": {
+          "openat": 2,
+          "read": 4,
+          "close": 2,
+          "write": 110,
+          "exit": 1
+        },
+        "all_inputs_opened": true,
+        "no_guest_execve": true,
+        "no_guest_self_elf_reads": true
+      }
+    }
+  ],
+  "seed_sha256": "90c9523de43bebbd0a6932e74abc8cd670b60478c3b4f0fc1eff74fbf4cfb686",
+  "seed_source_identity": "cd6336297d22dd27efe29cbcc4fe0f0b88c7f4882e9f81fdce6e2f2e5415397d",
+  "p3_record_sha256": "171f7c18cdcc7392c9ce1ad79ae579c901cfa64a6b948dbb1f89286bd0d791ec",
+  "p3_candidate_sha256": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+  "p_source_sha256": {
+    "bootstrap/transition/model.vt": "f4e5d37141fbd14cf657f24f69a78b9a33a05209c3ea92c2d96f54c82cc85c46",
+    "bootstrap/transition/rules.vt": "c880ca4d0c6f3e943741ea14227359785335f1bee9e4d9323ddda14fd884f103",
+    "bootstrap/transition/lex.vt": "e3ab3720efd55f7aeaff98c89fc95eefbca4e791ebe38eeb2ce901d11799f07b",
+    "bootstrap/transition/input.vt": "bd3bb2b379e656f85b3837870f0c6430de4441ae615b5c1046c3b2f2b21079e5",
+    "bootstrap/transition/types.vt": "156de7550487c35498b94c65d0f4f03bf4b60971d984abebc5cb7efa8ffbdd0c",
+    "bootstrap/transition/parse.vt": "f92b7fb793a2229a5ac1607b20a6b8c964f0edfdb4801b3710ad5babaf5e8256",
+    "bootstrap/transition/init.vt": "0162d4c2d22bc77d7a060a2383fd02be836ecef42225c16cceb5da356e24558b",
+    "bootstrap/transition/ir.vt": "9aa979d858b19cdeaa1bb2d7949e2a34c2667784152fbee0e8e4b8d198161776",
+    "bootstrap/transition/check.vt": "78118af31df5a194fa7056da2258d9c323dbd25ad66cf4b72beb453da4fea901",
+    "bootstrap/transition/image.vt": "541aa72d9d62c17fc227e568696aed629672d0f239f39bc53bafc4d37e3067cc",
+    "bootstrap/transition/rv64.vt": "db0ecd1620bc11e31d5a2f83123510480d2f770466af131b2716741867f63ee4",
+    "bootstrap/transition/s0.vt": "3fa1bb7690ad64ff59cdece20169a056e73222957a460f3e2796d9ac46a90480",
+    "bootstrap/transition/blocking.vt": "85ed19281e7e61bece91584fd06d732eab551a74a6e19fc7b7bd08c72febf545",
+    "bootstrap/transition/main.vt": "95b34d02148fe47af54ea8e4a08163d223619cb4255831f671690ea775ef8cd9",
+    "bootstrap/frozen/core-s/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+    "bootstrap/frozen/core-s/runtime/linux.vt": "5c51d33ec7e61939238dd36a856a8dfa72247dabd4373e7df9d09af2134b6d78",
+    "bootstrap/frozen/core-s/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a"
+  },
+  "q_source_sha256": {
+    "compiler/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+    "compiler/check.vt": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0",
+    "compiler/compiler.build": "556d94d804c9aff5635c9cb9d478749a5d5b5ccc7a1f05b631e91473728587b0",
+    "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+    "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+    "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+    "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+    "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+    "compiler/main.vt": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+    "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+    "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+    "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+    "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+    "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+    "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+    "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+    "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+  },
+  "qemu": {
+    "path": "/usr/bin/qemu-riscv64",
+    "version": "qemu-riscv64 version 11.1.1"
+  },
+  "tool_sha256": {
+    "bootstrap/frozen/core-s/tools/verify.py": "5ad1be0497e6918ec198f7fe7fac1a1bda223906ea8a95deddd9fc2fdf9f7b92",
+    "tools/selfhost_next.py": "ce6699c0187d521856bf27c02ce03106015d64d63b94af9c92df779957bea618",
+    "tools/verify.py": "9066a9505d799daf7e3dce94f0042e6e5e1eade723baf7bc8ed029bb4e6ad112"
+  },
+  "e2_equals_e3": true,
+  "sha256": {
+    "e0": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+    "e1": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "e2": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "e3": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+  },
+  "perturbation": {
+    "source": "compiler/main.vt",
+    "before_sha256": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+    "after_sha256": "f1acbcba725e275de883a6eedaa56230a7a4e1253a7788098a891855967b7d33",
+    "old_prefix": "S-next-0.1",
+    "new_prefix": "S-next-P4-PERTURBED-1fd5f5ff2118",
+    "behavior_observed": true,
+    "sample_sha256": {
+      "sample.vt": "79640d8b23fb0fc4803822b850dbf23b2e23a68088f117dbd09bcbfd18e58c3c"
+    },
+    "sample_manifest": "format 1\nprofile linux-user\nentry proof::sample::run\nsource sample.vt\noutput compiler.elf\n"
+  },
+  "capsule_sha256": {
+    "p3-candidate-source.tar": "31c1e8aebb9efc4c6c508fe23b0f759150ff5746329f0056f937c8564710d4ab",
+    "seed-source.tar": "2b79e239a25e825572b455c6ad3e70ab96d177a40a64c3a0439d25ba20216fa6",
+    "q-source.tar": "48477a29f6f5acda86f592b49cc8225d2c4f2f9f0d2cee39d7bffd4d5c3518ef",
+    "perturbed-source.tar": "6c51fc7aad91f2bf2c034ec473e81337b78bf2b5b3ac421e5e7d1595e07d1bb9",
+    "tool-source.tar": "1c54217752ff9cf664999344fe8ea7dd7028037d98705703772149c25fd8f1f6"
+  }
+}

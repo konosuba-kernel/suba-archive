@@ -1,0 +1,70 @@
+// Ordinary U fixtures: one cooperative window and one nonresponsive busy app.
+module test::k5_app;
+import suba::abi;
+import suba::windows;
+import suba::syscalls;
+import libsuba::window_api;
+import libsuba::services;
+import libsuba::syscall;
+static mut PIXELS: [65536]u8 = zero;
+
+unsafe fn paint(token: usize, color: u32) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < 65536_usize {
+            PIXELS[i] = (color >> ((i % 4_usize) * 8_usize) as u32) as u8;
+            i = i + 1_usize;
+        }
+        var row: usize = 0;
+        while row < 240_usize {
+            var rows: usize = 40;
+            if rows > 240_usize - row { rows = 240_usize - row; }
+            let rect: window_api::Rect = make window_api::Rect { x: 0, y: row, width: 360, height: rows };
+            let bytes: []const u8 = core::slice_from_raw_parts(core::slice_of(PIXELS).data, rows * 1440_usize);
+            let result: syscall::Reply = window_api::update(token, rect, 1440, bytes);
+            if result.status != abi::OK { return false; }
+            row = row + rows;
+        }
+    }
+    return true;
+}
+
+fn run(color: u32, spin: bool) -> u32 {
+    let created: syscall::Reply = window_api::create(360, 240);
+    if created.status != abi::OK { return 10; }
+    let token: usize = created.value;
+    unsafe {
+        if !paint(token, color) { return 11; }
+        if spin { loop {} }
+        var pressed: bool = false;
+        loop {
+            match window_api::event(token, false) {
+                window_api::EventRead::Failed(status) => {
+                    if status != abi::WOULD_BLOCK { return 12; }
+                    let watches: [1]services::Watch = [make services::Watch { handle: token, events: syscalls::READABLE }];
+                    let waited: syscall::Reply = services::wait(core::slice_of(watches), 0, false);
+                    if waited.status != abi::OK { return 13; }
+                },
+                window_api::EventRead::Ready(event) => {
+                    if event.kind == abi::EVENT_CLOSE_REQUESTED { return 0; }
+                    if event.kind == windows::EVENT_RESET && pressed {
+                        pressed = false;
+                        if !paint(token, 0x15803d) { return 14; }
+                    }
+                    if event.kind == abi::EVENT_KEY && event.a == 30_usize {
+                        let down: bool = event.b != 0_usize;
+                        if down != pressed {
+                            pressed = down;
+                            var tint: u32 = 0x15803d;
+                            if pressed { tint = 0x22c55e; }
+                            if !paint(token, tint) { return 14; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+pub fn green() -> u32 { return run(0x15803d, false); }
+pub fn amber() -> u32 { return run(0xb45309, true); }

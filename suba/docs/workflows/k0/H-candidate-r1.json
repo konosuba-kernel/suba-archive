@@ -1,0 +1,33 @@
+{
+  "node": "H",
+  "revision": "r1",
+  "status": "frozen_for_independent_acceptance",
+  "baseline": "a86586e690685591bd219e20fe204303336d8d82",
+  "standard_sha256": "980c0a8e13a63e990dd7800bca9315aeac30d892622c8ea28e227e12c949c968",
+  "files": {
+    "biomiya/core-s/next/q/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "biomiya/core-s/next/q/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+    "biomiya/core-s/next/q/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+    "biomiya/core-s/tools/check_q_host.py": "d570ee5213186f39b369de4f6b042f941714e0aa7c4b6d848a59794976b77672",
+    "biomiya/core-s/next/q/tests/k0-host-probe.vt": "bb2385739304355f196ad915f93f549bcc5ce8f74c2bad7229f7f7d1befaecb5",
+    "biomiya/core-s/next/q/tests/k0-host-replacement.vt": "830b2490b60fc290cb915bebabbea4d68c2d3877054ddff27c888d3841a897b6",
+    "biomiya/core-s/next/q/tests/k0-host-trap.s0": "72dccf887fa0d68b6400c3d363e48c80f72ddd44e0e555e7ad5f4fe8063168ff",
+    "suba/docs/workflows/k0/H-build-r1.json": "52c9a6437352f2668beccc0a55761961df27f0b9ec0b48fea59daf4d43224d4a",
+    "suba/docs/workflows/k0/H-diagnostics-r1.json": "a094bd5e4eefeb44df4f4d49e8917349c0af45e7e712e45b7e8ce5bf0a245878",
+    "suba/docs/workflows/k0/H-io-r1.json": "07f95173b545839eb5f8264bb3672e244d379e236e299c4679febcb5a251588d",
+    "suba/docs/workflows/k0/H-probe-failed-initial.json": "14757025aca0ac6ce63d71590c1a115c2a68beb4a231e4023eaf9fdc23100962",
+    "suba/docs/workflows/k0/H-probe-optimized-r1.json": "6f222384099f5dd33e14e06df2753272903812552fa90e7ec46671e7792b323a",
+    "suba/docs/workflows/k0/H-probe-r1.json": "fda2117c7d9eadbbca22904a36ae8133dc44b67e7165737ecf8864275d175ff5",
+    "suba/docs/workflows/k0/H-report-r1.md": "d968252d355fc2187decfda5152ca69da2f8c7c7f943fef9557859edbec6d376",
+    "suba/docs/workflows/k0/H-source-inputs-r1.json": "9414e87c5618e195cde7fd26514a61850d9dc60a325c2a2c410557463b0f01af"
+  },
+  "author_checks": {
+    "host_probe": 3,
+    "host_probe_python_optimized": 3,
+    "io": 12,
+    "diagnostics": 18,
+    "isolated_compiler_build": true,
+    "full_selfhost": false
+  },
+  "scope": "Paths relative to /home/mii/code/konOSuba. main/input integration is isolated-only and belongs to P; compiler.build and existing tool manifest changes belong to root. No suba service backend provided before K3."
+}

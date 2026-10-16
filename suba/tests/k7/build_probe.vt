@@ -1,0 +1,164 @@
+// Protected test controller: normal FS/Child/Stream calls. Only result pixels
+// use the trusted desktop grant. Production worker/compiler remain unmodified.
+module test::build_pipeline;
+import suba::abi;
+import suba::syscalls;
+import libsuba::syscall;
+import libsuba::services;
+import libsuba::argument_builder;
+import libsuba::files;
+import user::build::io;
+import runtime::bytes;
+static mut ARGS: [4096]u8 = zero;
+static mut OUTPUT: [65536]u8 = zero;
+static mut FIRST: [65537]u8 = zero;
+static mut NEXT: [65537]u8 = zero;
+static mut LOG: [65536]u8 = zero;
+static mut LOG_BYTES: usize = 0;
+static mut FIRST_BYTES: usize = 0;
+static mut SEQUENCE: usize = 0;
+
+unsafe fn result(code: usize) -> u32 {
+    unsafe {
+        let pixel: *u32 = core::ptr::<u32>(abi::DISPLAY_BASE);
+        if code == 0_usize { *pixel = 0x00ff00; }
+        else { *pixel = 0xff0000_usize as u32 | code as u32; }
+        let empty: [1]services::Watch = zero;
+        loop { let slept: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(empty).data, 0), 0, false); }
+    }
+    return code as u32;
+}
+unsafe fn spawn(path: []const u8, manifest: []const u8, output: usize) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), path) {
+            return make syscall::Reply { status: abi::INVALID, value: 0 };
+        }
+        if manifest.len != 0_usize && !argument_builder::append(core::slice_of_mut(ARGS), manifest) {
+            return make syscall::Reply { status: abi::INVALID, value: 0 };
+        }
+        return services::spawn(path, core::slice_of(ARGS), output, output, 0);
+    }
+}
+unsafe fn contains(data: []const u8, wanted: []const u8) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i <= data.len {
+            if wanted.len > data.len - i { return false; }
+            if bytes::equal(bytes::view(data, i, i + wanted.len), wanted) { return true; }
+            i = i + 1_usize;
+        }
+    }
+    return false;
+}
+unsafe fn collected(child: usize) -> services::Exit {
+    unsafe {
+        let watches: [1]services::Watch = [make services::Watch { handle: child, events: syscalls::EXITED }];
+        let waited: syscall::Reply = services::wait(core::slice_of(watches), 0, false);
+        if waited.status != abi::OK { return make services::Exit { status: 99, cause: 99, value: 0, pc: 0 }; }
+        match services::collect(child) {
+            services::Collected::Ready(exit) => { return exit; },
+            services::Collected::Failed(error) => { return make services::Exit { status: error, cause: 99, value: 0, pc: 0 }; }
+        }
+    }
+}
+unsafe fn build(cancel: bool) -> services::Exit {
+    unsafe {
+        var pipe: services::StreamPair = zero;
+        match services::streams() {
+            services::Streams::Failed(error) => { return make services::Exit { status: error, cause: 98, value: 0, pc: 0 }; },
+            services::Streams::Ready(pair) => { pipe = pair; }
+        }
+        let child: syscall::Reply = spawn("/sys/build.elf", "program.build", pipe.write);
+        let closed: syscall::Reply = syscall::close(pipe.write);
+        if child.status != abi::OK { return make services::Exit { status: child.status, cause: 97, value: 0, pc: 0 }; }
+        LOG_BYTES = 0;
+        var killed: bool = false;
+        loop {
+            let got: syscall::Reply = services::read(pipe.read, core::slice_of_mut(OUTPUT), false);
+            if got.status != abi::OK || got.value > 65536_usize { return make services::Exit { status: got.status, cause: 96, value: 0, pc: 0 }; }
+            if got.value == 0_usize { break; }
+            if got.value > 65536_usize - LOG_BYTES { return make services::Exit { status: 95, cause: 95, value: 0, pc: 0 }; }
+            var i: usize = 0;
+            while i < got.value { LOG[LOG_BYTES + i] = OUTPUT[i]; i = i + 1_usize; }
+            LOG_BYTES = LOG_BYTES + got.value;
+            if cancel && !killed && contains(core::slice_from_raw_parts(core::slice_of(LOG).data, LOG_BYTES), "compile started\n") {
+                if syscall::invoke(abi::SYS_KILL_CHILD, child.value, 0, 0, 0, 0, 0).status != abi::OK {
+                    return make services::Exit { status: 94, cause: 94, value: 0, pc: 0 };
+                }
+                killed = true;
+            }
+        }
+        let close_read: syscall::Reply = syscall::close(pipe.read);
+        let exit: services::Exit = collected(child.value);
+        let name: []const u8 = "probe-first.log";
+        if SEQUENCE == 0_usize {
+            let saved: usize = io::save_new(name, core::slice_from_raw_parts(core::slice_of(LOG).data, LOG_BYTES), true);
+            if saved != abi::OK { return make services::Exit { status: saved, cause: 93, value: 0, pc: 0 }; }
+        }
+        SEQUENCE = SEQUENCE + 1_usize;
+        if cancel && !killed { return make services::Exit { status: 92, cause: 92, value: 0, pc: 0 }; }
+        return exit;
+    }
+}
+unsafe fn remember() -> bool {
+    unsafe {
+        match io::read("hello.elf", core::slice_of_mut(FIRST)) {
+            io::Read::Failed(error) => { return false; },
+            io::Read::Ready(count) => { FIRST_BYTES = count; return true; }
+        }
+    }
+}
+unsafe fn unchanged() -> bool {
+    unsafe {
+        match io::read("hello.elf", core::slice_of_mut(NEXT)) {
+            io::Read::Failed(error) => { return false; },
+            io::Read::Ready(count) => {
+                return count == FIRST_BYTES && bytes::equal(core::slice_from_raw_parts(core::slice_of(FIRST).data, FIRST_BYTES),
+                    core::slice_from_raw_parts(core::slice_of(NEXT).data, count));
+            }
+        }
+    }
+}
+unsafe fn replace_source(data: []const u8) -> bool {
+    unsafe {
+        return io::save_new("source.tmp", data, false) == abi::OK &&
+            files::replace("source.tmp", "hello.vt").status == abi::OK;
+    }
+}
+pub fn main() -> u32 {
+    unsafe {
+        let baseline: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+        let first: services::Exit = build(false);
+        if first.status != 0_usize || first.cause != 0_usize { return result(1); }
+        if !remember() { return result(2); }
+        let child: syscall::Reply = spawn("hello.elf", "", 0);
+        if child.status != abi::OK { return result(3); }
+        let ran: services::Exit = collected(child.value);
+        if ran.status != 41_usize || ran.cause != 0_usize { return result(4); }
+        if !replace_source("module demo; pub fn main() -> u32 { return missing; }\n") { return result(5); }
+        let failed: services::Exit = build(false);
+        if failed.status == 0_usize || failed.cause != 0_usize || !unchanged() { return result(6); }
+        if !contains(core::slice_from_raw_parts(core::slice_of(LOG).data, LOG_BYTES), "E_NAME") { return result(7); }
+        if !replace_source("module demo; pub fn main() -> u32 { return 42; }\n") { return result(8); }
+        let cancelled: services::Exit = build(true);
+        if cancelled.status != abi::CANCELLED || cancelled.cause != 0_usize || !unchanged() { return result(9); }
+        if services::stats(syscalls::STATS_FREE_PAGES).value != baseline ||
+            services::stats(syscalls::STATS_STREAMS).value != 0_usize { return result(10); }
+        if files::sync_all().status != abi::OK { return result(11); }
+        return result(0);
+    }
+}
+pub fn invalid() -> u32 {
+    unsafe {
+        if !remember() { return result(20); }
+        let built: services::Exit = build(false);
+        if built.status == 0_usize || built.cause != 0_usize || !unchanged() { return result(21); }
+        if !contains(core::slice_from_raw_parts(core::slice_of(LOG).data, LOG_BYTES), "publish") { return result(22); }
+        if files::sync_all().status != abi::OK { return result(23); }
+        return result(0);
+    }
+}
+pub fn bad_compiler() -> u32 {
+    unsafe { return io::save_new("out/result.elf", "not an ELF", true) as u32; }
+}

@@ -1,0 +1,39 @@
+// Path syntax only. Namespace resolution must check each traversed node is a directory;
+// in particular, a missing/file component cannot be erased by a subsequent '..'.
+module kernel::fs::path;
+import user::text::utf8;
+pub struct Part { pub start: usize, pub bytes: usize, pub next: usize }
+pub enum Component { End, Current(usize), Parent(usize), Name(Part), Invalid }
+pub unsafe fn valid(bytes: []const u8) -> bool {
+    if bytes.len == 0_usize || bytes.len > 255_usize { return false; }
+    // SAFETY: caller owns the borrowed path for this synchronous check, <=255 bytes.
+    unsafe {
+        var i: usize = 0;
+        while i < bytes.len {
+            if bytes[i] == 0_u8 { return false; }
+            i = i + 1_usize;
+        }
+        match utf8::validate(bytes) {
+            utf8::Validation::Valid => { return true; },
+            utf8::Validation::Invalid(offset) => { return false; }
+        }
+    }
+}
+// Cursor starts at zero; returned next advances strictly, including slash separators.
+pub unsafe fn next(bytes: []const u8, cursor: usize) -> Component {
+    if cursor > bytes.len { return Component::Invalid; }
+    unsafe {
+        var at: usize = cursor;
+        while at < bytes.len && bytes[at] == 47_u8 { at = at + 1_usize; }
+        if at == bytes.len { return Component::End; }
+        let start: usize = at;
+        while at < bytes.len && bytes[at] != 47_u8 { at = at + 1_usize; }
+        let count: usize = at - start;
+        if count > 63_usize { return Component::Invalid; }
+        if count == 1_usize && bytes[start] == 46_u8 { return Component::Current(at); }
+        if count == 2_usize && bytes[start] == 46_u8 && bytes[start + 1_usize] == 46_u8 {
+            return Component::Parent(at);
+        }
+        return Component::Name(make Part { start: start, bytes: count, next: at });
+    }
+}

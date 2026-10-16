@@ -1,0 +1,234 @@
+module user::edit::app;
+static mut TEMP_PATH: [160]u8 = zero;
+static mut CALL_ARGUMENTS: [4096]u8 = zero;
+static mut PLAN_TEXT: [16384]u8 = zero;
+
+unsafe fn edited(result: buffer::Edit) -> () {
+    unsafe {
+        match result {
+            buffer::Edit::Done => { DIRTY = true; },
+            buffer::Edit::InvalidUtf8(at) => { message("Invalid UTF-8; document unchanged"); },
+            buffer::Edit::InvalidPosition => { message("Invalid text position"); },
+            buffer::Edit::Limit => { message("Document limit: 4 MiB"); },
+            buffer::Edit::NoMemory => { message("No document capacity"); },
+            buffer::Edit::Aliased => { message("Aliased edit rejected"); },
+            buffer::Edit::VersionLimit => { message("Document version exhausted"); }
+        }
+    }
+    return ();
+}
+unsafe fn save(document: *const buffer::Document) -> bool {
+    unsafe {
+        var count: usize = 0;
+        match buffer::snapshot(document, core::slice_of_mut(SNAPSHOT)) {
+            buffer::Copy::Done(bytes) => { count = bytes; },
+            buffer::Copy::NoMemory => { message("Save buffer exhausted"); return false; },
+            buffer::Copy::Aliased => { message("Aliased save rejected"); return false; }
+        }
+        let name: []const u8 = path();
+        var parent: usize = 0;
+        var i: usize = 0;
+        while i < name.len { if name[i] == 47_u8 { parent = i + 1_usize; } i = i + 1_usize; }
+        let clock: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+        if clock.status != abi::OK { message("Cannot obtain save identity"); return false; }
+        var writer: records::Writer = records::begin(core::slice_of_mut(TEMP_PATH));
+        if !records::text(core::addr_of_mut(writer), core::slice_from_raw_parts(name.data, parent)) ||
+            !records::text(core::addr_of_mut(writer), ".suba-save-") ||
+            !records::number(core::addr_of_mut(writer), clock.value) ||
+            !records::text(core::addr_of_mut(writer), ".tmp") { message("Save path too long"); return false; }
+        let temporary: []const u8 = records::bytes(core::addr_of(writer));
+        let text: []const u8 = core::slice_from_raw_parts(core::slice_of(SNAPSHOT).data, count);
+        let saved: usize = io::save_new(temporary, text, false);
+        if saved != abi::OK { message("Save failed; previous file retained"); return false; }
+        let replaced: syscall::Reply = fs::replace(temporary, name);
+        if replaced.status != abi::OK {
+            // This branch owns exactly the transient successfully created above.
+            let ignored: syscall::Reply = fs::unlink(temporary);
+            message("Save failed; previous file retained"); return false;
+        }
+        if fs::sync_all().status != abi::OK { message("Save committed; sync failed"); return false; }
+        SAVED_VERSION = buffer::state(document).version;
+        message("Saved");
+    }
+    return true;
+}
+unsafe fn start_build(document: *const buffer::Document) -> () {
+    unsafe {
+        match TASK { Task::Running(task) => { message("Build already running; Esc cancels"); return (); }, Task::Idle => {} }
+        if !save(document) { return (); }
+        let page: []u8 = core::slice_of_mut(CALL_ARGUMENTS);
+        if !argument_builder::initialize(page, "/work") || !argument_builder::append(page, "build") ||
+            !argument_builder::append(page, manifest_path()) { message("Invalid build arguments"); return (); }
+        var pair: services::StreamPair = zero;
+        match services::streams() {
+            services::Streams::Failed(error) => { message("Cannot create build output stream"); return (); },
+            services::Streams::Ready(value) => { pair = value; }
+        }
+        let child: syscall::Reply = services::spawn("/sys/build.elf", core::slice_of(CALL_ARGUMENTS), pair.write, pair.write, 0);
+        let closed: syscall::Reply = syscall::close(pair.write);
+        if child.status != abi::OK {
+            let removed: syscall::Reply = syscall::close(pair.read);
+            message("Cannot start build worker"); return ();
+        }
+        TASK = Task::Running(make Running { child: child.value, pipe: pair.read, cancelling: false, eof: false });
+        LOG_BYTES = 0; LOG_TRUNCATED = false;
+        message("Building; editing remains available; Esc cancels");
+    }
+    return ();
+}
+unsafe fn cancel_build() -> () {
+    unsafe {
+        match TASK {
+            Task::Idle => { message("No active build"); },
+            Task::Running(task) => {
+                let killed: syscall::Reply = syscall::invoke(abi::SYS_KILL_CHILD, task.child, 0, 0, 0, 0, 0);
+                if killed.status != abi::OK { message("Build termination failed"); return (); }
+                var next: Running = task; next.cancelling = true;
+                TASK = Task::Running(next); message("Cancelling build; waiting for resource cleanup");
+            }
+        }
+    }
+    return ();
+}
+unsafe fn run_output() -> () {
+    unsafe {
+        if RUN_CHILD != 0_usize { message("Previous program is still running"); return (); }
+        var count: usize = 0;
+        match io::read(manifest_path(), core::slice_from_raw_parts_mut(core::slice_of_mut(SNAPSHOT).data, 16385)) {
+            io::Read::Failed(error) => { message("Cannot read build manifest"); return (); },
+            io::Read::Ready(bytes) => { count = bytes; }
+        }
+        var plan: manifest::Plan = manifest::begin();
+        let input: []const u8 = core::slice_from_raw_parts(core::slice_of(SNAPSHOT).data, count);
+        match manifest::prepare(core::addr_of_mut(plan), input, core::slice_of_mut(PLAN_TEXT)) {
+            manifest::Outcome::Invalid(at) => { message("Invalid build manifest"); return (); },
+            manifest::Outcome::Limit => { message("Manifest limit exceeded"); return (); },
+            manifest::Outcome::Ready => {}
+        }
+        if manifest::kernel(core::addr_of(plan)) { message("Kernel ELF is a saved artifact; cannot run as an app"); return (); }
+        let output: []const u8 = manifest::output_path(core::addr_of(plan));
+        let page: []u8 = core::slice_of_mut(CALL_ARGUMENTS);
+        if !argument_builder::initialize(page, "/work") || !argument_builder::append(page, output) {
+            message("Invalid run arguments"); return ();
+        }
+        let child: syscall::Reply = services::spawn(output, core::slice_of(CALL_ARGUMENTS), 0, 0, 0);
+        if child.status != abi::OK { message("Cannot load output; build a valid program first"); return (); }
+        RUN_CHILD = child.value;
+        message("Running current published version");
+    }
+    return ();
+}
+// Selecting a manifest never changes the document or a running build's identity.
+unsafe fn choose_manifest(name: []const u8) -> bool {
+    unsafe {
+        if !bytes::path(name) { message("Invalid manifest path"); return false; }
+        var count: usize = 0;
+        match io::read(name, core::slice_from_raw_parts_mut(core::slice_of_mut(SNAPSHOT).data, 16385)) {
+            io::Read::Failed(error) => { message("Cannot read build manifest"); return false; },
+            io::Read::Ready(value) => { count = value; }
+        }
+        var plan: manifest::Plan = manifest::begin();
+        match manifest::prepare(core::addr_of_mut(plan),
+            core::slice_from_raw_parts(core::slice_of(SNAPSHOT).data, count), core::slice_of_mut(PLAN_TEXT)) {
+            manifest::Outcome::Invalid(at) => { message("Invalid build manifest"); return false; },
+            manifest::Outcome::Limit => { message("Manifest limit exceeded"); return false; },
+            manifest::Outcome::Ready => {}
+        }
+        var i: usize = 0;
+        while i < name.len { MANIFEST[i] = name[i]; i = i + 1_usize; }
+        MANIFEST_BYTES = name.len;
+        LOG_BYTES = 0; LOG_TRUNCATED = false;
+        PROMPT = Prompt::None; message("Manifest selected; Ctrl+B builds saved sources");
+    }
+    return true;
+}
+unsafe fn open_key(document: *buffer::Document, input: keys::Input) -> () {
+    unsafe {
+        match input {
+            keys::Input::Cancel => { PROMPT = Prompt::None; message("Open cancelled"); },
+            keys::Input::Backspace => { if OPEN_BYTES != 0_usize { OPEN_BYTES = OPEN_BYTES - 1_usize; } DIRTY = true; },
+            keys::Input::Text(value) => {
+                if value == 10_u8 {
+                    let name: []const u8 = core::slice_from_raw_parts(core::slice_of(OPEN_PATH).data, OPEN_BYTES);
+                    match PROMPT {
+                        Prompt::Manifest => { let chosen: bool = choose_manifest(name); return (); },
+                        Prompt::None => {}, Prompt::File => {}
+                    }
+                    match opened(name) {
+                        DocumentOpen::Failed(error) => { message("Open failed; check path and UTF-8"); },
+                        DocumentOpen::Ready(next) => {
+                            *document = next;
+                            if !set_path(name) { message("Invalid path"); return (); }
+                            SAVED_VERSION = 0; TOP_LINE = 0; LEFT_PIXEL = 0; PROMPT = Prompt::None;
+                            edited(buffer::move(document, buffer::Motion::Start, false)); message("Opened");
+                        }
+                    }
+                } else {
+                    if value >= 32_u8 && OPEN_BYTES < 96_usize {
+                        OPEN_PATH[OPEN_BYTES] = value; OPEN_BYTES = OPEN_BYTES + 1_usize; DIRTY = true;
+                    }
+                }
+            },
+            keys::Input::None => {}, keys::Input::Save => {}, keys::Input::Build => {},
+            keys::Input::Run => {}, keys::Input::Open => {}, keys::Input::Manifest => {}, keys::Input::Copy => {},
+            keys::Input::Cut => {}, keys::Input::Paste => {}, keys::Input::SelectAll => {},
+            keys::Input::Diagnostic => {}, keys::Input::Left => {}, keys::Input::Right => {},
+            keys::Input::Up => {}, keys::Input::Down => {}, keys::Input::Home => {},
+            keys::Input::End => {}, keys::Input::Delete => {}
+        }
+    }
+    return ();
+}
+unsafe fn clipboard(document: *buffer::Document, cut: bool) -> () {
+    unsafe {
+        match buffer::copy_selection(core::ptr_const(document), core::slice_of_mut(CLIPBOARD)) {
+            buffer::Copy::Done(count) => {
+                CLIP_BYTES = count;
+                if cut { edited(buffer::replace(document, "")); }
+                message("Copied selection (process-local clipboard)");
+            },
+            buffer::Copy::NoMemory => { message("Clipboard limit: 64 KiB"); },
+            buffer::Copy::Aliased => { message("Aliased clipboard rejected"); }
+        }
+    }
+    return ();
+}
+unsafe fn act(document: *buffer::Document, input: keys::Input) -> () {
+    unsafe {
+        if prompt_label().len != 0_usize { open_key(document, input); return (); }
+        let extend: bool = extending();
+        match input {
+            keys::Input::None => {},
+            keys::Input::Text(value) => { let text: [1]u8 = [value]; edited(buffer::replace(document, core::slice_of(text))); },
+            keys::Input::Save => { let saved: bool = save(core::ptr_const(document)); },
+            keys::Input::Build => { start_build(core::ptr_const(document)); },
+            keys::Input::Cancel => { cancel_build(); },
+            keys::Input::Run => { run_output(); },
+            keys::Input::Open => {
+                if buffer::state(core::ptr_const(document)).version != SAVED_VERSION { message("Save changes before opening another file"); }
+                else { PROMPT = Prompt::File; OPEN_BYTES = 0; message("Enter a path relative to /work, then Return"); }
+            },
+            keys::Input::Manifest => {
+                match TASK {
+                    Task::Running(task) => { message("Wait for build completion before changing manifest"); },
+                    Task::Idle => { PROMPT = Prompt::Manifest; OPEN_BYTES = 0; message("Enter a build manifest relative to /work, then Return"); }
+                }
+            },
+            keys::Input::Copy => { clipboard(document, false); }, keys::Input::Cut => { clipboard(document, true); },
+            keys::Input::Paste => {
+                edited(buffer::replace(document, core::slice_from_raw_parts(core::slice_of(CLIPBOARD).data, CLIP_BYTES)));
+            },
+            keys::Input::SelectAll => { edited(buffer::select(document, 0, buffer::state(core::ptr_const(document)).bytes)); },
+            keys::Input::Diagnostic => { diagnostic(document); },
+            keys::Input::Left => { edited(buffer::move(document, buffer::Motion::Left, extend)); },
+            keys::Input::Right => { edited(buffer::move(document, buffer::Motion::Right, extend)); },
+            keys::Input::Home => { edited(buffer::move(document, buffer::Motion::LineStart, extend)); },
+            keys::Input::End => { edited(buffer::move(document, buffer::Motion::LineEnd, extend)); },
+            keys::Input::Up => { edited(buffer::vertical(document, false, extend)); },
+            keys::Input::Down => { edited(buffer::vertical(document, true, extend)); },
+            keys::Input::Backspace => { edited(buffer::erase(document, true)); },
+            keys::Input::Delete => { edited(buffer::erase(document, false)); }
+        }
+    }
+    return ();
+}

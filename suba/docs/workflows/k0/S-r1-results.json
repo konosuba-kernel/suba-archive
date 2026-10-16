@@ -1,0 +1,56 @@
+{
+  "node": "S",
+  "revision": "r1",
+  "status": "frozen candidate; independent acceptance pending",
+  "compiler_sha256": "3f29c54ea59f5fa27ef250fa5cf584d9989b1b843130bb24340da542afb11c8f",
+  "build": {
+    "record": "S-r1-build.json",
+    "sha256": "01aed19a926b5ccb7aa7cf7f53e800472c1f2ddf3a1506d210388fd5f27e98e8",
+    "passed": true
+  },
+  "verification": {
+    "record": "S-r1-verification.json",
+    "sha256": "d05ec7daf47e6e6c53e9f7dcd7fdc8bb3979ffb8616f1edbcf09a62284ba7724",
+    "command": [
+      "python3",
+      "tools/check_q_s0_system.py",
+      "--compiler",
+      "build/k0-s-r1/compiler.elf",
+      "--record-dir",
+      "build/k0-s-final-r1"
+    ],
+    "cwd": "/home/mii/code/konOSuba/biomiya/core-s",
+    "exit": 0,
+    "passed": true,
+    "count": 167,
+    "instruction_count": 80,
+    "alignment_cases": 5,
+    "negative_cases": 160,
+    "execution_cases": 1
+  },
+  "optimized_old_compiler_control": {
+    "record": "S-r1-control.json",
+    "sha256": "59595b9ef43c56eff1197f27cc07ecdd6532fab7478ae89353081734e9b1ac03",
+    "command": [
+      "python3",
+      "-O",
+      "tools/check_q_s0_system.py",
+      "--compiler",
+      "build/behavior-fixes-p4-r1/e3.elf",
+      "--record-dir",
+      "build/k0-s-old-control-r1"
+    ],
+    "cwd": "/home/mii/code/konOSuba/biomiya/core-s",
+    "expected_exit": 1,
+    "actual_exit": 1,
+    "passed_cases": 3,
+    "expected_rejection_observed": true
+  },
+  "production_lines_added": 91,
+  "independently_accepted": false,
+  "limits": [
+    "No hardware privilege semantics claimed here; I validates the real S-mode path.",
+    "No complete self-host/regression run performed in S; I owns combined verification.",
+    "Clang is used only as an independent test oracle."
+  ]
+}

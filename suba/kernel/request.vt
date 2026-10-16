@@ -1,0 +1,137 @@
+// One pending syscall per process. Tokens invalidate delivery before owners are closed.
+// No pointers into a user page or kernel stack survive a call. Serialized dispatch only.
+module kernel::request;
+import kernel::process;
+import kernel::objects;
+import kernel::ranges;
+import kernel::window;
+pub struct Surface { pub copy: window::Copy, pub done: usize, pub writing: bool }
+pub struct Transfer { pub stream: objects::Identity, pub address: usize, pub bytes: usize, pub nonblock: bool }
+pub struct Watch { pub handle: usize, pub events: usize }
+pub struct WaitSet { pub count: usize, pub watches: [16]Watch, pub deadline: usize }
+pub enum Preparation { Copy(usize), Validate, Directory(objects::Identity), Inspect, Create }
+pub struct Preparing { pub source: objects::Identity, pub argv: usize, pub stdout: usize, pub stderr: usize,
+    pub job: objects::Identity, pub directory: usize, pub reservation: objects::Identity, pub phase: Preparation }
+pub struct Installing { pub child: process::Id, pub reservation: objects::Identity, pub job: objects::Identity,
+    pub source: objects::Identity, pub stdout: usize, pub stderr: usize, pub directory: usize }
+pub struct Spawn { pub child: process::Id, pub source: objects::Identity, pub handle: usize }
+pub enum MemoryPhase { Allocating, Freeing, Rollback(usize) }
+pub struct Memory { pub range: ranges::Range, pub done: usize, pub phase: MemoryPhase }
+pub struct Job { pub ticket: objects::Identity, pub address: usize, pub token: usize, pub creating: bool }
+pub struct File { pub ticket: objects::Identity, pub address: usize, pub writing: bool }
+pub enum Operation { Idle, Job(Job), File(File), Read(Transfer), Write(Transfer), Wait(WaitSet), Preparing(Preparing), Installing(Installing), Loading(Spawn), Pages(Memory), WindowCreate(objects::Identity), WindowCopy(Surface) }
+enum Owner { Empty, Live(process::Id) }
+struct Record { sequence: usize, owner: Owner, operation: Operation }
+static mut RECORDS: [process::CAPACITY]Record = zero;
+pub enum Started { Ready(usize), Invalid, Busy, Limit }
+pub struct Pending { pub owner: process::Id, pub token: usize, pub operation: Operation }
+pub enum Peek { Ready(Pending), Empty }
+
+fn idle(operation: Operation) -> bool {
+    match operation {
+        Operation::Idle => { return true; },
+        Operation::Job(value) => {},
+        Operation::WindowCreate(value) => {}, Operation::WindowCopy(value) => {},
+        Operation::File(value) => {}, Operation::Read(value) => {}, Operation::Write(value) => {},
+        Operation::Wait(value) => {}, Operation::Preparing(value) => {}, Operation::Installing(value) => {}, Operation::Loading(value) => {}, Operation::Pages(value) => {},
+    }
+    return false;
+}
+
+// Caller already validated operation inputs and will block the owner in this same
+// serialized dispatch step. Failed start does not acquire object or source references.
+pub unsafe fn start(id: process::Id, operation: Operation) -> Started {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY || !process::deliverable(id) || idle(operation) { return Started::Invalid; }
+        if !idle(RECORDS[slot].operation) { return Started::Busy; }
+        if RECORDS[slot].sequence == 0xffffffffffffffff_usize { return Started::Limit; }
+        RECORDS[slot].sequence = RECORDS[slot].sequence + 1_usize;
+        RECORDS[slot].owner = Owner::Live(id);
+        RECORDS[slot].operation = operation;
+        return Started::Ready(RECORDS[slot].sequence);
+    }
+}
+
+pub unsafe fn peek(slot: usize) -> Peek {
+    if slot >= process::CAPACITY { return Peek::Empty; }
+    unsafe {
+        if idle(RECORDS[slot].operation) { return Peek::Empty; }
+        match RECORDS[slot].owner {
+            Owner::Empty => { return Peek::Empty; },
+            Owner::Live(id) => {
+                return Peek::Ready(make Pending { owner: id, token: RECORDS[slot].sequence,
+                    operation: RECORDS[slot].operation });
+            },
+        }
+    }
+}
+
+pub unsafe fn owns(id: process::Id, token: usize) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY || RECORDS[slot].sequence != token ||
+            idle(RECORDS[slot].operation) { return false; }
+        match RECORDS[slot].owner {
+            Owner::Empty => { return false; },
+            Owner::Live(saved) => {
+                // process::slot rejects the saved generation after slot reuse.
+                return process::slot(saved) == slot;
+            },
+        }
+    }
+}
+
+// Advances metadata without changing the request token. Resource ownership stays
+// with the same in-flight operation; only the same syscall may transition to its next phase here.
+pub unsafe fn advance(id: process::Id, token: usize, operation: Operation) -> bool {
+    unsafe {
+        if !owns(id, token) || idle(operation) { return false; }
+        RECORDS[process::slot(id)].operation = operation;
+    }
+    return true;
+}
+
+// First terminal action wins. Caller releases operation-specific references after
+// invalidation, then may set the user's return frame; no late completion can deliver.
+pub unsafe fn finish(id: process::Id, token: usize) -> bool {
+    unsafe {
+        if !owns(id, token) { return false; }
+        let slot: usize = process::slot(id);
+        RECORDS[slot].operation = Operation::Idle;
+        RECORDS[slot].owner = Owner::Empty;
+    }
+    return true;
+}
+
+// Kill calls this while identity is still live, before handle/window teardown.
+// Returned metadata transfers cleanup responsibility to dispatch; sequence is retained.
+pub unsafe fn cancel(id: process::Id) -> Peek {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY { return Peek::Empty; }
+        let pending: Peek = peek(slot);
+        match pending {
+            Peek::Empty => { return Peek::Empty; },
+            Peek::Ready(value) => {
+                if !owns(id, value.token) { return Peek::Empty; }
+                let finished: bool = finish(id, value.token);
+                if !finished { return Peek::Empty; }
+                return Peek::Ready(value);
+            },
+        }
+    }
+}
+
+// A killed request still owns cleanup metadata but can never copyout or complete.
+pub unsafe fn active(id: process::Id, token: usize) -> bool {
+    unsafe { return process::deliverable(id) && owns(id, token); }
+}
+// Admission check before dispatch reserves pages/handles for a possible pending operation.
+pub unsafe fn available(id: process::Id) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        return slot < process::CAPACITY && process::deliverable(id) &&
+            idle(RECORDS[slot].operation) && RECORDS[slot].sequence != 0xffffffffffffffff_usize;
+    }
+}

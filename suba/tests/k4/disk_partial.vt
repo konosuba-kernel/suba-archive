@@ -1,0 +1,44 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+static mut DATA: [65536]u8 = zero;
+unsafe fn free_eight() -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < 10000_usize {
+            let count: syscall::Reply = services::stats(6);
+            if count.status != abi::OK { return false; }
+            if count.value == 8_usize { return true; }
+            i = i + 1_usize;
+        }
+        return false;
+    }
+}
+pub fn run() -> u32 {
+    unsafe {
+        let removed: syscall::Reply = files::unlink("aaa_hole");
+        if removed.status != abi::OK && removed.status != abi::NOT_FOUND { return 120; }
+        if !free_eight() { return 121; }
+        var round: usize = 0;
+        while round < 4_usize {
+            let opened: syscall::Reply = files::open("empty", 6);
+            if opened.status != abi::OK { return 122; }
+            let epoch: usize = services::stats(4).value;
+            if files::write_at(opened.value, 0, core::slice_of(DATA)).status != abi::NO_SPACE ||
+                services::stats(4).value != epoch || services::stats(6).value != 8_usize { return 123; }
+            match files::stat(opened.value) {
+                files::Stated::Failed(status) => { return 124; },
+                files::Stated::Ready(stat) => { if stat.bytes != 0_usize { return 125; } }
+            }
+            let half: []const u8 = core::slice_from_raw_parts(core::slice_of(DATA).data, 32768);
+            let written: syscall::Reply = files::write_at(opened.value, 0, half);
+            if written.status != abi::OK || written.value != 32768_usize || services::stats(6).value != 0_usize { return 126; }
+            if files::sync(opened.value, false).status != abi::OK || syscall::close(opened.value).status != abi::OK ||
+                files::unlink("empty").status != abi::OK || !free_eight() { return 127; }
+            round = round + 1_usize;
+        }
+        return 0;
+    }
+}

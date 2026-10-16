@@ -1,0 +1,229 @@
+{
+  "scope": "I-r2: unchanged production inputs and prior accepted mechanical records; updated observer and actual post-marker-fault negative control. Independent decision separate.",
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "q_source_sha256": {
+    "compiler/blocking.vt": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+    "compiler/check.vt": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0",
+    "compiler/compiler.build": "556d94d804c9aff5635c9cb9d478749a5d5b5ccc7a1f05b631e91473728587b0",
+    "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+    "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+    "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+    "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+    "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+    "compiler/main.vt": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+    "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+    "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+    "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+    "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+    "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+    "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+    "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+    "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+  },
+  "e1_e2_e3_equal": true,
+  "source_perturbation_observed": true,
+  "frozen_inputs_unchanged": 71,
+  "existing_current_suite_cases": 435,
+  "new_profile_s0_host_cases": 196,
+  "records": [
+    {
+      "source": "biomiya/build/layout-seed-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-seed-r1.json",
+      "sha256": "d5fb57539fb2ef049f8c964e0778f557544064f6e6f9589c262948b8b85bd3d1",
+      "passed": 91,
+      "compiler_sha256": null,
+      "cases": 0
+    },
+    {
+      "source": "biomiya/build/layout-p3-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-p3-r1.json",
+      "sha256": "171f7c18cdcc7392c9ce1ad79ae579c901cfa64a6b948dbb1f89286bd0d791ec",
+      "passed": 126,
+      "compiler_sha256": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+      "cases": 126
+    },
+    {
+      "source": "biomiya/build/layout-check_q-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q-r1.json",
+      "sha256": "68a259a237f00878bba22f617fdf9b8e2c22eb0f04977b81fbde782d4c31d14a",
+      "passed": 126,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 126
+    },
+    {
+      "source": "biomiya/build/layout-machine-r2/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-machine-r2.json",
+      "sha256": "ea57cf364cd71a457addc7e4bedc157a2936ae7bb3264dd127708036e31efacb",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 105
+    },
+    {
+      "source": "biomiya/build/layout-check_q_input-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_input-r1.json",
+      "sha256": "6bce8197b287a2afdcad4ed19e0085658ce46b5c0f880f0ec9dc2aef89aaeefd",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 24
+    },
+    {
+      "source": "biomiya/build/layout-check_q_copy-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_copy-r1.json",
+      "sha256": "9846bcb4d92c42c0199a43d786c912b95ad6751e41511bd06a1356b74505140f",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 8
+    },
+    {
+      "source": "biomiya/build/layout-check_q_io_failures-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_io_failures-r1.json",
+      "sha256": "347f0fd146b4352d481a8e374886c77034d08c5e0e2c1133a4f71f3deaf36f38",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 12
+    },
+    {
+      "source": "biomiya/build/layout-check_q_diagnostics-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_diagnostics-r1.json",
+      "sha256": "ca6470b7b08df4a41475e805ac8dd2df93b92a386a94a744a0868ed98f662d27",
+      "passed": true,
+      "compiler_sha256": null,
+      "cases": 18
+    },
+    {
+      "source": "biomiya/build/layout-check_q_blocking-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_blocking-r1.json",
+      "sha256": "0f75738ec663e44064235dc178d31655444b269074c498f59c7cb4ed3e995aaa",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 48
+    },
+    {
+      "source": "biomiya/build/layout-check_q_interfaces-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_interfaces-r1.json",
+      "sha256": "42a9d26975b763912098cf1824974774901715e770875c957d59c8d4b1050cda",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 76
+    },
+    {
+      "source": "biomiya/build/layout-check_q_limits-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_limits-r1.json",
+      "sha256": "565e645a4c5d6a667326e55d3520da5480f0555b217c2a47d4a01e3e4c95a67d",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 15
+    },
+    {
+      "source": "biomiya/build/layout-host-r2/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-host-r2.json",
+      "sha256": "d62be7d06eee3ac1a89da5f4113e4102698c10e81d4f512b6149a9bad2ea396f",
+      "passed": true,
+      "compiler_sha256": null,
+      "cases": 3
+    },
+    {
+      "source": "biomiya/build/layout-check_q_profiles-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_profiles-r1.json",
+      "sha256": "01e0458f23c3b513c693e07911b8cf4723c3f0976a78d751856ef3688f275604",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 26
+    },
+    {
+      "source": "biomiya/build/layout-check_q_s0_system-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_q_s0_system-r1.json",
+      "sha256": "5ae010059a010cbd3d35b592c1a614eb8725aec0462d5a642d28f63f76245dae",
+      "passed": true,
+      "compiler_sha256": null,
+      "cases": 167
+    },
+    {
+      "source": "biomiya/build/layout-check_next_reference-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-check_next_reference-r1.json",
+      "sha256": "4b468babe5cee796aaf2d04066db4af635d7ec52674ef0f1460e7c784712c16d",
+      "passed": 3,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 3
+    },
+    {
+      "source": "biomiya/build/layout-trials-r2/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-trials-r2.json",
+      "sha256": "395ece3a0d40a28229afa10f0d8d0488b040c66bb3484baae8b780dc3b4bd628",
+      "passed": true,
+      "compiler_sha256": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+      "cases": 8
+    },
+    {
+      "source": "biomiya/build/layout-system-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-system-r1.json",
+      "sha256": "457a92ae6360e5e9c5cfccbe152c15e4565c0800f0e9fde03c3d68b013276a1c",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 0
+    },
+    {
+      "source": "biomiya/build/layout-frozen-reference-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-frozen-reference-r1.json",
+      "sha256": "cc4cb2cf8bab6ab061e6f4badf56d34098d5515ddc51a7331467a8c2a47d57f3",
+      "passed": 22,
+      "compiler_sha256": "90c9523de43bebbd0a6932e74abc8cd670b60478c3b4f0fc1eff74fbf4cfb686",
+      "cases": 22
+    },
+    {
+      "source": "biomiya/build/layout-p4-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-p4-r1.json",
+      "sha256": "da171f3fb8cacf3126f9640422d7e7b2cb22b95d5df591f5f3747dcdb76dd5ed",
+      "passed": true,
+      "compiler_sha256": null,
+      "cases": 0
+    },
+    {
+      "source": "biomiya/build/layout-guards.log",
+      "saved": "docs/workflows/k0/evidence/layout-guards.json",
+      "sha256": "d534cf817d70d568eca29460e97193eb7285d758ade80a2b4d5e50a07cae9215",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 0
+    },
+    {
+      "source": "suba/build/layout-abi-r1/verification.json",
+      "saved": "docs/workflows/k0/evidence/layout-abi-r1.json",
+      "sha256": "dedf4a272c619492c731f1ea69e8788bd562a0c8c4dabf328d04307532510684",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 0
+    },
+    {
+      "source": "suba/build/k0-entry-r2-finalb/verification.json",
+      "saved": "docs/workflows/k0/evidence/k0-entry-r2-finalb.json",
+      "sha256": "064b12707addf39ab974deda92fd3f06cbbea8a6509f7a931e847ceb31a56679",
+      "passed": true,
+      "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "cases": 4,
+      "terminal_cases": 0
+    },
+    {
+      "source": "suba/build/k0-observer-r2-finalb.json",
+      "saved": "docs/workflows/k0/evidence/k0-observer-r2-finalb.json",
+      "sha256": "df588ccbfb79aff63685bac2bf20d4f390b0550cacc152b7282654fde08d6434",
+      "passed": true,
+      "compiler_sha256": null,
+      "cases": 4,
+      "terminal_cases": 20
+    }
+  ],
+  "supersedes_observations": [
+    "suba/build/k0-entry-layout-r1/verification.json",
+    "suba/build/k0-observer-layout-r1.json"
+  ],
+  "corrected_attempt": {
+    "source": "suba/build/k0-entry-r2-final/verification.json",
+    "saved": "docs/workflows/k0/evidence/k0-entry-r2-final-failed.json",
+    "sha256": "50f6fd3038f1ccff52389931cec5ee91a5461a822427eac06bc5c2071d34db6c",
+    "reason": "Early stop on ! truncated UART fatal record. Gather full post-marker observation window before final rejection; negative control now verifies ordered success then actual illegal-instruction cause."
+  }
+}

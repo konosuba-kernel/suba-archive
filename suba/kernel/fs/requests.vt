@@ -1,0 +1,236 @@
+// One queue entry per process; the serial worker owns all filesystem mutation.
+// Tickets are generation checked. No queue record contains a user/stack pointer.
+module kernel::fs;
+pub struct Access { pub file: objects::Identity, pub offset: usize, pub bytes: usize }
+pub struct Sync { pub file: objects::Identity, pub seal: bool }
+pub enum Command { SyncAll, Open(usize), Read(Access), Write(Access), Stat(objects::Identity),
+    Sync(Sync), Mkdir, List(usize), Unlink, Replace, Directory, Job(JobCommand) }
+pub enum Outcome { Value(usize), File(objects::Identity), Directory(usize), Failed(Error) }
+pub struct Copy { pub offset: usize, pub bytes: []u8 }
+pub enum Action { Wait, Input(Copy), Output(Copy), Done(Outcome), Invalid }
+pub enum Queued { Ready(objects::Identity), Failed(Error) }
+enum RequestState { Empty, Queued, Active, Done(Outcome) }
+struct Operation {
+    generation: usize, state: RequestState, client: Client, command: Command,
+    path: [255]u8, path_bytes: usize, other: [255]u8, other_bytes: usize,
+    cancelled: bool, pinned: bool, cwd: usize,
+}
+static mut OPERATIONS: [16]Operation = zero;
+static mut ACTIVE: usize = 16;
+static mut QUEUE_CURSOR: usize = 0;
+static mut STAGING: [65536]u8 = zero;
+static mut PHASE: Phase = zero;
+static mut RESOLVER: Resolver = zero;
+static mut NODE: usize = 0;
+static mut OTHER_NODE: usize = 0;
+static mut MISSING: Missing = zero;
+static mut SCAN: usize = 0;
+static mut COPIED: usize = 0;
+static mut LENGTH: usize = 0;
+static mut OFFSET: usize = 0;
+static mut FILE_BLOCK: usize = 0;
+static mut CHAIN_AT: u32 = 0;
+static mut BLOCK_IDS: [17]u32 = zero;
+static mut BLOCK_COUNT: usize = 0;
+static mut RESERVED: [16]u32 = zero;
+static mut RESERVED_COUNT: usize = 0;
+static mut REQUIRED: usize = 0;
+static mut IO_INDEX: usize = 0;
+static mut SUBMITTED: bool = false;
+static mut SYNC_BLOCK: usize = 0;
+static mut ENCODE_AT: usize = 0;
+enum Phase { Start, Resolve, ResolveOther, Create, Remove, Enumerate, Input, Locate,
+    Reserve, Read, Reading, Output, PrepareWrite, EdgeReading, Writing, Commit,
+    SyncScan, Encode, SyncWriting, Flush, Flushing, Job }
+
+fn same_client(a: Client, b: Client) -> bool {
+    return a.slot == b.slot && a.generation == b.generation;
+}
+unsafe fn valid_ticket(id: objects::Identity) -> bool {
+    unsafe {
+        if id.slot >= 16_usize || id.generation == 0_usize || OPERATIONS[id.slot].generation != id.generation { return false; }
+        match OPERATIONS[id.slot].state {
+            RequestState::Empty => { return false; }, RequestState::Queued => {},
+            RequestState::Active => {}, RequestState::Done(result) => {}
+        }
+        return true;
+    }
+}
+unsafe fn request_file(command: Command) -> objects::Identity {
+    match command {
+        Command::Read(access) => { return access.file; }, Command::Write(access) => { return access.file; },
+        Command::Stat(id) => { return id; }, Command::Sync(sync) => { return sync.file; },
+        Command::Open(flags) => {}, Command::Mkdir => {}, Command::List(cursor) => {},
+        Command::Unlink => {}, Command::Replace => {}, Command::SyncAll => {}, Command::Directory => {},
+            Command::Job(command) => {}
+    }
+    return make objects::Identity { slot: 0, generation: 0 };
+}
+// Caller supplies validated borrowed paths and a live process identity. References
+// transfer to the queue only on Ready; paths are copied before this call returns.
+pub unsafe fn enqueue(client: Client, command: Command, first: []const u8, second: []const u8) -> Queued {
+    unsafe {
+        if client.slot >= 16_usize || client.generation == 0_usize || first.len > 255_usize || second.len > 255_usize {
+            return Queued::Failed(Error::Invalid);
+        }
+        let slot: usize = client.slot;
+        match OPERATIONS[slot].state {
+            RequestState::Empty => {}, RequestState::Queued => { return Queued::Failed(Error::Busy); },
+            RequestState::Active => { return Queued::Failed(Error::Busy); },
+            RequestState::Done(result) => { return Queued::Failed(Error::Busy); }
+        }
+        if OPERATIONS[slot].generation == 0xffffffffffffffff_usize { return Queued::Failed(Error::Limit); }
+        let file: objects::Identity = request_file(command);
+        if file.generation != 0_usize {
+            if !file_valid(file) { return Queued::Failed(Error::Invalid); }
+            if !file_mode(file, false) && !file_mode(file, true) { return Queued::Failed(Error::Denied); }
+            if !retain_file(file, file_mode(file, true)) { return Queued::Failed(Error::Limit); }
+        }
+        OPERATIONS[slot].generation = OPERATIONS[slot].generation + 1_usize;
+        OPERATIONS[slot].client = client;
+        OPERATIONS[slot].command = command;
+        OPERATIONS[slot].path_bytes = first.len;
+        OPERATIONS[slot].other_bytes = second.len;
+        OPERATIONS[slot].cancelled = false;
+        OPERATIONS[slot].pinned = file.generation != 0_usize;
+        OPERATIONS[slot].cwd = cwd_node(client);
+        var i: usize = 0;
+        while i < first.len { OPERATIONS[slot].path[i] = first[i]; i = i + 1_usize; }
+        i = 0;
+        while i < second.len { OPERATIONS[slot].other[i] = second[i]; i = i + 1_usize; }
+        OPERATIONS[slot].state = RequestState::Queued;
+        return Queued::Ready(make objects::Identity { slot: slot, generation: OPERATIONS[slot].generation });
+    }
+}
+unsafe fn discard_result(result: Outcome) -> bool {
+    unsafe {
+        match result {
+            Outcome::File(id) => { return release_file(id); },
+            Outcome::Directory(node) => { return directory_release(node); },
+            Outcome::Value(value) => {}, Outcome::Failed(error) => {}
+        }
+        return true;
+    }
+}
+unsafe fn release_pin(slot: usize) -> bool {
+    unsafe {
+        if !OPERATIONS[slot].pinned { return true; }
+        OPERATIONS[slot].pinned = false;
+        return release_file(request_file(OPERATIONS[slot].command));
+    }
+}
+unsafe fn complete(result: Outcome) -> Progress {
+    unsafe {
+        if !release_pin(ACTIVE) { return Progress::Invalid; }
+        if OPERATIONS[ACTIVE].cancelled {
+            if !discard_result(result) { return Progress::Invalid; }
+            OPERATIONS[ACTIVE].state = RequestState::Empty;
+        } else { OPERATIONS[ACTIVE].state = RequestState::Done(result); }
+        ACTIVE = 16;
+        return Progress::More;
+    }
+}
+unsafe fn failed(error: Error) -> Progress { unsafe { return complete(Outcome::Failed(error)); } }
+pub unsafe fn cancel(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid_ticket(id) { return false; }
+        OPERATIONS[id.slot].cancelled = true;
+        match OPERATIONS[id.slot].state {
+            RequestState::Queued => {
+                if !release_pin(id.slot) { return false; }
+                OPERATIONS[id.slot].state = RequestState::Empty;
+            },
+            RequestState::Done(result) => {
+                if !discard_result(result) { return false; }
+                OPERATIONS[id.slot].state = RequestState::Empty;
+            },
+            RequestState::Active => {}, RequestState::Empty => { return false; }
+        }
+        return true;
+    }
+}
+// Returned staging view is borrowed only until copied() in this dispatch step.
+pub unsafe fn action(id: objects::Identity) -> Action {
+    unsafe {
+        if !valid_ticket(id) || OPERATIONS[id.slot].cancelled { return Action::Invalid; }
+        match OPERATIONS[id.slot].state {
+            RequestState::Done(result) => { return Action::Done(result); },
+            RequestState::Queued => { return Action::Wait; },
+            RequestState::Empty => { return Action::Invalid; }, RequestState::Active => {}
+        }
+        match PHASE {
+            Phase::Input => {
+                var count: usize = LENGTH - COPIED;
+                if count > 4096_usize { count = 4096; }
+                return Action::Input(make Copy { offset: COPIED, bytes: core::slice_from_raw_parts_mut(
+                    core::ptr_add(core::slice_of_mut(STAGING).data, COPIED), count) });
+            },
+            Phase::Output => {
+                return Action::Output(make Copy { offset: COPIED, bytes:
+                    core::slice_from_raw_parts_mut(core::slice_of_mut(STAGING).data, output_bytes()) });
+            },
+            Phase::Job => {}, Phase::Start => {}, Phase::Resolve => {}, Phase::ResolveOther => {}, Phase::Create => {},
+            Phase::Remove => {}, Phase::Enumerate => {}, Phase::Locate => {}, Phase::Reserve => {},
+            Phase::Read => {}, Phase::Reading => {}, Phase::PrepareWrite => {}, Phase::EdgeReading => {},
+            Phase::Writing => {}, Phase::Commit => {}, Phase::SyncScan => {}, Phase::Encode => {},
+            Phase::SyncWriting => {}, Phase::Flush => {}, Phase::Flushing => {}
+        }
+        return Action::Wait;
+    }
+}
+pub unsafe fn take(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid_ticket(id) { return false; }
+        match OPERATIONS[id.slot].state {
+            RequestState::Done(result) => { OPERATIONS[id.slot].state = RequestState::Empty; return true; },
+            RequestState::Empty => {}, RequestState::Queued => {}, RequestState::Active => {}
+        }
+        return false;
+    }
+}
+pub unsafe fn copied(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid_ticket(id) || ACTIVE != id.slot || OPERATIONS[id.slot].cancelled { return false; }
+        match PHASE {
+            Phase::Input => {
+                var count: usize = LENGTH - COPIED;
+                if count > 4096_usize { count = 4096; }
+                COPIED = COPIED + count;
+                if COPIED == LENGTH { begin_locate(); }
+                return true;
+            },
+            Phase::Output => {
+                COPIED = COPIED + output_bytes();
+                match OPERATIONS[ACTIVE].command {
+                    Command::Read(access) => {
+                        IO_INDEX = IO_INDEX + 1_usize;
+                        if COPIED < LENGTH { PHASE = Phase::Read; return true; }
+                    },
+                    Command::Stat(file) => {}, Command::List(cursor) => {},
+                    Command::Open(flags) => { return false; }, Command::Write(access) => { return false; },
+                    Command::Sync(sync) => { return false; }, Command::Mkdir => { return false; },
+                    Command::Unlink => { return false; }, Command::Replace => { return false; },
+                    Command::SyncAll => { return false; }, Command::Directory => { return false; },
+            Command::Job(command) => {}
+                }
+                var value: usize = LENGTH;
+                match OPERATIONS[ACTIVE].command {
+                    Command::List(cursor) => { value = SCAN; }, Command::Read(access) => {},
+                    Command::Stat(file) => {}, Command::Open(flags) => {}, Command::Write(access) => {},
+                    Command::Sync(sync) => {}, Command::Mkdir => {}, Command::Unlink => {},
+                    Command::Replace => {}, Command::SyncAll => {}, Command::Directory => {},
+            Command::Job(command) => {}
+                }
+                match complete(Outcome::Value(value)) { Progress::Invalid => { return false; },
+                    Progress::More => {}, Progress::Wait => {}, Progress::Ready => {} }
+                return true;
+            },
+            Phase::Job => {}, Phase::Start => {}, Phase::Resolve => {}, Phase::ResolveOther => {}, Phase::Create => {},
+            Phase::Remove => {}, Phase::Enumerate => {}, Phase::Locate => {}, Phase::Reserve => {},
+            Phase::Read => {}, Phase::Reading => {}, Phase::PrepareWrite => {}, Phase::EdgeReading => {},
+            Phase::Writing => {}, Phase::Commit => {}, Phase::SyncScan => {}, Phase::Encode => {},
+            Phase::SyncWriting => {}, Phase::Flush => {}, Phase::Flushing => {}
+        }
+        return false;
+    }
+}

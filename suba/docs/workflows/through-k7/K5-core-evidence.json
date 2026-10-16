@@ -1,0 +1,97 @@
+{
+  "scope": "K5 shared core integration evidence, author report pending independent acceptance",
+  "baseline_commit": "10de32f",
+  "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+  "reports": {
+    "build/k5-integrated-contracts-r1/verification.json": {
+      "sha256": "5c5d95c924a687dc25e9b767899eae1e663d6564d562e552073013df107a2964",
+      "passed": true
+    },
+    "build/k5-integrated-contracts-r2/verification.json": {
+      "sha256": "faa63dde02fda267c67135661c6cfb1f238f9071b27a9322c6685339a3fa9520",
+      "passed": true
+    },
+    "build/k5-integrated-contracts-r3/verification.json": {
+      "sha256": "158a8566293419fc6103146f8faec9545b1350bb864f124cfe75621986453f2b",
+      "passed": true
+    },
+    "build/k5-integrated-desktop-r3/verification.json": {
+      "sha256": "fd1486e82fea16d4c075316ce9d8efab9c4bcde2faf9f7e2182345210f293888",
+      "passed": false
+    },
+    "build/k5-integrated-gtk-r4/verification.json": {
+      "sha256": "81163b11e0bf82a21254de1ac3934b77e77bd82a0d87b11877aa99006e398e5b",
+      "passed": true
+    },
+    "build/k5-storage-filesystem-r1/verification.json": {
+      "sha256": "1cc2aa49e20a35f2ee55e1d78137b158aa684417aabf479777c62c7ef4169763",
+      "passed": false
+    },
+    "build/k5-storage-filesystem-r2/verification.json": {
+      "sha256": "c7d6aa22ec6397855b732d59402677b1b024c4721ea6f507c3caef4ed80bc3ac",
+      "passed": true
+    },
+    "build/k5-storage-cancel-dma-r1/verification.json": {
+      "sha256": "c84acef07e52514de311f32ececc100757b23baae3538004a2a08218256e04ca",
+      "passed": false
+    },
+    "build/k5-storage-boundaries-r1/verification.json": {
+      "sha256": "3ff0b4b0af084ed7ef7b17f6f3af3c08e3c48ea12ab11b06e818221dd77677db",
+      "passed": true
+    },
+    "build/k5-storage-cancel-dma-r2/verification.json": {
+      "sha256": "c3d48f052a252965478a97ce838d152f23e7478154321651836ded3f63c1d85d",
+      "passed": true
+    },
+    "build/k5-devices-private-r1/verification.json": {
+      "sha256": "ef2fc8126a2993b16225aa458184a8862c1944379439790d74376dfe66268577",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-gtk-xvfb-r1/verification.json": {
+      "sha256": "b3b28e499decbc17af87066abc2f26f6d81bb276e0916082c1b272d5b52485d9",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-overflow-r1/verification.json": {
+      "sha256": "ee97330a3dbe420be96e2b4caded05efffd0700a965e29aa6ace13d866a930b6",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-ram-r1/verification.json": {
+      "sha256": "be16c4c3cbf3a737d88947f1429e2a0982564d4b07b91a5ca5eacce748430d81",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-lifecycle-r3/verification.json": {
+      "sha256": "8ba0403c0a97465db631df5e9bae08e2bf013623216a1fa388299ccba922bd0b",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-lifecycle-r3/lifecycle/verification.json": {
+      "sha256": "6e4effa7d40e8143144635967dcb8dab8024ad38e4313e39e9e76e2b55d2811c",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-window-queue-r2/verification.json": {
+      "sha256": "72e9c670222faec9982285865bc4e8fde0feec135fe1b20b6785ddff00a77a99",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-window-queue-r2/queue/verification.json": {
+      "sha256": "5aed9df3217953966c8eb6e2b059d8d7bca09a2b766a337837604bddd78080a1",
+      "passed": true,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-old-kill-negative-r2/verification.json": {
+      "sha256": "ee4871ecc8ced58d859a15704b68a0d39eb32ff1370037a25e199deffafb8afd",
+      "passed": false,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    },
+    "build/k5-lifecycle-r3/regression-comparison.json": {
+      "sha256": "74b1b7a2d2f2b9fe7e0f3417367e6e8a8110ed3b697b83fc0bb23300b7e893ba",
+      "passed": null,
+      "scope": "See K5 engineering notes; old-kill report is expected negative, not production"
+    }
+  }
+}

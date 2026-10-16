@@ -1,0 +1,25 @@
+{
+  "font": "GNU Unifont 17.0.04 BMP source; packed display name suba BMP 17",
+  "glyph_count": 57086,
+  "width8_count": 7282,
+  "width16_count": 49804,
+  "coverage_inclusive_hex": [
+    [
+      "U+0000",
+      "U+D7FF"
+    ],
+    [
+      "U+F900",
+      "U+FFFD"
+    ]
+  ],
+  "basic_cjk": [
+    "U+4E00",
+    "U+9FFF"
+  ],
+  "extension_a": [
+    "U+3400",
+    "U+4DBF"
+  ],
+  "uncovered": "all scalar values absent from these ranges, including all supplementary planes; display a 16x16 box without changing UTF-8 bytes"
+}

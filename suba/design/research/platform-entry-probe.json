@@ -1,0 +1,56 @@
+{
+  "records": [
+    {
+      "command": [
+        "clang",
+        "--target=riscv64-unknown-elf",
+        "-march=rv64imac_zicsr",
+        "-mabi=lp64",
+        "-nostdlib",
+        "-fuse-ld=lld",
+        "-Wl,-T,/home/mii/code/konOSuba/suba/design/research/platform-entry-probe.ld",
+        "-o",
+        "/tmp/suba-entry-ayb983nx/entry.elf",
+        "/home/mii/code/konOSuba/suba/design/research/platform-entry-probe.S"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "qemu-system-riscv64",
+        "-machine",
+        "virt,aclint=off,aia=none,acpi=off,iommu-sys=off",
+        "-accel",
+        "tcg",
+        "-cpu",
+        "rv64",
+        "-smp",
+        "1",
+        "-m",
+        "512M",
+        "-bios",
+        "default",
+        "-kernel",
+        "/tmp/suba-entry-ayb983nx/entry.elf",
+        "-display",
+        "none",
+        "-serial",
+        "stdio",
+        "-monitor",
+        "none"
+      ],
+      "returncode": 0,
+      "stdout": "\nOpenSBI v1.8.1\n   ____                    _____ ____ _____\n  / __ \\                  / ____|  _ \\_   _|\n | |  | |_ __   ___ _ __ | (___ | |_) || |\n | |  | | '_ \\ / _ \\ '_ \\ \\___ \\|  _ < | |\n | |__| | |_) |  __/ | | |____) | |_) || |_\n  \\____/| .__/ \\___|_| |_|_____/|____/_____|\n        | |\n        |_|\n\nPlatform Name               : riscv-virtio,qemu\nPlatform Features           : medeleg\nPlatform HART Count         : 1\nPlatform HART Protection    : pmp\nPlatform IPI Device         : aclint-mswi\nPlatform Timer Device       : aclint-mtimer @ 10000000Hz\nPlatform Console Device     : uart8250\nPlatform HSM Device         : ---\nPlatform PMU Device         : ---\nPlatform Reboot Device      : syscon-reboot\nPlatform Shutdown Device    : syscon-poweroff\nPlatform Suspend Device     : ---\nPlatform CPPC Device        : ---\nFirmware Base               : 0x80000000\nFirmware Size               : 321 KB\nFirmware RW Offset          : 0x40000\nFirmware RW Size            : 65 KB\nFirmware Heap Offset        : 0x47000\nFirmware Heap Size          : 37 KB (total), 0 KB (reserved), 12 KB (used), 23 KB (free)\nFirmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)\nRuntime SBI Version         : 3.0\nStandard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse\nExperimental SBI Extensions : none\n\nDomain0 Name                : root\nDomain0 Boot HART           : 0\nDomain0 HARTs               : 0*\nDomain0 Region00            : 0x0000000080040000-0x000000008005ffff M: (F,R,W) S/U: ()\nDomain0 Region01            : 0x0000000080000000-0x000000008003ffff M: (F,R,X) S/U: ()\nDomain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)\nDomain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)\nDomain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()\nDomain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)\nDomain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)\nDomain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)\nDomain0 Next Address        : 0x0000000080200000\nDomain0 Next Arg1           : 0x000000009fe00000\nDomain0 Next Mode           : S-mode\nDomain0 SysReset            : yes\nDomain0 SysSuspend          : yes\n\nBoot HART ID                : 0\nBoot HART Domain            : root\nBoot HART Priv Version      : v1.12\nBoot HART Base ISA          : rv64imafdch\nBoot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu\nBoot HART PMP Count         : 16\nBoot HART PMP Granularity   : 2 bits\nBoot HART PMP Address Bits  : 54\nBoot HART MHPM Info         : 16 (0x0007fff8)\nBoot HART Debug Triggers    : 2 triggers\nBoot HART MIDELEG           : 0x0000000000001666\nBoot HART MEDELEG           : 0x0000000000f4b509\nS0\n\nOpenSBI v1.8.1\n   ____                    _____ ____ _____\n  / __ \\                  / ____|  _ \\_   _|\n | |  | |_ __   ___ _ __ | (___ | |_) || |\n | |  | | '_ \\ / _ \\ '_ \\ \\___ \\|  _ < | |\n | |__| | |_) |  __/ | | |____) | |_) || |_\n  \\____/| .__/ \\___|_| |_|_____/|____/_____|\n        | |\n        |_|\n\nPlatform Name               : riscv-virtio,qemu\nPlatform Features           : medeleg\nPlatform HART Count         : 1\nPlatform HART Protection    : pmp\nPlatform IPI Device         : aclint-mswi\nPlatform Timer Device       : aclint-mtimer @ 10000000Hz\nPlatform Console Device     : uart8250\nPlatform HSM Device         : ---\nPlatform PMU Device         : ---\nPlatform Reboot Device      : syscon-reboot\nPlatform Shutdown Device    : syscon-poweroff\nPlatform Suspend Device     : ---\nPlatform CPPC Device        : ---\nFirmware Base               : 0x80000000\nFirmware Size               : 321 KB\nFirmware RW Offset          : 0x40000\nFirmware RW Size            : 65 KB\nFirmware Heap Offset        : 0x47000\nFirmware Heap Size          : 37 KB (total), 0 KB (reserved), 12 KB (used), 23 KB (free)\nFirmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)\nRuntime SBI Version         : 3.0\nStandard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse\nExperimental SBI Extensions : none\n\nDomain0 Name                : root\nDomain0 Boot HART           : 0\nDomain0 HARTs               : 0*\nDomain0 Region00            : 0x0000000080040000-0x000000008005ffff M: (F,R,W) S/U: ()\nDomain0 Region01            : 0x0000000080000000-0x000000008003ffff M: (F,R,X) S/U: ()\nDomain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)\nDomain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)\nDomain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()\nDomain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)\nDomain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)\nDomain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)\nDomain0 Next Address        : 0x0000000080200000\nDomain0 Next Arg1           : 0x000000009fe00000\nDomain0 Next Mode           : S-mode\nDomain0 SysReset            : yes\nDomain0 SysSuspend          : yes\n\nBoot HART ID                : 0\nBoot HART Domain            : root\nBoot HART Priv Version      : v1.12\nBoot HART Base ISA          : rv64imafdch\nBoot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu\nBoot HART PMP Count         : 16\nBoot HART PMP Granularity   : 2 bits\nBoot HART PMP Address Bits  : 54\nBoot HART MHPM Info         : 16 (0x0007fff8)\nBoot HART Debug Triggers    : 2 triggers\nBoot HART MIDELEG           : 0x0000000000001666\nBoot HART MEDELEG           : 0x0000000000f4b509\nS1\n",
+      "stderr": ""
+    }
+  ],
+  "binary_sha256": "011d4016c0fee34c53a952021e68ee855ac31f1ecc873d68391302b8951a4377",
+  "checks": {
+    "reboot_first_mark": true,
+    "reboot_second_mark": true,
+    "firmware_two_entries": true,
+    "shutdown_success": true
+  }
+}

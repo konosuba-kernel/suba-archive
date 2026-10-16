@@ -1,0 +1,59 @@
+{
+  "scope": "independent ignored copy with unimp inserted after acceptance marker",
+  "builds": [
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+        "build",
+        "kernel/kernel.build"
+      ],
+      "returncode": 0,
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=1 source=14155 assembly=2390 names=538 name_bytes=10217 decls=202 types=19 fields=2 params=20 max_ast=381 max_ir=286 max_frame=1200 max_bindings=6 max_defers=0 max_loops=1 max_slots=167 max_args=39 max_params=3 text=9784 data=59 objects=4 symbols=198 fixups=293 relocations=0 elf=20481\n"
+    },
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+        "build",
+        "boot.build"
+      ],
+      "returncode": 0,
+      "stderr": "S-next-0.1 sources=5 imports=5 assembly_files=1 source=15324 assembly=2390 names=573 name_bytes=10621 decls=208 types=22 fields=2 params=20 max_ast=324 max_ir=274 max_frame=1424 max_bindings=5 max_defers=0 max_loops=1 max_slots=187 max_args=44 max_params=3 text=12256 data=49 objects=5 symbols=236 fixups=385 relocations=0 elf=20481\n"
+    }
+  ],
+  "execution": {
+    "command": [
+      "qemu-system-riscv64",
+      "-machine",
+      "virt",
+      "-accel",
+      "tcg",
+      "-m",
+      "512M",
+      "-smp",
+      "1",
+      "-nographic",
+      "-bios",
+      "/usr/share/qemu/opensbi-riscv64-generic-fw_dynamic.bin",
+      "-kernel",
+      "/home/mii/code/konOSuba/suba/build/k0-acceptance-post-marker-fault-r1/build/boot.elf",
+      "-device",
+      "loader,file=/home/mii/code/konOSuba/suba/build/k0-acceptance-post-marker-fault-r1/build/kernel.elf",
+      "-device",
+      "ramfb",
+      "-no-reboot"
+    ],
+    "marker": "suba kernel K0: handoff accepted\n",
+    "observed": true,
+    "stable_observation_ms": 500,
+    "observer_stopped_after_marker": true,
+    "returncode": 0,
+    "log": "\r\nOpenSBI v1.8.1\r\n   ____                    _____ ____ _____\r\n  / __ \\                  / ____|  _ \\_   _|\r\n | |  | |_ __   ___ _ __ | (___ | |_) || |\r\n | |  | | '_ \\ / _ \\ '_ \\ \\___ \\|  _ < | |\r\n | |__| | |_) |  __/ | | |____) | |_) || |_\r\n  \\____/| .__/ \\___|_| |_|_____/|____/_____|\r\n        | |\r\n        |_|\r\n\r\nPlatform Name               : riscv-virtio,qemu\r\nPlatform Features           : medeleg\r\nPlatform HART Count         : 1\r\nPlatform HART Protection    : pmp\r\nPlatform IPI Device         : aclint-mswi\r\nPlatform Timer Device       : aclint-mtimer @ 10000000Hz\r\nPlatform Console Device     : uart8250\r\nPlatform HSM Device         : ---\r\nPlatform PMU Device         : ---\r\nPlatform Reboot Device      : syscon-reboot\r\nPlatform Shutdown Device    : syscon-poweroff\r\nPlatform Suspend Device     : ---\r\nPlatform CPPC Device        : ---\r\nFirmware Base               : 0x80000000\r\nFirmware Size               : 321 KB\r\nFirmware RW Offset          : 0x40000\r\nFirmware RW Size            : 65 KB\r\nFirmware Heap Offset        : 0x47000\r\nFirmware Heap Size          : 37 KB (total), 0 KB (reserved), 12 KB (used), 23 KB (free)\r\nFirmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)\r\nRuntime SBI Version         : 3.0\r\nStandard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse\r\nExperimental SBI Extensions : none\r\n\r\nDomain0 Name                : root\r\nDomain0 Boot HART           : 0\r\nDomain0 HARTs               : 0*\r\nDomain0 Region00            : 0x0000000080040000-0x000000008005ffff M: (F,R,W) S/U: ()\r\nDomain0 Region01            : 0x0000000080000000-0x000000008003ffff M: (F,R,X) S/U: ()\r\nDomain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()\r\nDomain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)\r\nDomain0 Next Address        : 0x0000000080200000\r\nDomain0 Next Arg1           : 0x000000009fe00000\r\nDomain0 Next Mode           : S-mode\r\nDomain0 SysReset            : yes\r\nDomain0 SysSuspend          : yes\r\n\r\nBoot HART ID                : 0\r\nBoot HART Domain            : root\r\nBoot HART Priv Version      : v1.12\r\nBoot HART Base ISA          : rv64imafdch\r\nBoot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu\r\nBoot HART PMP Count         : 16\r\nBoot HART PMP Granularity   : 2 bits\r\nBoot HART PMP Address Bits  : 54\r\nBoot HART MHPM Info         : 16 (0x0007fff8)\r\nBoot HART Debug Triggers    : 2 triggers\r\nBoot HART MIDELEG           : 0x0000000000001666\r\nBoot HART MEDELEG           : 0x0000000000f4b509\r\nsuba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\n!0000000000000002:0000000080402630:00000000c0001073\nqemu-system-riscv64: terminating on signal 15 from pid 248789 (python3)\n",
+    "passed": true
+  }
+}

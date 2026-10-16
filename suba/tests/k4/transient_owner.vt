@@ -1,0 +1,49 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut ARGS: [4096]u8 = zero;
+static mut BUFFER: [32]u8 = zero;
+unsafe fn temporary(path: []const u8) -> bool {
+    unsafe {
+        let file: syscall::Reply = files::open(path, 14);
+        return file.status == abi::OK && files::write_at(file.value, 0, "owned").status == abi::OK &&
+            syscall::close(file.value).status == abi::OK;
+    }
+}
+unsafe fn unchanged(path: []const u8) -> bool {
+    unsafe {
+        let file: syscall::Reply = files::open(path, 1);
+        if file.status != abi::OK { return false; }
+        let read: syscall::Reply = files::read_at(file.value, 0, core::slice_of_mut(BUFFER));
+        if read.status != abi::OK || read.value != 5_usize { return false; }
+        let expected: []const u8 = "owned";
+        var i: usize = 0;
+        while i < expected.len {
+            if BUFFER[i] != expected[i] { return false; }
+            i = i + 1_usize;
+        }
+        return syscall::close(file.value).status == abi::OK;
+    }
+}
+pub fn run() -> u32 {
+    unsafe {
+        if !temporary("secret_unlink") || !temporary("secret_replace") { return 170; }
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") { return 171; }
+        let child: syscall::Reply = services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0);
+        if child.status != abi::OK { return 172; }
+        var watch: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED };1];
+        let now: syscall::Reply = services::stats(1);
+        if services::wait(core::slice_of(watch), now.value + 50000000_usize, false).value != 1_usize { return 173; }
+        match services::collect(child.value) {
+            services::Collected::Failed(status) => { return 174; },
+            services::Collected::Ready(exit) => { if exit.status != 0_usize { return 175; } }
+        }
+        if !unchanged("secret_unlink") || !unchanged("secret_replace") { return 176; }
+        // Exit must remove both unsealed owner files; next boot recreates the names.
+        return 0;
+    }
+}

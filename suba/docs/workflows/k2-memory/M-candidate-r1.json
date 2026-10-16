@@ -1,0 +1,54 @@
+{
+  "node": "M",
+  "revision": "r1",
+  "status": "frozen-for-independent-acceptance",
+  "authors": [
+    "/root/physical_memory",
+    "/root/memory_resume"
+  ],
+  "recovery": "Original agent absent after interruption; resumed existing memory.vt/backing code and completed tests/evidence.",
+  "independent_reviewer": "/root",
+  "paths_relative_to": "/home/mii/code/konOSuba/suba",
+  "baseline_commit": "006a63b0c368e4c7cfb5c77bda0cb69d16bd64bf",
+  "dependencies": {
+    "R_candidate": {
+      "path": "docs/workflows/k2-memory/R-candidate-r1.json",
+      "sha256": "f58658cb7b97dea87209fc7640f0912fbe26da1224d9ffa6ebf650d955e3bc49"
+    },
+    "R_acceptance": {
+      "path": "docs/workflows/k2-memory/R-acceptance-r1.md",
+      "sha256": "a345933004a356a0d4c800f4a09cf3d2ee28a17eabfdc57080b9f588a3854949"
+    },
+    "style": {
+      "path": "CODE_STYLE.md",
+      "sha256": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99"
+    },
+    "ABI": {
+      "path": "abi/contract.vt",
+      "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d"
+    },
+    "compiler": {
+      "path": "../biomiya/build/layout-p4-r1/e3.elf",
+      "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+    }
+  },
+  "files": {
+    "kernel/memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4",
+    "tests/memory/initialize.vt": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497",
+    "tests/memory/lifecycle.vt": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638",
+    "tests/memory/retirement.vt": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c",
+    "tests/memory/support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+    "tools/check_memory.py": "95c59bd0aff4268788f60905713f5125bd23a64df1f504436ece91c39e319fab",
+    "docs/workflows/k2-memory/M-verification-r1.json": "539d38b38d64cb969100a54943629d5cf966146e182dd746e0d8d71fff0857c1",
+    "docs/workflows/k2-memory/M-attempt-initial-type-error.json": "4cb5f9aa8ed279950f9398e4ea9cf41290a4f345b1ed4b210dfa7664631dd93a",
+    "docs/workflows/k2-memory/M-cost-r1.json": "27908b46899a4c4c57f1bfdc716c3f62b749406749f531875e91a9824a91775e",
+    "docs/workflows/k2-memory/M-report-r1.md": "1360549a2e5d2de6f3f36c3ef55101d1059539cf5f05dd4a002bdea718a7e616"
+  },
+  "acceptance_required": [
+    "Exclusive donated aligned whole-page extent; retry after invalid initialization, no reset after success",
+    "Private frame identity and O(1) metadata work with bounded one-page zeroing",
+    "Exhaustion, duplicate/stale release, generation retirement, accurate stats and guard preservation",
+    "Tests use same production allocator and discriminate omitted clearing / generation updates",
+    "Measured production, test, metadata/BSS and frame costs; no unsupported isolation or full-RAM claim"
+  ]
+}

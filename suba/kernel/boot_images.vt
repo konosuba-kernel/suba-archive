@@ -1,0 +1,78 @@
+// Validates the separate fixed-RAM launcher record before following file pointers.
+module kernel::boot_images;
+import suba::abi;
+import suba::ram_start;
+import platform::boot_info;
+import suba::image as elf;
+pub struct Source { pub address: usize, pub bytes: usize }
+pub struct Description { pub kernel: Source, pub count: usize, pub images: [8]Source }
+pub enum Read { Ready(Description), Invalid }
+
+unsafe fn covered(source: Source, info: *const boot_info::Description) -> bool {
+    if source.address < abi::KERNEL_BASE || source.address % abi::PAGE_BYTES != 0_usize ||
+        source.bytes == 0_usize || source.bytes > abi::IMAGE_BYTES_MAX ||
+        source.address - abi::RAM_BASE >= abi::RAM_BYTES ||
+        source.bytes > abi::RAM_BYTES - (source.address - abi::RAM_BASE) { return false; }
+    // SAFETY: read() supplies a live validated BootInfo and its bounded reservation table.
+    unsafe {
+        if source.address < (*info).kernel_end { return false; }
+        var i: usize = 0;
+        while i < (*info).reserved_count {
+            let base: usize = (*info).reserved[i].base;
+            let bytes: usize = (*info).reserved[i].bytes;
+            if source.address >= base && source.address - base <= bytes &&
+                source.bytes <= bytes - (source.address - base) { return true; }
+            i = i + 1_usize;
+        }
+    }
+    return false;
+}
+
+// Caller holds validated BootInfo in bare S-mode. Only the descriptor's fixed
+// permanent boot window is read before each source is proved fully reserved RAM.
+pub unsafe fn read(info: *const boot_info::Description) -> Read {
+    // SAFETY: caller guarantees the fixed boot reservation and live BootInfo; offsets
+    // fit the 256-byte record. covered() proves every complete source before publication.
+    unsafe {
+        let data: []const u8 = core::slice_from_raw_parts(
+            core::ptr_const(core::ptr::<u8>(ram_start::ADDRESS)), ram_start::BYTES);
+        if elf::word(data, 0, 8) != ram_start::MAGIC || elf::word(data, 8, 4) != ram_start::VERSION ||
+            elf::word(data, 12, 4) != ram_start::BYTES { return Read::Invalid; }
+        var result: Description = zero;
+        result.kernel = make Source { address: elf::word(data, ram_start::KERNEL_SOURCE, 8),
+            bytes: elf::word(data, ram_start::KERNEL_BYTES, 8) };
+        result.count = elf::word(data, ram_start::IMAGE_COUNT, 8);
+        if result.count == 0_usize || result.count > ram_start::IMAGE_CAPACITY ||
+            !covered(result.kernel, info) { return Read::Invalid; }
+        var i: usize = 40;
+        while i < ram_start::IMAGES {
+            if data[i] != 0_u8 { return Read::Invalid; }
+            i = i + 1_usize;
+        }
+        var previous_end: usize = result.kernel.address + result.kernel.bytes;
+        i = 0;
+        while i < result.count {
+            let at: usize = ram_start::IMAGES + i * ram_start::ENTRY_BYTES;
+            let source: Source = make Source { address: elf::word(data, at, 8),
+                bytes: elf::word(data, at + 8_usize, 8) };
+            if source.address < previous_end || !covered(source, info) { return Read::Invalid; }
+            result.images[i] = source;
+            previous_end = source.address + source.bytes;
+            i = i + 1_usize;
+        }
+        i = ram_start::IMAGES + result.count * ram_start::ENTRY_BYTES;
+        while i < ram_start::BYTES {
+            if data[i] != 0_u8 { return Read::Invalid; }
+            i = i + 1_usize;
+        }
+        return Read::Ready(result);
+    }
+}
+
+// Source must be the successful record output; immutable until loading finishes.
+pub unsafe fn bytes(source: Source) -> []const u8 {
+    // SAFETY: successful read() proves reserved ordinary RAM; caller preserves its lifetime.
+    unsafe {
+        return core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(source.address)), source.bytes);
+    }
+}

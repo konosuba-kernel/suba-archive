@@ -1,0 +1,30 @@
+{
+  "candidate": "C-r2",
+  "date": "2026-10-14",
+  "inputs": {
+    "A": "r2",
+    "B": "r1"
+  },
+  "contributors": [
+    "/root",
+    "/root/suba_platform",
+    "/root/suba_toolchain"
+  ],
+  "files": {
+    "README.md": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17",
+    "REQUIREMENTS.md": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a",
+    "design/ARCHITECTURE.md": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b",
+    "design/CONTRACTS.md": "03aceb70ffd94d33801c2f73e1986066f1927401fc19fd39bb5fbccd50527ee4",
+    "design/IMPLEMENTATION.md": "674ccbcf6632130ab6e3d5ca8d785662fbb27c33c42000075a52cfb3917032fc",
+    "design/research/platform.md": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb",
+    "design/research/toolchain.md": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245",
+    "design/research/toolchain-evidence.json": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039"
+  },
+  "supersedes": "C-r1",
+  "changes": [
+    "Immutable job source tree and epoch-checked capture; separate output rights",
+    "Child/Job kill and collect authorization; desktop cannot kill trusted processes",
+    "Boot entry stub is lowest PT_LOAD byte and e_entry",
+    "Shutdown internal drain and exact size/register wording"
+  ]
+}

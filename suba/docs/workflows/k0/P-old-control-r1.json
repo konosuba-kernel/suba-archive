@@ -1,0 +1,85 @@
+{
+  "compiler_sha256": "8051f3599704a6bf180496b14632691c3463f1239946893641f65aae21969904",
+  "cases": [
+    {
+      "name": "linux-user",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/behavior-fixes-p4-r1/e3.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=187 assembly=0 names=9 name_bytes=68 decls=2 types=10 fields=0 params=0 max_ast=20 max_ir=40 max_frame=192 max_bindings=0 max_defers=0 max_loops=0 max_slots=24 max_args=0 max_params=0 text=768 data=22 objects=2 symbols=23 fixups=29 relocations=1 elf=12289\n",
+      "layout": {
+        "entry": 65536,
+        "segments": [
+          [
+            1,
+            5,
+            4096,
+            65536,
+            65536,
+            768,
+            768,
+            4096
+          ],
+          [
+            1,
+            4,
+            8192,
+            69632,
+            69632,
+            22,
+            22,
+            4096
+          ],
+          [
+            1,
+            6,
+            12288,
+            73728,
+            73728,
+            1,
+            1,
+            4096
+          ]
+        ],
+        "sha256": "6e030f639538b201948fe5717aa9929019d92c55ea1f681cb2e24a3fb0d5516d"
+      },
+      "execution": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-p/old-control-r1/linux-user/probe.elf"
+        ],
+        "exit": 37,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "suba-user",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/behavior-fixes-p4-r1/e3.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "I_UNSUPPORTED file=0 byte=9\n"
+    }
+  ],
+  "passed": false,
+  "tool_sha256": "1506b46260dd0fb6109c1e99235b68833932785cd1ff582e19ddde1a47e7cb98",
+  "fixture_sha256": {
+    "k0-profile-machine.s0": "b824a673203e3116fa0d421206a19ec21a41299163b9fe7261f2aac7adc0a6f6",
+    "k0-profile-user.vt": "ca3f54a02e076dfcf2de1a22f0daee50a09912418e06ee581906d883a4e979b5",
+    "k0-profile-machine.vt": "12a15f929b29a757aee3d2fb13358511613f727114f6efc7620c84c00f6b0ee9"
+  }
+}

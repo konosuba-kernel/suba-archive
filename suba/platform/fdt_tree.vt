@@ -1,0 +1,226 @@
+// Bounded, nonrecursive structural traversal. State and name views are call-local.
+module platform::fdt;
+
+enum NodeKind { Other, Root, Memory, Reserved, Reservation, Chosen }
+struct Node { kind: NodeKind, seen: u32, children: bool }
+struct Tree {
+    cursor: usize, depth: usize, nodes: usize, memory_seen: bool, reserved_seen: bool,
+    stack: [DEPTH_CAPACITY]Node,
+    reserved_names: [RESERVATION_CAPACITY][]const u8, reserved_name_count: usize
+}
+const BAD_OFFSET: usize = BLOB_CAPACITY + 1_usize;
+
+unsafe fn terminator(data: []const u8, offset: usize, end: usize) -> usize {
+    // SAFETY: caller proved offset <= end <= data.len; cursor strictly advances.
+    unsafe {
+        var cursor: usize = offset;
+        while cursor < end {
+            if data[cursor] == 0_u8 { return cursor; }
+            cursor = cursor + 1_usize;
+        }
+    }
+    return end;
+}
+
+fn aligned_after(offset: usize, end: usize) -> usize {
+    let padding: usize = (4_usize - offset % 4_usize) % 4_usize;
+    if !fits(offset, padding, end) { return BAD_OFFSET; }
+    // QEMU/libfdt leaves nonzero property padding in observed DTBs. Padding bytes
+    // have no semantic value; only their bounded extent and next-token alignment matter.
+    return offset + padding;
+}
+
+unsafe fn named(name: []const u8, stem: []const u8) -> bool {
+    // SAFETY: both borrowed names are readable; suffix inspection follows length check.
+    unsafe {
+        if equal(name, stem) { return true; }
+        return name.len > stem.len && name[stem.len] == 64_u8 &&
+            equal(view(name, 0, stem.len), stem);
+    }
+}
+
+fn name_character(byte: u8) -> bool {
+    return (byte >= 65_u8 && byte <= 90_u8) || (byte >= 97_u8 && byte <= 122_u8) ||
+        (byte >= 48_u8 && byte <= 57_u8) || byte == 44_u8 || byte == 46_u8 ||
+        byte == 95_u8 || byte == 43_u8 || byte == 45_u8;
+}
+
+unsafe fn valid_name(name: []const u8) -> bool {
+    // SAFETY: name is bounded by a checked NUL; @ separates a nonempty name/address once.
+    unsafe {
+        var i: usize = 0;
+        var address: bool = false;
+        while i < name.len {
+            if name[i] == 64_u8 {
+                if address || i == 0_usize || i + 1_usize == name.len { return false; }
+                address = true;
+            } else {
+                if !name_character(name[i]) { return false; }
+            }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+unsafe fn valid_property_name(name: []const u8) -> bool {
+    // SAFETY: property names are at most 31 bytes (DTSpec 2.2.4.1), borrowed from strings.
+    unsafe {
+        var i: usize = 0;
+        while i < name.len {
+            if !name_character(name[i]) && name[i] != 63_u8 && name[i] != 35_u8 {
+                return false;
+            }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+unsafe fn reservation_name(tree: *Tree, name: []const u8) -> Check {
+    // SAFETY: local tree owns bounded borrowed views; names remain live until inspect returns.
+    unsafe {
+        var i: usize = 0;
+        while i < (*tree).reserved_name_count {
+            if equal((*tree).reserved_names[i], name) { return Check::Invalid; }
+            i = i + 1_usize;
+        }
+        if i == RESERVATION_CAPACITY { return Check::Limit; }
+        (*tree).reserved_names[i] = name;
+        (*tree).reserved_name_count = i + 1_usize;
+    }
+    return Check::Good;
+}
+
+unsafe fn classify_node(tree: *Tree, name: []const u8, node: *Node) -> Check {
+    // SAFETY: all pointers refer to exclusive local traversal state; depth is checked by caller.
+    unsafe {
+        if (*tree).depth == 0_usize {
+            if (*tree).nodes != 0_usize || name.len != 0_usize { return Check::Invalid; }
+            (*node).kind = NodeKind::Root;
+            return Check::Good;
+        }
+        if name.len == 0_usize || !valid_name(name) { return Check::Invalid; }
+        match (*tree).stack[(*tree).depth - 1_usize].kind {
+            NodeKind::Memory => { return Check::Unsupported; },
+            NodeKind::Reservation => { return Check::Unsupported; },
+            NodeKind::Reserved => {
+                (*node).kind = NodeKind::Reservation;
+                return reservation_name(tree, name);
+            },
+            NodeKind::Other => {}, NodeKind::Root => {}, NodeKind::Chosen => {},
+        }
+        if named(name, "memory") {
+            if (*tree).depth != 1_usize { return Check::Unsupported; }
+            if (*tree).memory_seen { return Check::Invalid; }
+            (*tree).memory_seen = true;
+            (*node).kind = NodeKind::Memory;
+        }
+        if named(name, "reserved-memory") {
+            if (*tree).depth != 1_usize || !equal(name, "reserved-memory") {
+                return Check::Unsupported;
+            }
+            if (*tree).reserved_seen { return Check::Invalid; }
+            (*tree).reserved_seen = true;
+            (*node).kind = NodeKind::Reserved;
+        }
+        if (*tree).depth == 1_usize && equal(name, "chosen") { (*node).kind = NodeKind::Chosen; }
+    }
+    return Check::Good;
+}
+
+unsafe fn begin_node(data: []const u8, header: Header, tree: *Tree) -> Check {
+    // SAFETY: cursor is within structure; name/padding are validated before any view is made.
+    unsafe {
+        if (*tree).depth == DEPTH_CAPACITY || (*tree).nodes == NODE_CAPACITY {
+            return Check::Limit;
+        }
+        let start: usize = (*tree).cursor;
+        let end: usize = terminator(data, start, header.structure_end);
+        if end == header.structure_end { return Check::Invalid; }
+        let next: usize = aligned_after(end + 1_usize, header.structure_end);
+        if next == BAD_OFFSET { return Check::Invalid; }
+        var node: Node = zero;
+        match classify_node(tree, view(data, start, end - start), core::addr_of_mut(node)) {
+            Check::Good => {},
+            Check::Invalid => { return Check::Invalid; },
+            Check::Unsupported => { return Check::Unsupported; },
+            Check::Limit => { return Check::Limit; },
+        }
+        if (*tree).depth != 0_usize { (*tree).stack[(*tree).depth - 1_usize].children = true; }
+        (*tree).stack[(*tree).depth] = node;
+        (*tree).depth = (*tree).depth + 1_usize;
+        (*tree).nodes = (*tree).nodes + 1_usize;
+        (*tree).cursor = next;
+    }
+    return Check::Good;
+}
+
+unsafe fn read_property(data: []const u8, header: Header, tree: *Tree,
+    output: *Description) -> Check {
+    // SAFETY: node exists, fields and subsequent subranges are validated before access.
+    unsafe {
+        let cursor: usize = (*tree).cursor;
+        if (*tree).depth == 0_usize || !fits(cursor, 8, header.structure_end) {
+            return Check::Invalid;
+        }
+        let node: *Node = core::addr_of_mut((*tree).stack[(*tree).depth - 1_usize]);
+        if (*node).children { return Check::Invalid; }
+        let bytes: usize = be32(data, cursor);
+        let name_offset: usize = be32(data, cursor + 4_usize);
+        let start: usize = cursor + 8_usize;
+        if !fits(start, bytes, header.structure_end) ||
+            name_offset >= header.strings_end - header.strings { return Check::Invalid; }
+        let name_start: usize = header.strings + name_offset;
+        var name_limit: usize = header.strings_end;
+        if name_limit - name_start > 32_usize { name_limit = name_start + 32_usize; }
+        let name_end: usize = terminator(data, name_start, name_limit);
+        if name_end == name_limit || name_end == name_start { return Check::Invalid; }
+        let name: []const u8 = view(data, name_start, name_end - name_start);
+        if !valid_property_name(name) { return Check::Invalid; }
+        let next: usize = aligned_after(start + bytes, header.structure_end);
+        if next == BAD_OFFSET { return Check::Invalid; }
+        (*tree).cursor = next;
+        return property(node, name,
+            view(data, start, bytes), output);
+    }
+}
+
+unsafe fn read_tree(data: []const u8, header: Header, output: *Description) -> Check {
+    var tree: Tree = zero;
+    tree.cursor = header.structure;
+    // SAFETY: local state is exclusive; each token is bounded before decode. Every iteration
+    // consumes at least four bytes, at most 65536 bytes total, with stack <=32 and nodes <=512.
+    unsafe {
+        while fits(tree.cursor, 4, header.structure_end) {
+            let token: usize = be32(data, tree.cursor);
+            tree.cursor = tree.cursor + 4_usize;
+            var result: Check = Check::Good;
+            // Numeric tags are the FDT wire token numbers, not enum representations.
+            match token {
+                1 => { result = begin_node(data, header, core::addr_of_mut(tree)); },
+                2 => {
+                    if tree.depth == 0_usize { return Check::Invalid; }
+                    result = finish_node(tree.stack[tree.depth - 1_usize]);
+                    tree.depth = tree.depth - 1_usize;
+                },
+                3 => { result = read_property(data, header, core::addr_of_mut(tree), output); },
+                4 => {},
+                9 => {
+                    if tree.depth != 0_usize || tree.nodes == 0_usize ||
+                        tree.cursor != header.structure_end { return Check::Invalid; }
+                    if !tree.memory_seen { return Check::Unsupported; }
+                    return Check::Good;
+                },
+                _ => { return Check::Invalid; },
+            }
+            match result {
+                Check::Good => {},
+                Check::Invalid => { return Check::Invalid; },
+                Check::Unsupported => { return Check::Unsupported; },
+                Check::Limit => { return Check::Limit; },
+            }
+        }
+    }
+    return Check::Invalid;
+}

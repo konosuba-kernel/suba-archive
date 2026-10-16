@@ -1,0 +1,100 @@
+// User addresses are integers until checked against the live process's page tables.
+// Serialized dispatch keeps that address space unchanged throughout a bounded copy.
+module kernel::usercopy;
+import suba::abi;
+import kernel::process;
+import kernel::space;
+
+pub unsafe fn range(id: process::Id, address: usize, bytes: usize, write: bool) -> bool {
+    if bytes > abi::IO_BYTES_MAX { return false; }
+    // SAFETY: only page-table metadata is consulted; no supplied VA is dereferenced.
+    unsafe {
+        if !process::deliverable(id) { return false; }
+        if bytes == 0_usize { return true; }
+        if address < abi::USER_BASE || address >= abi::USER_STACK_END ||
+            bytes > abi::USER_STACK_END - address { return false; }
+        var at: usize = address;
+        var remaining: usize = bytes;
+        while remaining != 0_usize {
+            match process::lookup(id, at, write) {
+                space::Lookup::Invalid => { return false; },
+                space::Lookup::Page(physical) => {},
+            }
+            var step: usize = abi::PAGE_BYTES - at % abi::PAGE_BYTES;
+            if step > remaining { step = remaining; }
+            at = at + step;
+            remaining = remaining - step;
+        }
+    }
+    return true;
+}
+
+// Caller owns destination kernel storage; rejection leaves it unchanged. No waits.
+pub unsafe fn read(id: process::Id, address: usize, destination: []u8) -> bool {
+    if destination.len > abi::PAGE_BYTES { return false; }
+    // SAFETY: all pages are checked before copying, no map/owner mutation can interleave.
+    unsafe {
+        if !range(id, address, destination.len, false) { return false; }
+        var copied: usize = 0;
+        while copied < destination.len {
+            let at: usize = address + copied;
+            var count: usize = abi::PAGE_BYTES - at % abi::PAGE_BYTES;
+            if count > destination.len - copied { count = destination.len - copied; }
+            match process::lookup(id, at, false) {
+                space::Lookup::Invalid => { return false; },
+                space::Lookup::Page(physical) => {
+                    copy_ram(physical, core::addr(destination.data) + copied, count);
+                },
+            }
+            copied = copied + count;
+        }
+    }
+    return true;
+}
+
+// Caller grants immutable kernel bytes; the entire destination must be writable.
+pub unsafe fn write(id: process::Id, address: usize, source: []const u8) -> bool {
+    if source.len > abi::PAGE_BYTES { return false; }
+    // SAFETY: physical aliases come only from validated U+W PTEs; SUM remains zero.
+    unsafe {
+        if !range(id, address, source.len, true) { return false; }
+        var copied: usize = 0;
+        while copied < source.len {
+            let at: usize = address + copied;
+            var count: usize = abi::PAGE_BYTES - at % abi::PAGE_BYTES;
+            if count > source.len - copied { count = source.len - copied; }
+            match process::lookup(id, at, true) {
+                space::Lookup::Invalid => { return false; },
+                space::Lookup::Page(physical) => {
+                    copy_ram(core::addr(source.data) + copied, physical, count);
+                },
+            }
+            copied = copied + count;
+        }
+    }
+    return true;
+}
+
+// Only validated physical aliases and owned kernel buffers reach this function.
+// Serialized dispatch keeps both nonoverlapping RAM ranges alive; a page-bounded
+// count prevents either word access from crossing into an unchecked page.
+unsafe fn copy_ram(source: usize, destination: usize, bytes: usize) -> () {
+    unsafe {
+        var copied: usize = 0;
+        if source % 8_usize == destination % 8_usize {
+            while copied < bytes && (destination + copied) % 8_usize != 0_usize {
+                *core::ptr::<u8>(destination + copied) = *core::ptr::<u8>(source + copied);
+                copied = copied + 1_usize;
+            }
+            while bytes - copied >= 8_usize {
+                *core::ptr::<usize>(destination + copied) = *core::ptr::<usize>(source + copied);
+                copied = copied + 8_usize;
+            }
+        }
+        while copied < bytes {
+            *core::ptr::<u8>(destination + copied) = *core::ptr::<u8>(source + copied);
+            copied = copied + 1_usize;
+        }
+    }
+    return ();
+}

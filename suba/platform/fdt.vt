@@ -1,0 +1,153 @@
+// Fixed QEMU virt memory description. No I/O, physical access or persistent state.
+// All views borrow the caller's immutable blob and expire before inspect returns.
+module platform::fdt;
+import suba::abi;
+
+pub const RESERVATION_CAPACITY: usize = 32;
+const BLOB_CAPACITY: usize = 65536;
+const DEPTH_CAPACITY: usize = 32;
+const NODE_CAPACITY: usize = 512;
+pub struct Region { pub base: usize, pub bytes: usize }
+pub struct Description {
+    pub ram_base: usize, pub ram_bytes: usize,
+    pub reserved_count: usize, pub reserved: [RESERVATION_CAPACITY]Region
+}
+pub enum InspectResult { Ready(Description), Invalid, Unsupported, Limit }
+enum Check { Good, Invalid, Unsupported, Limit }
+struct Header { structure: usize, structure_end: usize, strings: usize,
+    strings_end: usize, reservations: usize }
+
+fn fits(offset: usize, bytes: usize, end: usize) -> bool {
+    return offset <= end && bytes <= end - offset;
+}
+
+// SAFETY at each call: the requested width lies in the live input slice.
+unsafe fn be32(data: []const u8, offset: usize) -> usize {
+    unsafe {
+        return ((data[offset] as usize) << 24_usize) |
+            ((data[offset + 1_usize] as usize) << 16_usize) |
+            ((data[offset + 2_usize] as usize) << 8_usize) |
+            (data[offset + 3_usize] as usize);
+    }
+}
+
+unsafe fn be64(data: []const u8, offset: usize) -> usize {
+    // SAFETY: caller checked eight bytes, so both four-byte halves fit.
+    unsafe { return (be32(data, offset) << 32_usize) | be32(data, offset + 4_usize); }
+}
+
+unsafe fn view(data: []const u8, offset: usize, bytes: usize) -> []const u8 {
+    // SAFETY: caller checked this subrange; no pointer escapes inspect.
+    unsafe { return core::slice_from_raw_parts(core::ptr_add(data.data, offset), bytes); }
+}
+
+unsafe fn equal(left: []const u8, right: []const u8) -> bool {
+    if left.len != right.len { return false; }
+    // SAFETY: both slices remain readable; each cursor is less than their lengths.
+    unsafe {
+        var i: usize = 0;
+        while i < left.len {
+            if left[i] != right[i] { return false; }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+unsafe fn read_header(data: []const u8, header: *Header) -> Check {
+    if data.len > BLOB_CAPACITY { return Check::Limit; }
+    if data.len < 40_usize { return Check::Invalid; }
+    // SAFETY: all header fields fit the first forty bytes; output is a local Header.
+    unsafe {
+        if be32(data, 0) != 0xd00dfeed_usize { return Check::Invalid; }
+        let total: usize = be32(data, 4);
+        if total < 40_usize || total > data.len { return Check::Invalid; }
+        if be32(data, 20) != 17_usize || be32(data, 24) != 16_usize {
+            return Check::Unsupported;
+        }
+        let structure: usize = be32(data, 8);
+        let strings: usize = be32(data, 12);
+        let reservations: usize = be32(data, 16);
+        let string_bytes: usize = be32(data, 32);
+        let structure_bytes: usize = be32(data, 36);
+        if reservations < 40_usize || reservations % 8_usize != 0_usize ||
+            structure % 4_usize != 0_usize || structure_bytes % 4_usize != 0_usize {
+            return Check::Invalid;
+        }
+        if !fits(reservations, 16, structure) || !fits(structure, structure_bytes, strings) ||
+            !fits(strings, string_bytes, total) || structure_bytes < 12_usize {
+            return Check::Invalid;
+        }
+        *header = make Header { structure: structure, structure_end: structure + structure_bytes,
+            strings: strings, strings_end: strings + string_bytes, reservations: reservations };
+    }
+    return Check::Good;
+}
+
+unsafe fn append_region(output: *Description, base: usize, bytes: usize) -> Check {
+    if base < abi::RAM_BASE || bytes == 0_usize { return Check::Invalid; }
+    if !fits(base - abi::RAM_BASE, bytes, abi::RAM_BYTES) { return Check::Invalid; }
+    // SAFETY: output is an exclusive local Description; count guards the array write.
+    unsafe {
+        if (*output).reserved_count == RESERVATION_CAPACITY { return Check::Limit; }
+        (*output).reserved[(*output).reserved_count] = make Region { base: base, bytes: bytes };
+        (*output).reserved_count = (*output).reserved_count + 1_usize;
+    }
+    return Check::Good;
+}
+
+unsafe fn read_reservations(data: []const u8, header: Header, output: *Description) -> Check {
+    var offset: usize = header.reservations;
+    // SAFETY: each pair is bounded before reading; output holds at most 32 checked RAM ranges.
+    unsafe {
+        while fits(offset, 16, header.structure) {
+            let base: usize = be64(data, offset);
+            let bytes: usize = be64(data, offset + 8_usize);
+            if base == 0_usize && bytes == 0_usize { return Check::Good; }
+            match append_region(output, base, bytes) {
+                Check::Good => {},
+                Check::Invalid => { return Check::Invalid; },
+                Check::Unsupported => { return Check::Unsupported; },
+                Check::Limit => { return Check::Limit; },
+            }
+            var i: usize = 0;
+            while i + 1_usize < (*output).reserved_count {
+                let previous: Region = (*output).reserved[i];
+                if base < previous.base + previous.bytes && previous.base < base + bytes {
+                    return Check::Invalid;
+                }
+                i = i + 1_usize;
+            }
+            offset = offset + 16_usize;
+        }
+    }
+    return Check::Invalid;
+}
+
+// Caller grants live readable immutable ordinary RAM for data throughout this call.
+// Never dereferences described RAM. Only a fully checked tree publishes a Description.
+pub unsafe fn inspect(data: []const u8) -> InspectResult {
+    var header: Header = zero;
+    var output: Description = zero;
+    // SAFETY: caller owns the immutable blob; local outputs are exclusive and nonescaping.
+    unsafe {
+        match read_header(data, core::addr_of_mut(header)) {
+            Check::Good => {},
+            Check::Invalid => { return InspectResult::Invalid; },
+            Check::Unsupported => { return InspectResult::Unsupported; },
+            Check::Limit => { return InspectResult::Limit; },
+        }
+        match read_reservations(data, header, core::addr_of_mut(output)) {
+            Check::Good => {},
+            Check::Invalid => { return InspectResult::Invalid; },
+            Check::Unsupported => { return InspectResult::Unsupported; },
+            Check::Limit => { return InspectResult::Limit; },
+        }
+        match read_tree(data, header, core::addr_of_mut(output)) {
+            Check::Good => { return InspectResult::Ready(output); },
+            Check::Invalid => { return InspectResult::Invalid; },
+            Check::Unsupported => { return InspectResult::Unsupported; },
+            Check::Limit => { return InspectResult::Limit; },
+        }
+    }
+}

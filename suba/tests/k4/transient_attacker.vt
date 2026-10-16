@@ -1,0 +1,17 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::syscall;
+pub fn run() -> u32 {
+    unsafe {
+        if files::open("secret_unlink", 1).status != abi::DENIED { return 177; }
+        let source: syscall::Reply = files::open("sealed_source", 14);
+        if source.status != abi::OK || files::write_at(source.value, 0, "other").status != abi::OK ||
+            files::sync(source.value, true).status != abi::OK || syscall::close(source.value).status != abi::OK { return 178; }
+        let unlinked: syscall::Reply = files::unlink("secret_unlink");
+        let replaced: syscall::Reply = files::replace("sealed_source", "secret_replace");
+        if unlinked.status != abi::DENIED || replaced.status != abi::DENIED { return 179; }
+        if files::unlink("sealed_source").status != abi::OK { return 180; }
+        return 0;
+    }
+}

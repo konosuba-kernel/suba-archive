@@ -1,0 +1,119 @@
+// One process, one donated extent. Every check uses the public allocator contract.
+module test::memory;
+import kernel::memory;
+import test::memory_support;
+
+unsafe fn expected_stats(free: usize, allocated: usize, retired: usize) -> bool {
+    // SAFETY: this single-threaded probe owns the allocator context.
+    unsafe {
+        let value: memory::Stats = memory::stats();
+        return value.capacity == 3_usize && value.free == free &&
+            value.allocated == allocated && value.retired == retired;
+    }
+}
+
+unsafe fn released(frame: memory::Frame) -> bool {
+    // SAFETY: test retains no access after release, and no mapping or DMA exists.
+    unsafe {
+        match memory::release(frame) {
+            memory::ReleaseResult::Released => { return true; },
+            memory::ReleaseResult::Invalid => { return false; }
+        }
+    }
+}
+
+unsafe fn invalid(frame: memory::Frame) -> bool {
+    // SAFETY: serialized checks only; an expired token grants no memory access.
+    unsafe {
+        match memory::address(frame) {
+            memory::AddressResult::Value(address) => { return false; },
+            memory::AddressResult::Invalid => {}
+        }
+        match memory::release(frame) {
+            memory::ReleaseResult::Released => { return false; },
+            memory::ReleaseResult::Invalid => { return true; }
+        }
+    }
+}
+
+unsafe fn allocated(first: memory::Frame, second: memory::Frame,
+    third: memory::Frame) -> u32 {
+    // SAFETY: all three identities are owned here. Page views die before release.
+    unsafe {
+        if !expected_stats(0, 3, 0) { return 20; }
+        let a: []u8 = memory_support::page(first);
+        let b: []u8 = memory_support::page(second);
+        let c: []u8 = memory_support::page(third);
+        if a.len != memory::PAGE_BYTES || b.len != a.len || c.len != a.len { return 21; }
+        if core::addr(a.data) == core::addr(b.data) ||
+            core::addr(a.data) == core::addr(c.data) ||
+            core::addr(b.data) == core::addr(c.data) { return 22; }
+        if core::addr(a.data) % memory::PAGE_BYTES != 0_usize ||
+            core::addr(b.data) % memory::PAGE_BYTES != 0_usize ||
+            core::addr(c.data) % memory::PAGE_BYTES != 0_usize { return 23; }
+        if !memory_support::all(core::slice_const(a), 0) || !memory_support::all(core::slice_const(b), 0) ||
+            !memory_support::all(core::slice_const(c), 0) { return 24; }
+        memory_support::fill(a, 17);
+        memory_support::fill(b, 34);
+        memory_support::fill(c, 51);
+        match memory::allocate() {
+            memory::Allocation::Exhausted => {},
+            memory::Allocation::NotReady => { return 25; },
+            memory::Allocation::Ready(extra) => { return 26; }
+        }
+        if !expected_stats(0, 3, 0) { return 27; }
+        let second_address: usize = core::addr(b.data);
+        if !released(second) || !invalid(second) { return 28; }
+        if !expected_stats(1, 2, 0) { return 29; }
+        match memory::allocate() {
+            memory::Allocation::Exhausted => { return 30; },
+            memory::Allocation::NotReady => { return 31; },
+            memory::Allocation::Ready(reused) => {
+                let fresh: []u8 = memory_support::page(reused);
+                // Address reuse is expected with one free slot, identity reuse is not.
+                if core::addr(fresh.data) != second_address { return 32; }
+                if !memory_support::all(core::slice_const(fresh), 0) { return 33; }
+                if !invalid(second) || !expected_stats(0, 3, 0) { return 34; }
+                if !memory_support::all(core::slice_const(a), 17) || !memory_support::all(core::slice_const(c), 51) { return 35; }
+                if !released(reused) || !invalid(reused) { return 36; }
+            }
+        }
+        if !released(first) || !released(third) { return 37; }
+        if !invalid(first) || !invalid(third) { return 38; }
+        if !expected_stats(3, 0, 0) || !memory_support::guards() { return 39; }
+    }
+    return 0;
+}
+
+pub fn run() -> u32 {
+    // SAFETY: prepare returns exclusive test BSS storage valid until process exit;
+    // no aliases are used to modify the extent while a Frame is owned elsewhere.
+    unsafe {
+        let storage: []u8 = memory_support::prepare();
+        match memory::initialize(storage) {
+            memory::InitResult::Ready => {},
+            memory::InitResult::Invalid => { return 1; },
+            memory::InitResult::AlreadyInitialized => { return 2; }
+        }
+        if !expected_stats(3, 0, 0) { return 3; }
+        match memory::allocate() {
+            memory::Allocation::NotReady => { return 4; },
+            memory::Allocation::Exhausted => { return 5; },
+            memory::Allocation::Ready(first) => {
+                match memory::allocate() {
+                    memory::Allocation::NotReady => { return 6; },
+                    memory::Allocation::Exhausted => { return 7; },
+                    memory::Allocation::Ready(second) => {
+                        match memory::allocate() {
+                            memory::Allocation::NotReady => { return 8; },
+                            memory::Allocation::Exhausted => { return 9; },
+                            memory::Allocation::Ready(third) => {
+                                return allocated(first, second, third);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

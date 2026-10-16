@@ -1,0 +1,50 @@
+// Distinguish global File object exhaustion from per-process handle exhaustion.
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut ARGS: [4096]u8 = zero;
+static mut HANDLES: [64]usize = zero;
+pub fn run() -> u32 {
+    unsafe {
+        let nodes: usize = services::stats(7).value;
+        let blocks: usize = services::stats(6).value;
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "") { return 10; }
+        let child: syscall::Reply = services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0);
+        if child.status != abi::OK { return 11; }
+        var i: usize = 0;
+        while i < 63_usize {
+            let file: syscall::Reply = files::open("shared", 1);
+            if file.status != abi::OK { return 12; }
+            HANDLES[i] = file.value;
+            i = i + 1_usize;
+        }
+        // Child +63 File handles fill this process, before any FS object allocation.
+        if files::open("handle_overflow", 6).status != abi::LIMIT { return 13; }
+        var watches: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED };1];
+        let now: syscall::Reply = services::stats(1);
+        let waited: syscall::Reply = services::wait(core::slice_of(watches), now.value + 50000000_usize, false);
+        if waited.status != abi::OK || waited.value != 1_usize { return 14; }
+        match services::collect(child.value) {
+            services::Collected::Failed(status) => { return 15; },
+            services::Collected::Ready(exit) => { if exit.status != 0_usize || exit.cause != 0_usize { return 16; } }
+        }
+        i = 0;
+        while i < 63_usize {
+            if syscall::close(HANDLES[i]).status != abi::OK { return 17; }
+            i = i + 1_usize;
+        }
+        if services::stats(6).value != blocks || services::stats(7).value != nodes ||
+            services::stats(8).value != 0_usize || services::stats(9).value != 0_usize { return 18; }
+        if files::open("handle_overflow", 1).status != abi::NOT_FOUND ||
+            files::open("global_overflow", 1).status != abi::NOT_FOUND ||
+            files::open("after_close", 1).status != abi::NOT_FOUND { return 19; }
+        let newer: syscall::Reply = files::open("shared", 1);
+        if newer.status != abi::OK || newer.value == HANDLES[0_usize] ||
+            syscall::close(HANDLES[0_usize]).status != abi::BAD_HANDLE { return 20; }
+        return syscall::close(newer.value).status as u32;
+    }
+}

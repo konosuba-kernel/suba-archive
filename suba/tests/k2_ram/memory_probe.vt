@@ -1,0 +1,174 @@
+// QEMU-only probe: tests real admitted RAM without reading any reserved address.
+module test::memory_kernel;
+import suba::abi;
+import kernel::memory;
+import test::ram_config;
+const HELD_MAX: usize = 8192;
+static mut HELD: [HELD_MAX]memory::Allocation = [memory::Allocation::NotReady;8192];
+
+unsafe fn address(frame: memory::Frame) -> usize {
+    // SAFETY: this serialized test holds the frame or intentionally checks an old token.
+    unsafe {
+        match memory::address(frame) {
+            memory::AddressResult::Value(value) => { return value; },
+            memory::AddressResult::Invalid => { return 0; },
+        }
+    }
+}
+
+fn allowed(value: usize) -> bool {
+    if value < ram_config::FIRST_PAGE || value >= abi::RAM_BASE + abi::RAM_BYTES {
+        return false;
+    }
+    if value % abi::PAGE_BYTES != 0_usize { return false; }
+    if !ram_config::HOLES { return true; }
+    if value >= 0x81001000_usize && value < 0x81003000_usize { return false; }
+    if value >= 0x81202000_usize && value < 0x81205000_usize { return false; }
+    if value >= 0x81403000_usize && value < 0x81404000_usize { return false; }
+    return true;
+}
+
+unsafe fn page_zero(frame: memory::Frame) -> bool {
+    // SAFETY: caller owns the page; all 512 word accesses are in its aligned extent.
+    unsafe {
+        let words: *usize = core::ptr::<usize>(address(frame));
+        var i: usize = 0;
+        while i < abi::PAGE_BYTES / 8_usize {
+            if *core::ptr_add(words, i) != 0_usize { return false; }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+unsafe fn dirty(frame: memory::Frame) -> () {
+    // SAFETY: exclusively owned page; bounded full-page writes stop before release.
+    unsafe {
+        let words: *usize = core::ptr::<usize>(address(frame));
+        var i: usize = 0;
+        while i < abi::PAGE_BYTES / 8_usize {
+            *core::ptr_add(words, i) = i + 1_usize;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+unsafe fn check_owned(frame: memory::Frame, previous: usize) -> u32 {
+    // SAFETY: allocation succeeded; check address membership before test accesses.
+    unsafe {
+        let value: usize = address(frame);
+        if !allowed(value) { return 26; }
+        // Initialization builds an ascending chain; this also rejects duplicates.
+        if value <= previous { return 27; }
+        return 0;
+    }
+}
+
+enum ScanResult { Ready(usize), Failed(u32) }
+
+unsafe fn allocate_through_holes() -> ScanResult {
+    var count: usize = 0;
+    var previous: usize = 0;
+    // SAFETY: serialized test, bounded private HELD slots, no external page users.
+    // Initial allocations are ascending; stop just beyond the last test hole.
+    unsafe {
+        while count < HELD_MAX {
+            match memory::allocate() {
+                memory::Allocation::Ready(frame) => {
+                    let code: u32 = check_owned(frame, previous);
+                    if code != 0_u32 { return ScanResult::Failed(code); }
+                    previous = address(frame);
+                    HELD[count] = memory::Allocation::Ready(frame);
+                    count = count + 1_usize;
+                    if previous >= ram_config::PROBE_UNTIL { return ScanResult::Ready(count); }
+                },
+                memory::Allocation::Exhausted => { return ScanResult::Failed(28); },
+                memory::Allocation::NotReady => { return ScanResult::Failed(29); },
+            }
+        }
+    }
+    return ScanResult::Failed(30);
+}
+
+unsafe fn release_all(count: usize) -> u32 {
+    // SAFETY: test owns these allocations and no raw access survives this call.
+    unsafe {
+        var i: usize = 0;
+        while i < count {
+            match HELD[i] {
+                memory::Allocation::Ready(frame) => {
+                    match memory::release(frame) {
+                        memory::ReleaseResult::Released => {},
+                        memory::ReleaseResult::Invalid => { return 31; },
+                    }
+                    if address(frame) != 0_usize { return 32; }
+                },
+                memory::Allocation::Exhausted => { return 33; },
+                memory::Allocation::NotReady => { return 33; },
+            }
+            i = i + 1_usize;
+        }
+    }
+    return 0;
+}
+
+unsafe fn reuse(old: memory::Frame) -> u32 {
+    // SAFETY: old is released; the only live page is the new allocation below.
+    unsafe {
+        match memory::allocate() {
+            memory::Allocation::Ready(frame) => {
+                if !allowed(address(frame)) { return 26; }
+                if !page_zero(frame) { return 24; }
+                match memory::release(old) {
+                    memory::ReleaseResult::Released => { return 34; },
+                    memory::ReleaseResult::Invalid => {},
+                }
+                match memory::release(frame) {
+                    memory::ReleaseResult::Released => { return 0; },
+                    memory::ReleaseResult::Invalid => { return 35; },
+                }
+            },
+            memory::Allocation::Exhausted => { return 36; },
+            memory::Allocation::NotReady => { return 36; },
+        }
+    }
+}
+
+unsafe fn recycled(count: usize) -> u32 {
+    // SAFETY: the last frame is owned, then all raw uses end before releasing it.
+    unsafe {
+        match HELD[count - 1_usize] {
+            memory::Allocation::Ready(old) => {
+                if !page_zero(old) { return 23; }
+                dirty(old);
+                let release: u32 = release_all(count);
+                if release != 0_u32 { return release; }
+                return reuse(old);
+            },
+            memory::Allocation::Exhausted => { return 37; },
+            memory::Allocation::NotReady => { return 37; },
+        }
+    }
+}
+
+pub unsafe fn run() -> u32 {
+    // SAFETY: runs only immediately after successful admission, before other users.
+    unsafe {
+        let before: memory::Stats = memory::stats();
+        if before.free != before.capacity ||
+            before.allocated != 0_usize || before.retired != 0_usize { return 21; }
+        var count: usize = 0;
+        match allocate_through_holes() {
+            ScanResult::Failed(code) => { return code; },
+            ScanResult::Ready(value) => { count = value; },
+        }
+        let result: u32 = recycled(count);
+        if result != 0_u32 { return result; }
+        if before.capacity != ram_config::EXPECTED_PAGES { return 21; }
+        let after: memory::Stats = memory::stats();
+        if after.capacity != before.capacity || after.free != before.free ||
+            after.allocated != 0_usize || after.retired != 0_usize { return 38; }
+    }
+    return 0;
+}

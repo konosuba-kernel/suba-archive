@@ -1,0 +1,18 @@
+// TEST ONLY: raw slot inspection remains inside the owner and exposes counts only.
+pub unsafe fn k10_state(slot: usize) -> usize {
+    unsafe { if slot < CAPACITY { return state_code(RECORDS[slot].state) as usize; } }
+    return 0;
+}
+pub unsafe fn k10_space(slot: usize) -> usize {
+    unsafe {
+        if slot >= CAPACITY { return space::CAPACITY; }
+        match RECORDS[slot].space {
+            AddressSpace::Empty => { return space::CAPACITY; },
+            AddressSpace::Owned(id) => { return space::k10_slot(id); }
+        }
+    }
+}
+pub unsafe fn k10_borrowed_display() -> usize {
+    unsafe { if DISPLAY_CHARGED { return windows::SCREEN_PAGES; } }
+    return 0;
+}

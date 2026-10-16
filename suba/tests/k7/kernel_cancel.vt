@@ -1,0 +1,147 @@
+module test::k7_kernel;
+static mut BULK: [65536]u8 = zero;
+pub fn death() -> u32 {
+    unsafe {
+        let nodes: usize = services::stats(wire::STATS_FS_FREE_NODES).value;
+        let blocks: usize = services::stats(wire::STATS_FS_FREE_BLOCKS).value;
+        var pair: services::StreamPair = zero;
+        match services::streams() { services::Streams::Failed(status) => { return 70; },
+            services::Streams::Ready(value) => { pair = value; } }
+        let before: syscall::Reply = stream_child("before", pair);
+        if before.status != abi::OK || !signal(pair) { return 71; }
+        if files::open("temporary", wire::READ).status != abi::DENIED ||
+            files::replace("temporary", "published").status != abi::DENIED { return 72; }
+        if syscall::kill_child(before.value).status != abi::OK || !collected(before.value, abi::CANCELLED) { return 73; }
+        if files::open("temporary", wire::READ).status != abi::NOT_FOUND || !settle_nodes(nodes, blocks) { return 74; }
+        let after: syscall::Reply = stream_child("after", pair);
+        if after.status != abi::OK || !signal(pair) { return 75; }
+        if syscall::kill_child(after.value).status != abi::OK || !collected(after.value, abi::CANCELLED) { return 76; }
+        let published: syscall::Reply = files::open("published", wire::READ);
+        if published.status != abi::OK || files::read_at(published.value, 0, core::slice_of_mut(BUFFER)).value != 3_usize ||
+            BUFFER[0_usize] != 110_u8 || syscall::close(published.value).status != abi::OK { return 77; }
+        if files::unlink("published").status != abi::OK || !settle_nodes(nodes, blocks) { return 78; }
+        if syscall::close(pair.read).status != abi::OK || syscall::close(pair.write).status != abi::OK { return 79; }
+    }
+    return 0;
+}
+unsafe fn cancellation_worker(write: bool, tree: bool) -> u32 {
+    unsafe {
+        if !write {
+            let child: syscall::Reply = spawn("/sys/worker", "normal", "", 0);
+            return 91;
+        }
+        if tree {
+            let descendant: syscall::Reply = spawn("/sys/worker", "waiter", "", 0);
+            if descendant.status != abi::OK { return 105; }
+        }
+        let file: syscall::Reply = create("out/partial", "", true);
+        if file.status != abi::OK { return 92; }
+        let written: syscall::Reply = files::write_at(file.value, 0, core::slice_of(BULK));
+        return 93;
+    }
+}
+pub fn cancellation(write: bool) -> u32 {
+    unsafe {
+        let pages: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+        let nodes: usize = services::stats(wire::STATS_FS_FREE_NODES).value;
+        let blocks: usize = services::stats(wire::STATS_FS_FREE_BLOCKS).value;
+        var revoked: usize = 0;
+        var round: usize = 0;
+        while round < 100_usize {
+            var job: usize = 0;
+            var role: []const u8 = "loader";
+            var cwd: []const u8 = "/work";
+            var selector: usize = 101;
+            if write {
+                let created: syscall::Reply = job_info();
+                if created.status != abi::OK { return 94; }
+                job = created.value;
+                if round == 0_usize {
+                    let old: syscall::Reply = create(path("/src/old"), "old", false);
+                    if old.status != abi::OK { return 106; }
+                    revoked = old.value;
+                }
+                let epoch: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_SOURCE_EPOCH, 8);
+                let boot: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_BOOT_ID, 8);
+                if syscall::invoke(abi::SYS_JOB_FREEZE, job, epoch, boot, 0, 0, 0).status != abi::OK { return 95; }
+                cwd = core::slice_from_raw_parts(core::slice_of(ROOT).data, ROOT_BYTES);
+                selector = 102; role = "writer";
+                if round == 0_usize { role = "forker"; }
+            }
+            if services::stats(selector).status != abi::OK { return 96; }
+            let child: syscall::Reply = spawn("/sys/worker", role, cwd, job);
+            if child.status != abi::OK { return 97; }
+            let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+            while services::stats(100).value != 1_usize && services::stats(syscalls::STATS_TIME_TICKS).value < until {}
+            if services::stats(100).value != 1_usize { return 98; }
+            var killed: syscall::Reply = make syscall::Reply { status: abi::INVALID, value: 0 };
+            if write { killed = services::job_end(job); }
+            else { killed = syscall::kill_child(child.value); }
+            if killed.status != abi::OK { return 99; }
+            // A genuine U external trap must deliver the deferred DMA completion.
+            while services::stats(100).value == 1_usize && services::stats(syscalls::STATS_TIME_TICKS).value < until {}
+            if services::stats(100).value == 1_usize { return 117; }
+            if !collected(child.value, abi::CANCELLED) { return 118; }
+            if write && (!wait_job(job) || syscall::close(job).status != abi::OK) { return 101; }
+            if !settle_nodes(nodes, blocks) || services::stats(syscalls::STATS_FREE_PAGES).value != pages { return 102; }
+            var expected_files: usize = 0;
+            if revoked != 0_usize {
+                expected_files = 1;
+                if files::read_at(revoked, 0, core::slice_of_mut(BUFFER)).status != abi::DENIED ||
+                    files::write_at(revoked, 0, "x").status != abi::DENIED || files::sync(revoked, false).status != abi::DENIED { return 107; }
+            }
+            if services::stats(wire::STATS_FS_FILES).value != expected_files || services::stats(wire::STATS_FS_REQUESTS).value != 0_usize ||
+                services::stats(wire::STATS_BLOCK_STATE).value != 0_usize { return 103; }
+            round = round + 1_usize;
+            *core::ptr::<u32>(abi::DISPLAY_BASE) = 0x00010000_u32 | (round as u32);
+        }
+        if services::stats(103).value != 100_usize { return 104; }
+        if revoked != 0_usize && syscall::close(revoked).status != abi::OK { return 108; }
+        if services::stats(wire::STATS_FS_FILES).value != 0_usize { return 109; }
+    }
+    return 0;
+}
+pub fn death_gate() -> u32 { return gate(3); }
+pub fn load_cancel_gate() -> u32 { return gate(4); }
+pub fn job_dma_gate() -> u32 { return gate(5); }
+
+unsafe fn job_owner_worker() -> u32 {
+    unsafe {
+        let created: syscall::Reply = job_info();
+        if created.status != abi::OK { return 124; }
+        let input: syscall::Reply = create(path("/src/owner-input"), "owned", false);
+        if input.status != abi::OK || syscall::close(input.value).status != abi::OK { return 125; }
+        let epoch: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_SOURCE_EPOCH, 8);
+        let boot: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_BOOT_ID, 8);
+        if syscall::invoke(abi::SYS_JOB_FREEZE, created.value, epoch, boot, 0, 0, 0).status != abi::OK { return 126; }
+        let cwd: []const u8 = core::slice_from_raw_parts(core::slice_of(ROOT).data, ROOT_BYTES);
+        let compiler: syscall::Reply = spawn("/sys/worker", "waiter", cwd, created.value);
+        if compiler.status != abi::OK || !announce("P") { return 127; }
+        // Deliberately keep Job and Child handles live. Parent kill, not explicit
+        // JobEnd, must cancel the selected compiler and drain the real directory.
+        return pause();
+    }
+}
+pub fn job_owner_death() -> u32 {
+    unsafe {
+        let nodes: usize = services::stats(wire::STATS_FS_FREE_NODES).value;
+        let blocks: usize = services::stats(wire::STATS_FS_FREE_BLOCKS).value;
+        let pages: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+        var pair: services::StreamPair = zero;
+        match services::streams() { services::Streams::Failed(status) => { return 128; },
+            services::Streams::Ready(value) => { pair = value; } }
+        var round: usize = 0;
+        while round < 10_usize {
+            let owner: syscall::Reply = stream_child("owner", pair);
+            if owner.status != abi::OK || !signal(pair) { return 129; }
+            if syscall::kill_child(owner.value).status != abi::OK || !collected(owner.value, abi::CANCELLED) { return 130; }
+            if !settle_nodes(nodes, blocks) || services::stats(syscalls::STATS_FREE_PAGES).value != pages ||
+                services::stats(wire::STATS_FS_FILES).value != 0_usize ||
+                services::stats(wire::STATS_FS_REQUESTS).value != 0_usize { return 131; }
+            round = round + 1_usize;
+        }
+        if syscall::close(pair.read).status != abi::OK || syscall::close(pair.write).status != abi::OK { return 132; }
+    }
+    return 0;
+}
+pub fn job_owner_gate() -> u32 { return gate(6); }

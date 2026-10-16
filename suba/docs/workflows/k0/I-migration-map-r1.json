@@ -1,0 +1,381 @@
+{
+  "scope": "Path mapping and component-byte comparison only; changed validation tools require independent migration-impact review. Historical acceptance files unchanged.",
+  "files": [
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/target.vt",
+      "current_path": "biomiya/compiler/target.vt",
+      "accepted_sha256": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+      "current_sha256": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/image.vt",
+      "current_path": "biomiya/compiler/image.vt",
+      "accepted_sha256": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+      "current_sha256": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/rv64.vt",
+      "current_path": "biomiya/compiler/rv64.vt",
+      "accepted_sha256": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+      "current_sha256": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/main.vt",
+      "current_path": "biomiya/compiler/main.vt",
+      "accepted_sha256": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+      "current_sha256": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/input.vt",
+      "current_path": "biomiya/compiler/input.vt",
+      "accepted_sha256": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+      "current_sha256": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/tools/check_q_profiles.py",
+      "current_path": "biomiya/tools/check_q_profiles.py",
+      "accepted_sha256": "1506b46260dd0fb6109c1e99235b68833932785cd1ff582e19ddde1a47e7cb98",
+      "current_sha256": "ff731877bbe556af752cfe470b95544a8ac7bec7630b87197f345c576feac637",
+      "unchanged_bytes": false
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/tests/k0-profile-machine.s0",
+      "current_path": "biomiya/tests/compiler/k0-profile-machine.s0",
+      "accepted_sha256": "b824a673203e3116fa0d421206a19ec21a41299163b9fe7261f2aac7adc0a6f6",
+      "current_sha256": "b824a673203e3116fa0d421206a19ec21a41299163b9fe7261f2aac7adc0a6f6",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/tests/k0-profile-user.vt",
+      "current_path": "biomiya/tests/compiler/k0-profile-user.vt",
+      "accepted_sha256": "ca3f54a02e076dfcf2de1a22f0daee50a09912418e06ee581906d883a4e979b5",
+      "current_sha256": "ca3f54a02e076dfcf2de1a22f0daee50a09912418e06ee581906d883a4e979b5",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "biomiya/core-s/next/q/tests/k0-profile-machine.vt",
+      "current_path": "biomiya/tests/compiler/k0-profile-machine.vt",
+      "accepted_sha256": "12a15f929b29a757aee3d2fb13358511613f727114f6efc7620c84c00f6b0ee9",
+      "current_sha256": "12a15f929b29a757aee3d2fb13358511613f727114f6efc7620c84c00f6b0ee9",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "suba/docs/workflows/k0/P-contract.md",
+      "current_path": "suba/docs/workflows/k0/P-contract.md",
+      "accepted_sha256": "168557da174ab1630cf055808e34ed8707e7d2326ce30313baf58123578b9a6b",
+      "current_sha256": "168557da174ab1630cf055808e34ed8707e7d2326ce30313baf58123578b9a6b",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "suba/docs/workflows/k0/P-r1.md",
+      "current_path": "suba/docs/workflows/k0/P-r1.md",
+      "accepted_sha256": "95fc1356bf395c7b5dfabf8e6170c16d5cecd506d9d21b604feb6fff8cb332a1",
+      "current_sha256": "95fc1356bf395c7b5dfabf8e6170c16d5cecd506d9d21b604feb6fff8cb332a1",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "suba/docs/workflows/k0/P-build-r1.json",
+      "current_path": "suba/docs/workflows/k0/P-build-r1.json",
+      "accepted_sha256": "2501c8c66020dee3cf6e5731d02911a7d5ea7ea556e43ec79c55e640383e1336",
+      "current_sha256": "2501c8c66020dee3cf6e5731d02911a7d5ea7ea556e43ec79c55e640383e1336",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "suba/docs/workflows/k0/P-tests-r1.json",
+      "current_path": "suba/docs/workflows/k0/P-tests-r1.json",
+      "accepted_sha256": "28582ae482458468e564a240ef6f5b3a7eec726bcc7e8b2767585fbba4b09ca9",
+      "current_sha256": "28582ae482458468e564a240ef6f5b3a7eec726bcc7e8b2767585fbba4b09ca9",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "suba/docs/workflows/k0/P-tests-optimized-r1.json",
+      "current_path": "suba/docs/workflows/k0/P-tests-optimized-r1.json",
+      "accepted_sha256": "47981cd7ce403de96f0739883706ce9c17c0e47051240c79cb630c49c516521e",
+      "current_sha256": "47981cd7ce403de96f0739883706ce9c17c0e47051240c79cb630c49c516521e",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "P",
+      "before_path": "suba/docs/workflows/k0/P-old-control-r1.json",
+      "current_path": "suba/docs/workflows/k0/P-old-control-r1.json",
+      "accepted_sha256": "54e1bef2fd132483865bf4d9273ae2c3b80cdf814a8378621e3ffae58aa01c68",
+      "current_sha256": "54e1bef2fd132483865bf4d9273ae2c3b80cdf814a8378621e3ffae58aa01c68",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/next/q/model.vt",
+      "current_path": "biomiya/compiler/model.vt",
+      "accepted_sha256": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+      "current_sha256": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/next/q/blocking.vt",
+      "current_path": "biomiya/compiler/blocking.vt",
+      "accepted_sha256": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+      "current_sha256": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/next/q/runtime/host_linux.vt",
+      "current_path": "biomiya/compiler/runtime/host_linux.vt",
+      "accepted_sha256": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+      "current_sha256": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/tools/check_q_host.py",
+      "current_path": "biomiya/tools/check_q_host.py",
+      "accepted_sha256": "d570ee5213186f39b369de4f6b042f941714e0aa7c4b6d848a59794976b77672",
+      "current_sha256": "ee0b544a80db81cc2af1ee20ff7860b756040cbf8ba43528744b9a04e8e274ab",
+      "unchanged_bytes": false
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/next/q/tests/k0-host-probe.vt",
+      "current_path": "biomiya/tests/compiler/k0-host-probe.vt",
+      "accepted_sha256": "bb2385739304355f196ad915f93f549bcc5ce8f74c2bad7229f7f7d1befaecb5",
+      "current_sha256": "bb2385739304355f196ad915f93f549bcc5ce8f74c2bad7229f7f7d1befaecb5",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/next/q/tests/k0-host-replacement.vt",
+      "current_path": "biomiya/tests/compiler/k0-host-replacement.vt",
+      "accepted_sha256": "830b2490b60fc290cb915bebabbea4d68c2d3877054ddff27c888d3841a897b6",
+      "current_sha256": "830b2490b60fc290cb915bebabbea4d68c2d3877054ddff27c888d3841a897b6",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "biomiya/core-s/next/q/tests/k0-host-trap.s0",
+      "current_path": "biomiya/tests/compiler/k0-host-trap.s0",
+      "accepted_sha256": "72dccf887fa0d68b6400c3d363e48c80f72ddd44e0e555e7ad5f4fe8063168ff",
+      "current_sha256": "72dccf887fa0d68b6400c3d363e48c80f72ddd44e0e555e7ad5f4fe8063168ff",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-build-r1.json",
+      "current_path": "suba/docs/workflows/k0/H-build-r1.json",
+      "accepted_sha256": "52c9a6437352f2668beccc0a55761961df27f0b9ec0b48fea59daf4d43224d4a",
+      "current_sha256": "52c9a6437352f2668beccc0a55761961df27f0b9ec0b48fea59daf4d43224d4a",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-diagnostics-r1.json",
+      "current_path": "suba/docs/workflows/k0/H-diagnostics-r1.json",
+      "accepted_sha256": "a094bd5e4eefeb44df4f4d49e8917349c0af45e7e712e45b7e8ce5bf0a245878",
+      "current_sha256": "a094bd5e4eefeb44df4f4d49e8917349c0af45e7e712e45b7e8ce5bf0a245878",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-io-r1.json",
+      "current_path": "suba/docs/workflows/k0/H-io-r1.json",
+      "accepted_sha256": "07f95173b545839eb5f8264bb3672e244d379e236e299c4679febcb5a251588d",
+      "current_sha256": "07f95173b545839eb5f8264bb3672e244d379e236e299c4679febcb5a251588d",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-probe-failed-initial.json",
+      "current_path": "suba/docs/workflows/k0/H-probe-failed-initial.json",
+      "accepted_sha256": "14757025aca0ac6ce63d71590c1a115c2a68beb4a231e4023eaf9fdc23100962",
+      "current_sha256": "14757025aca0ac6ce63d71590c1a115c2a68beb4a231e4023eaf9fdc23100962",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-probe-optimized-r1.json",
+      "current_path": "suba/docs/workflows/k0/H-probe-optimized-r1.json",
+      "accepted_sha256": "6f222384099f5dd33e14e06df2753272903812552fa90e7ec46671e7792b323a",
+      "current_sha256": "6f222384099f5dd33e14e06df2753272903812552fa90e7ec46671e7792b323a",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-probe-r1.json",
+      "current_path": "suba/docs/workflows/k0/H-probe-r1.json",
+      "accepted_sha256": "fda2117c7d9eadbbca22904a36ae8133dc44b67e7165737ecf8864275d175ff5",
+      "current_sha256": "fda2117c7d9eadbbca22904a36ae8133dc44b67e7165737ecf8864275d175ff5",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-report-r1.md",
+      "current_path": "suba/docs/workflows/k0/H-report-r1.md",
+      "accepted_sha256": "d968252d355fc2187decfda5152ca69da2f8c7c7f943fef9557859edbec6d376",
+      "current_sha256": "d968252d355fc2187decfda5152ca69da2f8c7c7f943fef9557859edbec6d376",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "H",
+      "before_path": "suba/docs/workflows/k0/H-source-inputs-r1.json",
+      "current_path": "suba/docs/workflows/k0/H-source-inputs-r1.json",
+      "accepted_sha256": "9414e87c5618e195cde7fd26514a61850d9dc60a325c2a2c410557463b0f01af",
+      "current_sha256": "9414e87c5618e195cde7fd26514a61850d9dc60a325c2a2c410557463b0f01af",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "biomiya/core-s/next/q/s0.vt",
+      "current_path": "biomiya/compiler/s0.vt",
+      "accepted_sha256": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+      "current_sha256": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "biomiya/core-s/next/q/tests/k0-s0-encoding.s0",
+      "current_path": "biomiya/tests/compiler/k0-s0-encoding.s0",
+      "accepted_sha256": "2b63d6d8dc1e54b8a93fe12ff4c8043d05e0152ca5bbfe84ba72b20970372c9a",
+      "current_sha256": "2b63d6d8dc1e54b8a93fe12ff4c8043d05e0152ca5bbfe84ba72b20970372c9a",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "biomiya/core-s/next/q/tests/k0-s0-invalid.json",
+      "current_path": "biomiya/tests/compiler/k0-s0-invalid.json",
+      "accepted_sha256": "fd40b43f420e28a672da8f5b60da42fd06fe7c190f21babab6c56c9a83b30efd",
+      "current_sha256": "fd40b43f420e28a672da8f5b60da42fd06fe7c190f21babab6c56c9a83b30efd",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "biomiya/core-s/next/q/tests/k0-s0-run.s0",
+      "current_path": "biomiya/tests/compiler/k0-s0-run.s0",
+      "accepted_sha256": "c952b809b7c376e6ad411fc6c7562f41adbbb47e679284189b8cf9956e542fdd",
+      "current_sha256": "c952b809b7c376e6ad411fc6c7562f41adbbb47e679284189b8cf9956e542fdd",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "biomiya/core-s/next/q/tests/k0-s0-run.vt",
+      "current_path": "biomiya/tests/compiler/k0-s0-run.vt",
+      "accepted_sha256": "aa705e52cab6d21b71c5d316bb9c43ed7fa5e5efdc7bf27587ca356572b876d7",
+      "current_sha256": "aa705e52cab6d21b71c5d316bb9c43ed7fa5e5efdc7bf27587ca356572b876d7",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "biomiya/core-s/tools/check_q_s0_system.py",
+      "current_path": "biomiya/tools/check_q_s0_system.py",
+      "accepted_sha256": "4b94094e6902b9c8c4f6b64a64e1ba1148366256b8ab602fc4f71f33abcdabda",
+      "current_sha256": "e776949aafc51721fdeb57a975338778b7299014d5fc1b45ce483f0cad04d796",
+      "unchanged_bytes": false
+    },
+    {
+      "component": "S",
+      "before_path": "suba/docs/workflows/k0/S-r1-build.json",
+      "current_path": "suba/docs/workflows/k0/S-r1-build.json",
+      "accepted_sha256": "01aed19a926b5ccb7aa7cf7f53e800472c1f2ddf3a1506d210388fd5f27e98e8",
+      "current_sha256": "01aed19a926b5ccb7aa7cf7f53e800472c1f2ddf3a1506d210388fd5f27e98e8",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "suba/docs/workflows/k0/S-r1-control.json",
+      "current_path": "suba/docs/workflows/k0/S-r1-control.json",
+      "accepted_sha256": "59595b9ef43c56eff1197f27cc07ecdd6532fab7478ae89353081734e9b1ac03",
+      "current_sha256": "59595b9ef43c56eff1197f27cc07ecdd6532fab7478ae89353081734e9b1ac03",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "suba/docs/workflows/k0/S-r1-results.json",
+      "current_path": "suba/docs/workflows/k0/S-r1-results.json",
+      "accepted_sha256": "b2768dd2a7e2ee62283eb989ded4800fc1bcd7b06c4ab10cce258557ab29de01",
+      "current_sha256": "b2768dd2a7e2ee62283eb989ded4800fc1bcd7b06c4ab10cce258557ab29de01",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "suba/docs/workflows/k0/S-r1-verification.json",
+      "current_path": "suba/docs/workflows/k0/S-r1-verification.json",
+      "accepted_sha256": "d05ec7daf47e6e6c53e9f7dcd7fdc8bb3979ffb8616f1edbcf09a62284ba7724",
+      "current_sha256": "d05ec7daf47e6e6c53e9f7dcd7fdc8bb3979ffb8616f1edbcf09a62284ba7724",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "S",
+      "before_path": "suba/docs/workflows/k0/S-r1.md",
+      "current_path": "suba/docs/workflows/k0/S-r1.md",
+      "accepted_sha256": "c978f35e6f726b54099932d6fc2c94b2f0763d1fe90501c3cbea6822f487f99e",
+      "current_sha256": "c978f35e6f726b54099932d6fc2c94b2f0763d1fe90501c3cbea6822f487f99e",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "C",
+      "before_path": "suba/abi/contract.vt",
+      "current_path": "suba/abi/contract.vt",
+      "accepted_sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+      "current_sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "C",
+      "before_path": "suba/abi/README.md",
+      "current_path": "suba/abi/README.md",
+      "accepted_sha256": "67f23a82124f3254acf356f9608730f6d6d1399ae40dbd62392fc5e9c5ea2b36",
+      "current_sha256": "67f23a82124f3254acf356f9608730f6d6d1399ae40dbd62392fc5e9c5ea2b36",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "C",
+      "before_path": "suba/platform/README.md",
+      "current_path": "suba/platform/README.md",
+      "accepted_sha256": "ab3f12a9de907c3947e8014ad0e1886ad2d3f1bed09a7abe13897b47ffbc3345",
+      "current_sha256": "ab3f12a9de907c3947e8014ad0e1886ad2d3f1bed09a7abe13897b47ffbc3345",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "C",
+      "before_path": "suba/platform/environment.json",
+      "current_path": "suba/platform/environment.json",
+      "accepted_sha256": "b14033bcef9f58990c76d3f6584d8dffbad649b9b896b34a11fd2f4443f64501",
+      "current_sha256": "b14033bcef9f58990c76d3f6584d8dffbad649b9b896b34a11fd2f4443f64501",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "C",
+      "before_path": "suba/tests/k0/abi.vt",
+      "current_path": "suba/tests/k0/abi.vt",
+      "accepted_sha256": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+      "current_sha256": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+      "unchanged_bytes": true
+    },
+    {
+      "component": "C",
+      "before_path": "suba/tools/check_abi.py",
+      "current_path": "suba/tools/check_abi.py",
+      "accepted_sha256": "4ac3af5dc17ac4097f0c131c41fd2965db3c276be90b416dc40499490a4d524f",
+      "current_sha256": "14f827249962af5d9811c10f16c42c143c1418292e27db74cdf6d059f98da665",
+      "unchanged_bytes": false
+    }
+  ]
+}

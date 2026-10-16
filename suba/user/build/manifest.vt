@@ -1,0 +1,225 @@
+// Snapshot manifest planner. Borrowed source views remain valid until planning ends.
+// This rewrites paths; the compiler remains the authority for language/profile/bind validity.
+module user::build::manifest;
+import runtime::bytes;
+import user::text::utf8;
+pub struct File { pub path: []const u8, pub assembly: bool }
+pub struct Plan { files: [72]File, count: usize, sources: usize, assemblies: usize,
+    output: []const u8, rewritten: usize, valid: bool, kernel: bool }
+pub enum Outcome { Ready, Invalid(usize), Limit }
+struct Line { start: usize, end: usize, next: usize, key: []const u8, value: []const u8, valid: bool }
+pub fn begin() -> Plan { var plan: Plan = zero; return plan; }
+
+// Caller retains the complete validated manifest; every borrowed view stays inside it.
+unsafe fn line(data: []const u8, offset: usize) -> Line {
+    var result: Line = zero;
+    result.start = offset;
+    result.end = offset;
+    unsafe {
+        while result.end < data.len && data[result.end] != 10_u8 && data[result.end] != 13_u8 {
+            result.end = result.end + 1_usize;
+        }
+        result.next = result.end;
+        if result.next < data.len { result.next = result.next + 1_usize; }
+        var at: usize = offset;
+        while at < result.end && bytes::space(data[at]) { at = at + 1_usize; }
+        result.valid = true;
+        if at == result.end || data[at] == 35_u8 { return result; }
+        let start: usize = at;
+        while at < result.end && !bytes::space(data[at]) { at = at + 1_usize; }
+        result.key = bytes::view(data, start, at);
+        while at < result.end && bytes::space(data[at]) { at = at + 1_usize; }
+        let value: usize = at;
+        while at < result.end && !bytes::space(data[at]) { at = at + 1_usize; }
+        result.value = bytes::view(data, value, at);
+        while at < result.end && bytes::space(data[at]) { at = at + 1_usize; }
+        result.valid = at == result.end && result.value.len != 0_usize;
+        return result;
+    }
+}
+
+unsafe fn append(plan: *Plan, output: []u8, value: []const u8) -> bool {
+    unsafe {
+        if (*plan).rewritten > output.len || value.len > output.len - (*plan).rewritten { return false; }
+        var i: usize = 0;
+        while i < value.len { output[(*plan).rewritten + i] = value[i]; i = i + 1_usize; }
+        (*plan).rewritten = (*plan).rewritten + value.len;
+    }
+    return true;
+}
+
+unsafe fn add_file(plan: *Plan, value: []const u8, assembly: bool) -> bool {
+    unsafe {
+        if !snapshot_path(value) { return false; }
+        if (assembly && (*plan).assemblies == 8_usize) || (!assembly && (*plan).sources == 64_usize) { return false; }
+        var i: usize = 0;
+        while i < (*plan).count {
+            if overlaps(value, (*plan).files[i].path) { return false; }
+            i = i + 1_usize;
+        }
+        (*plan).files[(*plan).count] = make File { path: value, assembly: assembly };
+        (*plan).count = (*plan).count + 1_usize;
+        if assembly { (*plan).assemblies = (*plan).assemblies + 1_usize; }
+        else { (*plan).sources = (*plan).sources + 1_usize; }
+    }
+    return true;
+}
+
+// File paths cannot also name an ancestor directory of another frozen input.
+unsafe fn prefix_file(file: []const u8, path: []const u8) -> bool {
+    unsafe {
+        if file.len > path.len { return false; }
+        if !bytes::equal(file, bytes::view(path, 0, file.len)) { return false; }
+        return file.len == path.len || path[file.len] == 47_u8;
+    }
+}
+unsafe fn overlaps(left: []const u8, right: []const u8) -> bool {
+    unsafe { return prefix_file(left, right) || prefix_file(right, left); }
+}
+
+// Compiler syntax and filesystem component limits are independent contracts.
+// max_depth counts components beneath an already chosen root.
+unsafe fn filesystem_path(value: []const u8, max_bytes: usize, max_depth: usize) -> bool {
+    unsafe {
+        if value.len > max_bytes || !bytes::path(value) { return false; }
+        match utf8::validate(value) {
+            utf8::Validation::Invalid(at) => { return false; },
+            utf8::Validation::Valid => {}
+        }
+        var start: usize = 0;
+        var depth: usize = 0;
+        var i: usize = 0;
+        while i <= value.len {
+            var separator: bool = i == value.len;
+            if !separator { separator = value[i] == 47_u8; }
+            if separator {
+                if i - start > 63_usize { return false; }
+                depth = depth + 1_usize;
+                if depth > max_depth { return false; }
+                start = i + 1_usize;
+            }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+// .suba-* components belong to temporary publication and build-record storage.
+unsafe fn reserved_output(path: []const u8) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < path.len {
+            if i == 0_usize || path[i - 1_usize] == 47_u8 {
+                if path.len - i >= 6_usize && bytes::equal(bytes::view(path, i, i + 6_usize), ".suba-") {
+                    return true;
+                }
+            }
+            i = i + 1_usize;
+        }
+    }
+    return false;
+}
+
+unsafe fn snapshot_path(value: []const u8) -> bool {
+    unsafe {
+        // /jobs/id/src consumes three of the filesystem's sixteen components.
+        if !filesystem_path(value, 92, 13) { return false; }
+        return !overlaps(value, "program.build") && !overlaps(value, ".suba-original.build") &&
+            !overlaps(value, ".suba-inputs.txt");
+    }
+}
+
+// Private buffers do not overlap. Original manifest remains immutable for the
+// lifetime of Plan; output is a separate >=0-byte arena, capped at16KiB.
+// Failure may modify output/Plan but valid remains false, so no query can use it.
+pub unsafe fn prepare(plan: *Plan, input: []const u8, output: []u8) -> Outcome {
+    unsafe {
+        *plan = begin();
+        if input.len > 16384_usize || output.len > 16384_usize { return Outcome::Limit; }
+        match utf8::validate(input) {
+            utf8::Validation::Invalid(at) => { return Outcome::Invalid(at); },
+            utf8::Validation::Valid => {},
+        }
+        if input.len >= 3_usize && input[0] == 239_u8 && input[1] == 187_u8 && input[2] == 191_u8 {
+            return Outcome::Invalid(0);
+        }
+        var at: usize = 0;
+        while at < input.len {
+            let item: Line = line(input, at);
+            if !item.valid { return Outcome::Invalid(at); }
+            if bytes::equal(item.key, "profile") {
+                if !bytes::equal(item.value, "suba-user") && !bytes::equal(item.value, "suba-kernel") {
+                    return Outcome::Invalid(at);
+                }
+                (*plan).kernel = bytes::equal(item.value, "suba-kernel");
+            }
+            let source: bool = bytes::equal(item.key, "source");
+            let assembly: bool = bytes::equal(item.key, "assembly");
+            if source || assembly {
+                if !add_file(plan, item.value, assembly) { return Outcome::Invalid(at); }
+                if !append(plan, output, item.key) || !append(plan, output, " src/") ||
+                    !append(plan, output, item.value) || !append(plan, output, "\n") { return Outcome::Limit; }
+            } else {
+                if bytes::equal(item.key, "output") {
+                    if (*plan).output.len != 0_usize || !filesystem_path(item.value, 96, 15) || reserved_output(item.value) { return Outcome::Invalid(at); }
+                    (*plan).output = item.value;
+                    if !append(plan, output, "output out/result.elf\n") { return Outcome::Limit; }
+                } else {
+                    // Preserve unknown directives verbatim for the actual compiler to reject.
+                    if !append(plan, output, bytes::view(input, item.start, item.next)) { return Outcome::Limit; }
+                    if item.next == input.len && item.end == item.next {
+                        if !append(plan, output, "\n") { return Outcome::Limit; }
+                    }
+                }
+            }
+            at = item.next;
+        }
+        if (*plan).sources == 0_usize || (*plan).output.len == 0_usize { return Outcome::Invalid(input.len); }
+        var i: usize = 0;
+        while i < (*plan).count {
+            if overlaps((*plan).output, (*plan).files[i].path) { return Outcome::Invalid(input.len); }
+            i = i + 1_usize;
+        }
+        (*plan).valid = true;
+    }
+    return Outcome::Ready;
+}
+
+// Check paths supplied outside the manifest before any copy/create. Empty policy
+// means no Blocking policy was requested. Policy bytes are an additional input.
+pub unsafe fn context(plan: *const Plan, original: []const u8, policy: []const u8) -> bool {
+    unsafe {
+        if !(*plan).valid || !filesystem_path(original, 96, 15) ||
+            overlaps((*plan).output, original) { return false; }
+        if policy.len != 0_usize && (!snapshot_path(policy) ||
+            overlaps((*plan).output, policy) || overlaps(original, policy)) {
+            return false;
+        }
+        var i: usize = 0;
+        while i < (*plan).count {
+            if overlaps(original, (*plan).files[i].path) { return false; }
+            if policy.len != 0_usize && overlaps(policy, (*plan).files[i].path) { return false; }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+pub unsafe fn count(plan: *const Plan) -> usize {
+    unsafe { if !(*plan).valid { return 0; } return (*plan).count; }
+}
+pub unsafe fn rewritten_bytes(plan: *const Plan) -> usize {
+    unsafe { if !(*plan).valid { return 0; } return (*plan).rewritten; }
+}
+pub unsafe fn file(plan: *const Plan, index: usize) -> File {
+    unsafe {
+        if !(*plan).valid || index >= (*plan).count { return make File { path: "", assembly: false }; }
+        return (*plan).files[index];
+    }
+}
+pub unsafe fn output_path(plan: *const Plan) -> []const u8 {
+    unsafe { if !(*plan).valid { return ""; } return (*plan).output; }
+}
+
+pub unsafe fn kernel(plan: *const Plan) -> bool {
+    unsafe { return (*plan).valid && (*plan).kernel; }
+}

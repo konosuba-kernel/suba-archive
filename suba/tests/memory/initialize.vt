@@ -1,0 +1,66 @@
+module test::memory;
+import kernel::memory;
+import test::memory_support;
+
+unsafe fn unchanged() -> bool {
+    // SAFETY: serialized test context, no successful donation yet.
+    unsafe {
+        let value: memory::Stats = memory::stats();
+        if value.capacity != 0_usize || value.free != 0_usize ||
+            value.allocated != 0_usize || value.retired != 0_usize { return false; }
+        match memory::allocate() {
+            memory::Allocation::NotReady => { return true; },
+            memory::Allocation::Ready(frame) => { return false; },
+            memory::Allocation::Exhausted => { return false; }
+        }
+    }
+}
+
+unsafe fn rejected(address: usize, length: usize) -> bool {
+    // SAFETY: malformed descriptors deliberately probe rejection before storage
+    // access. They are not real donations. Do not use such descriptors in kernels.
+    unsafe {
+        let bytes: []u8 = core::slice_from_raw_parts_mut(core::ptr::<u8>(address), length);
+        match memory::initialize(bytes) {
+            memory::InitResult::Invalid => { return unchanged(); },
+            memory::InitResult::Ready => { return false; },
+            memory::InitResult::AlreadyInitialized => { return false; }
+        }
+    }
+}
+
+pub fn run() -> u32 {
+    // SAFETY: test process is the only allocator caller. Successful donation is
+    // live, aligned ordinary BSS. Invalid descriptors must never be dereferenced.
+    unsafe {
+        if !unchanged() { return 1; }
+        let storage: []u8 = memory_support::prepare();
+        let base: usize = core::addr(storage.data);
+        let page: usize = memory::PAGE_BYTES;
+        if !rejected(0, page) { return 2; }
+        if !rejected(base + 1_usize, page) { return 3; }
+        if !rejected(base, 0) { return 4; }
+        if !rejected(base, page - 1_usize) { return 5; }
+        if !rejected(base, page + 1_usize) { return 6; }
+        if !rejected(0xfffffffffffff000, page) { return 7; }
+        if !rejected(base, (memory::PAGE_CAPACITY + 1_usize) * page) { return 8; }
+        if !memory_support::all(core::slice_const(storage), 173) || !memory_support::guards() { return 9; }
+        match memory::initialize(storage) {
+            memory::InitResult::Ready => {},
+            memory::InitResult::Invalid => { return 10; },
+            memory::InitResult::AlreadyInitialized => { return 11; }
+        }
+        match memory::initialize(storage) {
+            memory::InitResult::AlreadyInitialized => {},
+            memory::InitResult::Ready => { return 12; },
+            memory::InitResult::Invalid => { return 13; }
+        }
+        let value: memory::Stats = memory::stats();
+        if value.capacity != 3_usize || value.free != 3_usize ||
+            value.allocated != 0_usize || value.retired != 0_usize { return 14; }
+        // Initialization changes metadata only, not donated pages or guards.
+        if !memory_support::all(core::slice_const(storage), 173) || !memory_support::guards() { return 15; }
+        if sizeof(memory::Frame) != 8_usize || sizeof(memory::Stats) != 32_usize { return 16; }
+    }
+    return 0;
+}

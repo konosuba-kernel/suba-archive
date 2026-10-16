@@ -1,0 +1,419 @@
+{
+  "compiler": "/home/mii/code/konOSuba/biomiya/build/k0-p4-r2/e3.elf",
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "input_sha256": {
+    "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+    "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+    "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+    "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+    "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+    "tests/compiler/input.vt": "7e4f287f9a4ea86018f46bf9efc808772f3511cc17db83c1cc3f42b6958aacaa",
+    "tests/compiler/input-short.s0": "1c2ca777c78ee841e90b88d7477b2a87faadb51d91df3cd1910d90802ecd9614",
+    "tests/compiler/input-write-failure.s0": "eb4a353dfac5daeae0ad9a0fc79eb5f85b0994364f4572e93ddaf72ffdb02237",
+    "tools/check_q_input.py": "4473b987cb5de332ac88b95ab2cb927ea3d2fd9d5e52cb0ff791be151880c7ca"
+  },
+  "builds": [
+    {
+      "name": "tokens",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/compiler.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=8 imports=13 assembly_files=1 source=63485 assembly=345 names=1105 name_bytes=19734 decls=279 types=130 fields=118 params=151 max_ast=814 max_ir=1424 max_frame=7920 max_bindings=15 max_defers=0 max_loops=2 max_slots=887 max_args=103 max_params=5 text=196320 data=495 objects=100 symbols=2755 fixups=5264 relocations=4 elf=204896\n",
+      "elf_sha256": "1b44eb3c0d55addfd7640b508558d71efe2adf186ccc46be6f89fd349c69331a"
+    },
+    {
+      "name": "normal",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/compiler.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=8 imports=13 assembly_files=1 source=63485 assembly=345 names=1105 name_bytes=19734 decls=279 types=130 fields=118 params=151 max_ast=814 max_ir=1424 max_frame=7920 max_bindings=15 max_defers=0 max_loops=2 max_slots=887 max_args=103 max_params=5 text=196320 data=495 objects=100 symbols=2755 fixups=5264 relocations=4 elf=204896\n",
+      "elf_sha256": "03ed32ee16c0c95dbc63af9ab61c585fc596a410a28963e9c9dea19a7a02ef14"
+    },
+    {
+      "name": "short",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/compiler.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=8 imports=13 assembly_files=1 source=63485 assembly=581 names=1108 name_bytes=19774 decls=279 types=130 fields=118 params=151 max_ast=814 max_ir=1424 max_frame=7920 max_bindings=15 max_defers=0 max_loops=2 max_slots=887 max_args=103 max_params=5 text=196380 data=495 objects=100 symbols=2758 fixups=5268 relocations=4 elf=204896\n",
+      "elf_sha256": "058dafa8339c2fe4cec2805af351a1b797c792d280e9d278a098cc7aa4d69613"
+    },
+    {
+      "name": "failure",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/compiler.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=8 imports=13 assembly_files=1 source=63485 assembly=698 names=1108 name_bytes=19773 decls=279 types=130 fields=118 params=151 max_ast=814 max_ir=1424 max_frame=7920 max_bindings=15 max_defers=0 max_loops=2 max_slots=887 max_args=103 max_params=5 text=196396 data=495 objects=100 symbols=2758 fixups=5269 relocations=4 elf=204896\n",
+      "elf_sha256": "c35564d6bf4df1836fbfad43465233432058924be0be477c5ed65db2daaf0c46"
+    }
+  ],
+  "tests": [
+    {
+      "identity": "target_lexer_decodes_numbers_strings_ranges_and_nested_comments",
+      "case": "tokens",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-tokens/probe.elf",
+        "project"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "identity": "target_input_keeps_manifest_snapshots_and_handles_short_io",
+      "case": "normal",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "identity": "target_input_keeps_manifest_snapshots_and_handles_short_io",
+      "case": "normal-existing-output",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "save path=copied.vt phase=create errno=17 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n"
+    },
+    {
+      "identity": "target_input_keeps_manifest_snapshots_and_handles_short_io",
+      "case": "short",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-short/probe.elf",
+        "project"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "identity": "target_input_keeps_manifest_snapshots_and_handles_short_io",
+      "case": "short-existing-output",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-short/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "save path=copied.vt phase=create errno=17 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n"
+    },
+    {
+      "identity": "target_input_keeps_manifest_snapshots_and_handles_short_io",
+      "case": "partial-write-cleanup",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-failure/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "save path=copied.vt phase=write errno=5 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-0",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=1 byte=0\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-1",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=1 byte=2\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-2",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_TYPE file=1 byte=0\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-3",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_TYPE file=1 byte=0\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-4",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=1 byte=2\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-5",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "I_UNSUPPORTED file=1 byte=1\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-6",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=1 byte=2\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-7",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=1 byte=0\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-8",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=1 byte=0\n"
+    },
+    {
+      "identity": "target_rejects_bad_numeric_tokens_utf8_and_unsupported_identifiers",
+      "case": "bad-token-9",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "I_UNSUPPORTED file=1 byte=0\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "bad-manifest-0",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=0 byte=98\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "bad-manifest-1",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=0 byte=45\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "bad-manifest-2",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=0 byte=98\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "bad-manifest-3",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "I_UNSUPPORTED file=0 byte=9\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "bad-manifest-4",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PARSE file=0 byte=98\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "bad-manifest-5",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_IO file=1 byte=0\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "output-alias",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "save path=input.vt phase=create errno=17 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n"
+    },
+    {
+      "identity": "target_manifest_limits_and_source_aliases_preserve_inputs",
+      "case": "source-limit",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_input-r1/build-normal/probe.elf",
+        "project"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=4194305 limit=4194304 I_LIMIT file=1 byte=4194304\n"
+    }
+  ],
+  "passed": true
+}

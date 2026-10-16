@@ -1,0 +1,192 @@
+// Entry services PLIC before every call. More means runnable CPU work, Wait means
+// device or explicit usercopy action. Each call is bounded to64 entries or4KiB.
+module kernel::fs;
+static mut DETACHED_COUNT: usize = 0;
+static mut SHUTDOWN: bool = false;
+unsafe fn detach_node(node: usize, owner: Client) -> () {
+    unsafe {
+        if (NODES[node].flags & codec::DETACHED) == 0_u32 {
+            NODES[node].flags = NODES[node].flags | codec::DETACHED;
+            DETACHED_COUNT = DETACHED_COUNT + 1_usize;
+        }
+        if NODE_USE[node].readers == 0_usize && !NODE_USE[node].writer { NODE_USE[node].cleanup = owner; }
+        dirty_node(node);
+    }
+    return ();
+}
+unsafe fn sync_scan() -> Progress {
+    unsafe {
+        var count: usize = 0;
+        while count < 64_usize && SYNC_BLOCK < abi::FS_DATA_START {
+            if DIRTY[SYNC_BLOCK] { ENCODE_AT = 0; PHASE = Phase::Encode; return Progress::More; }
+            SYNC_BLOCK = SYNC_BLOCK + 1_usize; count = count + 1_usize;
+        }
+        if SYNC_BLOCK == abi::FS_DATA_START { PHASE = Phase::Flush; }
+        return Progress::More;
+    }
+}
+unsafe fn encode_step() -> Progress {
+    unsafe {
+        let buffer: []u8 = block::buffer();
+        if SYNC_BLOCK < abi::FS_NODES_START {
+            if SYNC_BLOCK < abi::FS_FAT_START { return Progress::Invalid; }
+            let first: usize = (SYNC_BLOCK - abi::FS_FAT_START) * 1024_usize;
+            let end: usize = ENCODE_AT + 64_usize;
+            while ENCODE_AT < end {
+                argument_wire::put(buffer, ENCODE_AT * 4_usize, FAT[first + ENCODE_AT] as usize, 4);
+                ENCODE_AT = ENCODE_AT + 1_usize;
+            }
+            if ENCODE_AT != 1024_usize { return Progress::More; }
+        } else {
+            let first: usize = (SYNC_BLOCK - abi::FS_NODES_START) * 32_usize;
+            var i: usize = 0;
+            while i < 32_usize {
+                var node: codec::Node = NODES[first + i];
+                match OPERATIONS[ACTIVE].command {
+                    Command::Sync(sync) => { if sync.seal && first + i == NODE { node.flags = node.flags & 0xfffffffe_u32; } },
+                    Command::SyncAll => {}, Command::Open(flags) => {}, Command::Read(access) => {},
+                    Command::Write(access) => {}, Command::Stat(file) => {}, Command::Mkdir => {},
+                    Command::List(cursor) => {}, Command::Unlink => {}, Command::Replace => {}, Command::Directory => {},
+            Command::Job(command) => {}
+                }
+                if !codec::node_write(node, core::slice_from_raw_parts_mut(
+                    core::ptr_add(buffer.data, i * abi::FS_NODE_BYTES), abi::FS_NODE_BYTES)) { return Progress::Invalid; }
+                i = i + 1_usize;
+            }
+        }
+        if !block::submit(block::Command::Write(DISK_BASE + SYNC_BLOCK)) { return Progress::Invalid; }
+        SUBMITTED = true; PHASE = Phase::SyncWriting;
+        return Progress::Wait;
+    }
+}
+unsafe fn sync_written() -> Progress {
+    unsafe {
+        match disk_complete() { Progress::Ready => {}, Progress::Wait => { return Progress::Wait; },
+            Progress::Invalid => { return Progress::Invalid; }, Progress::More => { return Progress::Invalid; } }
+        if !block::finish() { return Progress::Invalid; }
+        DIRTY[SYNC_BLOCK] = false;
+        SYNC_BLOCK = SYNC_BLOCK + 1_usize; PHASE = Phase::SyncScan;
+        return Progress::More;
+    }
+}
+unsafe fn flushed() -> Progress {
+    unsafe {
+        match disk_complete() { Progress::Ready => {}, Progress::Wait => { return Progress::Wait; },
+            Progress::Invalid => { return Progress::Invalid; }, Progress::More => { return Progress::Invalid; } }
+        if !block::finish() { return Progress::Invalid; }
+        match OPERATIONS[ACTIVE].command {
+            Command::Sync(sync) => {
+                if sync.seal && !OPERATIONS[ACTIVE].cancelled { NODES[NODE].flags = NODES[NODE].flags & 0xfffffffe_u32; NODE_USE[NODE].transient.generation = 0; }
+            },
+            Command::SyncAll => {}, Command::Open(flags) => {}, Command::Read(access) => {},
+            Command::Write(access) => {}, Command::Stat(file) => {}, Command::Mkdir => {},
+            Command::List(cursor) => {}, Command::Unlink => {}, Command::Replace => {}, Command::Directory => {},
+            Command::Job(command) => {}
+        }
+        return complete(Outcome::Value(0));
+    }
+}
+pub unsafe fn step() -> Progress {
+    unsafe {
+        if ACTIVE == 16_usize {
+            // The owner already maintains this ledger at detach/free. An idle
+            // filesystem need not rescan64 nodes on every unrelated syscall.
+            if DETACHED_COUNT != 0_usize && cleanup_step() { return Progress::More; }
+            if domain_cleanup() { return Progress::More; }
+            var count: usize = 0;
+            while count < 16_usize {
+                let slot: usize = QUEUE_CURSOR;
+                QUEUE_CURSOR = (QUEUE_CURSOR + 1_usize) % 16_usize;
+                count = count + 1_usize;
+                match OPERATIONS[slot].state {
+                    RequestState::Queued => { ACTIVE = slot; OPERATIONS[slot].state = RequestState::Active; PHASE = Phase::Start; break; },
+                    RequestState::Empty => {}, RequestState::Active => { return Progress::Invalid; }, RequestState::Done(result) => {}
+                }
+            }
+            if ACTIVE == 16_usize { return Progress::Wait; }
+        }
+        if OPERATIONS[ACTIVE].cancelled && !SUBMITTED {
+            rollback_reserved();
+            return failed(Error::Invalid);
+        }
+        match PHASE {
+            Phase::Start => { return begin_operation(); },
+            Phase::Job => { return job_step(); },
+            Phase::Resolve => { return resolve_operation(false); },
+            Phase::ResolveOther => { return resolve_operation(true); },
+            Phase::Create => { return create_operation(); },
+            Phase::Remove => { return remove_operation(); },
+            Phase::Enumerate => { return enumerate_operation(); },
+            Phase::Input => { return Progress::Wait; },
+            Phase::Locate => { return locate_step(); },
+            Phase::Reserve => { return reserve_step(); },
+            Phase::Read => { return submit_read(); },
+            Phase::Reading => { return read_completed(); },
+            Phase::Output => { return Progress::Wait; },
+            Phase::PrepareWrite => { return prepare_write(); },
+            Phase::EdgeReading => { return edge_completed(); },
+            Phase::Writing => { return write_completed(); },
+            Phase::Commit => { return commit_write(); },
+            Phase::SyncScan => { return sync_scan(); },
+            Phase::Encode => { return encode_step(); },
+            Phase::SyncWriting => { return sync_written(); },
+            Phase::Flush => {
+                if !block::submit(block::Command::Flush) { return Progress::Invalid; }
+                SUBMITTED = true; PHASE = Phase::Flushing; return Progress::Wait;
+            },
+            Phase::Flushing => { return flushed(); }
+        }
+    }
+}
+// Normal shutdown calls this after all processes have drained their storage tails.
+// It is not an application privilege or an implicit wait inside a leaf helper.
+pub unsafe fn shutdown_step() -> Progress {
+    unsafe {
+        if !SHUTDOWN {
+            if ACTIVE != 16_usize || live_files() != 0_usize || DETACHED_COUNT != 0_usize { return Progress::More; }
+            var i: usize = 0;
+            while i < 16_usize {
+                match OPERATIONS[i].state { RequestState::Empty => {}, RequestState::Queued => { return Progress::Invalid; },
+                    RequestState::Active => { return Progress::Invalid; }, RequestState::Done(result) => { return Progress::Invalid; } }
+                i = i + 1_usize;
+            }
+            OPERATIONS[0_usize].state = RequestState::Active;
+            OPERATIONS[0_usize].command = Command::SyncAll;
+            OPERATIONS[0_usize].cancelled = false;
+            OPERATIONS[0_usize].pinned = false;
+            ACTIVE = 0; PHASE = Phase::Start; SHUTDOWN = true;
+        }
+        match OPERATIONS[0_usize].state {
+            RequestState::Done(result) => { OPERATIONS[0_usize].state = RequestState::Empty; return Progress::Ready; },
+            RequestState::Empty => { return Progress::Ready; }, RequestState::Queued => { return Progress::Invalid; },
+            RequestState::Active => { return Progress::More; }
+        }
+    }
+}
+
+// Read-only resource ledger, <=64 entries. Block state:0 idle,1 submitted,2 completed.
+pub unsafe fn resource(selector: usize) -> usize {
+    unsafe {
+        if selector == files::STATS_FS_FREE_BLOCKS { return FREE_BLOCKS; }
+        if selector == files::STATS_FS_FREE_NODES { return FREE_NODES; }
+        if selector == files::STATS_FS_FILES { return live_files(); }
+        if selector == files::STATS_FS_DETACHED { return DETACHED_COUNT; }
+        if selector == files::STATS_BLOCK_STATE {
+            match block::state() {
+                block::State::Idle => { return 0; }, block::State::Submitted => { return 1; },
+                block::State::Completed => { return 2; }, block::State::Offline => { return 3; },
+                block::State::Failed => { return 4; }
+            }
+        }
+        var count: usize = 0;
+        var i: usize = 0;
+        while i < 16_usize {
+            match OPERATIONS[i].state {
+                RequestState::Empty => {}, RequestState::Queued => { count = count + 1_usize; },
+                RequestState::Active => { count = count + 1_usize; }, RequestState::Done(result) => { count = count + 1_usize; }
+            }
+            i = i + 1_usize;
+        }
+        return count;
+    }
+}

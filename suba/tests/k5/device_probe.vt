@@ -1,0 +1,119 @@
+// Driver integration probe only: bare S-mode MMIO addresses, no protected desktop.
+// IRQs run only inside poll_irq; event consumption below has global SIE off.
+module test::k5_device;
+import suba::abi;
+import suba::windows;
+import platform::devices;
+import kernel::machine;
+import kernel::device::io;
+import kernel::device::virtio;
+import kernel::device::input;
+import kernel::device::display;
+extern abi(C) fn draft_irq_enable() -> ();
+extern abi(C) fn k5_poll_irq() -> ();
+extern abi(C) fn k5_disable_irq() -> ();
+static mut IRQ_COUNT: usize = 0;
+
+fn number(value: usize) -> () {
+    var digits: [16]u8 = zero;
+    var i: usize = 0;
+    while i < 16_usize {
+        let n: usize = (value >> ((15_usize - i) * 4_usize)) & 15_usize;
+        var byte: usize = 48_usize + n;
+        if n > 9_usize { byte = 87_usize + n; }
+        digits[i] = byte as u8;
+        i = i + 1_usize;
+    }
+    unsafe { machine::text(core::slice_of(digits)); machine::text(" "); }
+    return ();
+}
+
+pub fn handle(cause: usize) -> usize {
+    unsafe {
+        if cause != 0x8000000000000009_usize { panic(11); }
+        var count: usize = 0;
+        while count < 8_usize {
+            let irq: u32 = io::read32(devices::PLIC_CONTEXT + 4_usize);
+            if irq == 0_u32 { return 0; }
+            if !input::interrupt(irq) { panic(12); }
+            io::write32(devices::PLIC_CONTEXT + 4_usize, irq);
+            IRQ_COUNT = IRQ_COUNT + 1_usize;
+            count = count + 1_usize;
+        }
+    }
+    return 0;
+}
+
+unsafe fn square(x: usize, y: usize, color: u32) -> () {
+    unsafe {
+        let base: usize = display::physical_base();
+        var row: usize = 0;
+        while row < 16_usize && row + y < windows::SCREEN_HEIGHT {
+            var col: usize = 0;
+            while col < 16_usize && col + x < windows::SCREEN_WIDTH {
+                *core::ptr::<u32>(base + ((y + row) * windows::SCREEN_WIDTH + x + col) * 4_usize) = color;
+                col = col + 1_usize;
+            }
+            row = row + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub fn start(info: usize) -> u32 {
+    machine::initialize();
+    unsafe {
+        if !display::initialize() { return panic(1); }
+        var mask: u32 = 0;
+        var slot: usize = 1;
+        while slot <= 8_usize {
+            match virtio::probe(devices::VIRTIO_BASE + slot * 4096_usize, slot) {
+                virtio::DeviceRead::Missing => {},
+                virtio::DeviceRead::Invalid => { return panic(2); },
+                virtio::DeviceRead::Ready(device) => {
+                    if virtio::id(device) == 18_u32 {
+                        if !input::initialize(device) { return panic(3); }
+                        mask = mask | (1_u32 << virtio::irq(device));
+                        io::write32(devices::PLIC_PRIORITY + slot * 4_usize, 1);
+                    }
+                }
+            }
+            slot = slot + 1_usize;
+        }
+        if !input::configured() { return panic(4); }
+        io::write32(devices::PLIC_ENABLE + 0x80_usize, mask);
+        io::write32(devices::PLIC_CONTEXT, 0);
+        draft_irq_enable();
+        k5_disable_irq();
+        machine::text("K5 DEVICE READY base=");
+        number(display::physical_base());
+        machine::text("\n");
+        loop {
+            k5_poll_irq();
+            match input::next() {
+                input::Poll::Empty => {},
+                input::Poll::Ready(event) => {
+                    machine::text("EVENT "); number(event.kind as usize);
+                    number(event.a); number(event.b); number(event.c);
+                    number(IRQ_COUNT); machine::text("\n");
+                    if event.kind == abi::EVENT_KEY && event.a == 30_usize {
+                        if event.b == 1_usize { square(20, 20, 0x00ff00); }
+                        if event.b == 0_usize { square(40, 20, 0xff0000); }
+                    }
+                    if event.kind == abi::EVENT_POINTER {
+                        square(event.a, event.b, 0xffffff);
+                        if event.c & 1_usize != 0_usize { square(60, 20, 0xffff00); }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+pub fn panic(reason: u32) -> u32 {
+    unsafe { machine::text("K5 DEVICE PANIC "); }
+    number(reason as usize);
+    machine::halt();
+    return reason;
+}

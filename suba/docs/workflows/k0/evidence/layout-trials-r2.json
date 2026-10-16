@@ -1,0 +1,240 @@
+{
+  "compiler_sha256": "4e538e5fa918470752d90323c50bfdcfed4f7c8e0ee75cc0d75f39dc8700263d",
+  "inputs": {
+    "tools/check_next_trials.py": "c7dbd25715468026bd628ed36d2398ffc2cc375421b18786a0ad5ac0f62bb0eb",
+    "tests/trials/cases.json": "8f1135d0a37c241e1884ad53dd46dcc21a7884fa516d312b23e001102753719d",
+    "tests/trials/typed.build": "41a0e4f3c36bf7f9642e315a7d6c1f9028d8f854d6552df403e8895994e0a094",
+    "tests/trials/typed.vt": "4e004af7010b44906087aa8b8926b7e7767373f75cd51e0a72f8d837795a8be0",
+    "tests/trials/program.vt": "3d0342cbd141b2335a25337940bf4675de385b952250b41e7f9a0cbe90175f98",
+    "tests/trials/tagged.build": "6e56a0d8cee1c194da4f8a37fedce564b14c6790f6070836db8c2a031e1d31d3",
+    "tests/trials/tagged.vt": "70de4849ec5cb117e4787ea2fc0454bff8fcab35dffd5c3287fe3ee5d52251ed",
+    "tests/trials/tagged_program.vt": "f8d1ab8651f5557e0b05cb674a51bda348190113c4800072dcfb5ffb99eb0729",
+    "tests/trials/wrong_id.build": "579909fa84f41c9004e76054e2025b51ec208b1109de448abcce2fd15def9f74",
+    "tests/trials/wrong_id.vt": "9840a959e81f53b12540c6b3e14f49b6fef0fd40b43207e7a5b6a0090c7ddbb9",
+    "tests/trials/tagged_wrong_id.build": "11a2c5f70b73e42fdc9b788cbfad45d9e907d38a30c7031a8630cd6e55971034",
+    "tests/trials/tagged_wrong_id.vt": "250b850721eca8df986e55cd72594dacb17f107610c220ba04be7549438843a9",
+    "tests/trials/private_id.build": "8ba535cd4f55dced7f4d38a25d45cd130ea5237d2af696eb15db9ad14ea2c9f4",
+    "tests/trials/private_id.vt": "c97731dc69eccd7669f7030388f9c27429f7df28185b21f917bea3c15fb05bb7",
+    "tests/trials/stale_id.build": "f999a7c85d935ee021130a4f0435974dd3de0eb2287c4b0f98bf8c7d50d552d0",
+    "tests/trials/stale_id.vt": "c62af0a4ad29ad2efb2bc1f2aec85f6958e0143a21e6f4b26d4ec38fb0348ff3",
+    "tests/trials/tagged_stale_id.build": "d2354c4e7fc4879efbfc82a63c48e88b399f96b7dbeef6098c43c7f65fac6706",
+    "tests/trials/tagged_stale_id.vt": "00ca545ab5705fd10151b4b76f3db137e18c5935c4382626b2d5baccc8c3a029",
+    "experiments/system/file_rollback.build": "dbb4ce403c5e0059569654ab7b17a039b4df7d4217c59c298eb874a492f37fef",
+    "experiments/system/file_rollback.vt": "b1888032148ee1624fbb66b7efcba4043a69ba6ac7f9e553476cf19d256680b5",
+    "experiments/system/linux.s0": "df5aaf3d07f866176d801633ac9120634d09ffd9fa1253a0e79d779dd4b44abc"
+  },
+  "cases": [
+    {
+      "case": {
+        "manifest": "tests/trials/typed.build",
+        "exit": 42
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "typed.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=2 imports=1 assembly_files=0 source=6713 assembly=0 names=164 name_bytes=2488 decls=32 types=38 fields=16 params=13 max_ast=150 max_ir=262 max_frame=1312 max_bindings=9 max_defers=0 max_loops=1 max_slots=168 max_args=18 max_params=2 text=14124 data=0 objects=8 symbols=271 fixups=561 relocations=0 elf=24577\n",
+      "elf_sha256": "0789b0fcb396dfd5107530bfb75945615d34f5b39e209c16d45a5062eb9b8731",
+      "elf_bytes": 24577,
+      "memory": {
+        "rw_bytes": 881,
+        "image_span_bytes": 21361
+      },
+      "run": {
+        "exit": 42,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "tests/trials/tagged.build",
+        "exit": 42
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "tagged.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=2 imports=1 assembly_files=0 source=6192 assembly=0 names=132 name_bytes=1939 decls=27 types=22 fields=9 params=13 max_ast=160 max_ir=264 max_frame=1328 max_bindings=9 max_defers=0 max_loops=1 max_slots=170 max_args=18 max_params=2 text=12524 data=0 objects=8 symbols=246 fixups=444 relocations=0 elf=24577\n",
+      "elf_sha256": "193cab12469123e170b6009f7602f43b17cad951d211e3be8874a234bd29c753",
+      "elf_bytes": 24577,
+      "memory": {
+        "rw_bytes": 1017,
+        "image_span_bytes": 21497
+      },
+      "run": {
+        "exit": 42,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "tests/trials/wrong_id.build",
+        "reject": "E_TYPE"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "wrong_id.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_TYPE file=2 byte=257\n",
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "tests/trials/tagged_wrong_id.build",
+        "exit": 0
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "tagged_wrong_id.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=2 imports=1 assembly_files=0 source=5396 assembly=0 names=110 name_bytes=1540 decls=27 types=22 fields=9 params=13 max_ast=160 max_ir=264 max_frame=1328 max_bindings=6 max_defers=0 max_loops=1 max_slots=170 max_args=5 max_params=2 text=10688 data=0 objects=8 symbols=213 fixups=372 relocations=0 elf=20481\n",
+      "elf_sha256": "551b800e93ebeab77e55cde2a5bfbd07cea35008d0bb292e7f861cfe55a6f34e",
+      "elf_bytes": 20481,
+      "memory": {
+        "rw_bytes": 1017,
+        "image_span_bytes": 17401
+      },
+      "run": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "tests/trials/private_id.build",
+        "reject": "E_NAME",
+        "reason": "private field construction"
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "private_id.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_NAME file=2 byte=167\n",
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "tests/trials/stale_id.build",
+        "exit": 101
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "stale_id.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=2 imports=1 assembly_files=0 source=5962 assembly=0 names=143 name_bytes=2111 decls=32 types=38 fields=16 params=13 max_ast=150 max_ir=262 max_frame=1312 max_bindings=6 max_defers=0 max_loops=1 max_slots=168 max_args=5 max_params=2 text=12344 data=0 objects=8 symbols=238 fixups=481 relocations=0 elf=24577\n",
+      "elf_sha256": "b1db2d45dbb16b6265ce840387a969ff7e888de801861838d98fbe2788e0dc93",
+      "elf_bytes": 24577,
+      "memory": {
+        "rw_bytes": 881,
+        "image_span_bytes": 21361
+      },
+      "run": {
+        "exit": 101,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "tests/trials/tagged_stale_id.build",
+        "exit": 101
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "tagged_stale_id.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=2 imports=1 assembly_files=0 source=5491 assembly=0 names=115 name_bytes=1603 decls=27 types=22 fields=9 params=13 max_ast=160 max_ir=264 max_frame=1328 max_bindings=6 max_defers=0 max_loops=1 max_slots=170 max_args=5 max_params=2 text=10792 data=0 objects=8 symbols=213 fixups=376 relocations=0 elf=20481\n",
+      "elf_sha256": "ccc53dee68512c9257b6fa66108e65551b63df727942317cf649228deef91848",
+      "elf_bytes": 20481,
+      "memory": {
+        "rw_bytes": 1017,
+        "image_span_bytes": 17401
+      },
+      "run": {
+        "exit": 101,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "manifest": "experiments/system/file_rollback.build",
+        "exit": 0
+      },
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-trials-r2/compiler.elf",
+        "build",
+        "file_rollback.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-P3 sources=1 imports=0 assembly_files=1 source=2524 assembly=206 names=72 name_bytes=953 decls=13 types=19 fields=6 params=10 max_ast=58 max_ir=96 max_frame=464 max_bindings=2 max_defers=1 max_loops=0 max_slots=51 max_args=7 max_params=1 text=5260 data=10 objects=4 symbols=103 fixups=160 relocations=0 elf=16385\n",
+      "elf_sha256": "7749d479e7b59d229e16da8568d231ca7fafa5ce2131f055254da56ff66ee276",
+      "elf_bytes": 16385,
+      "memory": {
+        "rw_bytes": 18,
+        "image_span_bytes": 12306
+      },
+      "run": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true
+    }
+  ],
+  "passed": true
+}

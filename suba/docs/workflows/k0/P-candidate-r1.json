@@ -1,0 +1,23 @@
+{
+  "node": "P",
+  "revision": "r1",
+  "status": "frozen-awaiting-independent-acceptance",
+  "baseline": "biomiya@a86586e / suba@1b73487",
+  "files": {
+    "biomiya/core-s/next/q/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "biomiya/core-s/next/q/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+    "biomiya/core-s/next/q/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+    "biomiya/core-s/next/q/main.vt": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516",
+    "biomiya/core-s/next/q/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+    "biomiya/core-s/tools/check_q_profiles.py": "1506b46260dd0fb6109c1e99235b68833932785cd1ff582e19ddde1a47e7cb98",
+    "biomiya/core-s/next/q/tests/k0-profile-machine.s0": "b824a673203e3116fa0d421206a19ec21a41299163b9fe7261f2aac7adc0a6f6",
+    "biomiya/core-s/next/q/tests/k0-profile-user.vt": "ca3f54a02e076dfcf2de1a22f0daee50a09912418e06ee581906d883a4e979b5",
+    "biomiya/core-s/next/q/tests/k0-profile-machine.vt": "12a15f929b29a757aee3d2fb13358511613f727114f6efc7620c84c00f6b0ee9",
+    "suba/docs/workflows/k0/P-contract.md": "168557da174ab1630cf055808e34ed8707e7d2326ce30313baf58123578b9a6b",
+    "suba/docs/workflows/k0/P-r1.md": "95fc1356bf395c7b5dfabf8e6170c16d5cecd506d9d21b604feb6fff8cb332a1",
+    "suba/docs/workflows/k0/P-build-r1.json": "2501c8c66020dee3cf6e5731d02911a7d5ea7ea556e43ec79c55e640383e1336",
+    "suba/docs/workflows/k0/P-tests-r1.json": "28582ae482458468e564a240ef6f5b3a7eec726bcc7e8b2767585fbba4b09ca9",
+    "suba/docs/workflows/k0/P-tests-optimized-r1.json": "47981cd7ce403de96f0739883706ce9c17c0e47051240c79cb630c49c516521e",
+    "suba/docs/workflows/k0/P-old-control-r1.json": "54e1bef2fd132483865bf4d9273ae2c3b80cdf814a8378621e3ffae58aa01c68"
+  }
+}

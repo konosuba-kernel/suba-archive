@@ -1,0 +1,48 @@
+// Fixed QEMU virt firmware directory check before RAM handoff.
+module boot::fw_cfg;
+import kernel::machine;
+const DATA: usize = 0x10100000;
+const SELECTOR: usize = 0x10100008;
+
+fn select_entry(value: u32) -> bool {
+    let big_endian: u32 = ((value & 255_u32) << 8_u32) | ((value >> 8_u32) & 255_u32);
+    // SAFETY: fixed QEMU virt fw_cfg selector, one aligned big-endian u16 write.
+    unsafe {
+        match machine::write16(SELECTOR, big_endian) {
+            machine::Write16Result::Done => { return true; },
+            machine::Write16Result::Invalid => { return false; },
+        }
+    }
+}
+
+pub fn verify() -> bool {
+    // Invalid arguments must be rejected before an MMIO operation. The odd
+    // address is not legal to touch; hardware exception would fail this probe.
+    unsafe {
+        match machine::write16(SELECTOR + 1_usize, 0) {
+            machine::Write16Result::Done => { return false; },
+            machine::Write16Result::Invalid => {},
+        }
+        match machine::write16(SELECTOR, 65536) {
+            machine::Write16Result::Done => { return false; },
+            machine::Write16Result::Invalid => {},
+        }
+    }
+    if !select_entry(0) { return false; }
+    // SAFETY: each load consumes one byte from the fixed device data register.
+    unsafe {
+        if machine::read8(DATA) != 81_u8 || machine::read8(DATA) != 69_u8 ||
+            machine::read8(DATA) != 77_u8 || machine::read8(DATA) != 85_u8 { return false; }
+    }
+    if !select_entry(25) { return false; }
+    var entries: usize = 0;
+    var i: usize = 0;
+    unsafe {
+        while i < 4_usize {
+            entries = entries * 256_usize + machine::read8(DATA) as usize;
+            i = i + 1_usize;
+        }
+    }
+    if entries == 0_usize || entries > 128_usize { return false; }
+    return true;
+}

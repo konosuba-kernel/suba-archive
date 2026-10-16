@@ -1,0 +1,102 @@
+// One-page-at-a-time ELF installation. Caller owns source I/O and inactive space.
+// Jobs originate from an unchanged successful elf::inspect Plan, never raw user data.
+module kernel::loader;
+import suba::abi;
+import suba::image as elf;
+import kernel::space;
+pub struct Job { plan: elf::Plan, segment: usize, offset: usize, stack: usize, argument: bool }
+pub struct Need { pub offset: usize, pub bytes: usize }
+pub enum Request { Bytes(Need), Done }
+pub enum Step { More, Done, Invalid, NoMemory }
+
+pub fn begin(plan: elf::Plan) -> Job {
+    return make Job { plan: plan, segment: 0, offset: 0, stack: 0, argument: false };
+}
+
+pub unsafe fn next(job: *const Job) -> Request {
+    // SAFETY: caller holds a live Job; private cursors stay inside its validated Plan.
+    unsafe {
+        if (*job).segment < (*job).plan.count {
+            let segment: elf::Segment = (*job).plan.segments[(*job).segment];
+            var bytes: usize = 0;
+            var offset: usize = 0;
+            if (*job).offset < segment.file_bytes {
+                bytes = segment.file_bytes - (*job).offset;
+                offset = segment.offset + (*job).offset;
+                if bytes > abi::PAGE_BYTES { bytes = abi::PAGE_BYTES; }
+            }
+            return Request::Bytes(make Need { offset: offset, bytes: bytes });
+        }
+        if (*job).stack < 256_usize || !(*job).argument {
+            return Request::Bytes(make Need { offset: 0, bytes: 0 });
+        }
+        return Request::Done;
+    }
+}
+
+unsafe fn put(address: usize, at: usize, value: usize, bytes: usize) -> () {
+    // SAFETY: caller owns the new page; at+bytes is within it and bytes is at most eight.
+    unsafe {
+        let pointer: *u8 = core::ptr::<u8>(address);
+        var i: usize = 0;
+        while i < bytes {
+            *core::ptr_add(pointer, at + i) = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+// Copies at most 4096 file bytes; allocates one user page and at most two table pages.
+// Failures retain all pages
+// under space ownership so the same bounded reap path handles failed creation.
+pub unsafe fn step(job: *Job, id: space::Id, data: []const u8) -> Step {
+    // SAFETY: exclusive live Job and inactive space; caller keeps requested source bytes
+    // readable. map_user returns an owned direct alias; copy is bounded by next().
+    unsafe {
+        match next(core::ptr_const(job)) {
+            Request::Done => { return Step::Done; },
+            Request::Bytes(need) => { if data.len != need.bytes { return Step::Invalid; } }
+        }
+        var address: usize = abi::ARGUMENT_BASE;
+        var flags: usize = space::READ;
+        if (*job).segment < (*job).plan.count {
+            let segment: elf::Segment = (*job).plan.segments[(*job).segment];
+            address = segment.address + (*job).offset;
+            flags = segment.permissions;
+        } else {
+            if (*job).stack < 256_usize {
+                address = abi::USER_STACK_BASE + (*job).stack * abi::PAGE_BYTES;
+                flags = space::READ | space::WRITE;
+            }
+        }
+        match space::map_user(id, address, flags) {
+            space::MappingResult::Invalid => { return Step::Invalid; },
+            space::MappingResult::NoMemory => { return Step::NoMemory; },
+            space::MappingResult::Ready(physical) => {
+                let pointer: *u8 = core::ptr::<u8>(physical);
+                var i: usize = 0;
+                while i < data.len {
+                    *core::ptr_add(pointer, i) = data[i];
+                    i = i + 1_usize;
+                }
+                if address == abi::ARGUMENT_BASE {
+                    put(physical, 0, abi::ARGUMENT_MAGIC, 8);
+                    put(physical, abi::ARGUMENT_VERSION, 1, 4);
+                    put(physical, abi::ARGUMENT_LENGTH, abi::ARGUMENT_BYTES, 4);
+                }
+            }
+        }
+        if (*job).segment < (*job).plan.count {
+            (*job).offset = (*job).offset + abi::PAGE_BYTES;
+            if (*job).offset >= (*job).plan.segments[(*job).segment].memory_bytes {
+                (*job).segment = (*job).segment + 1_usize;
+                (*job).offset = 0;
+            }
+        } else {
+            if (*job).stack < 256_usize { (*job).stack = (*job).stack + 1_usize; }
+            else { (*job).argument = true; }
+        }
+        return Step::More;
+    }
+}

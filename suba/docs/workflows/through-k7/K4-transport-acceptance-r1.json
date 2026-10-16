@@ -1,0 +1,44 @@
+{
+  "decision": "pass",
+  "artifact": "K4 shared transport/io r1",
+  "reviewer": "/root/k4_acceptance",
+  "production_contributor": false,
+  "candidate": "docs/workflows/through-k7/K4-transport-candidate-r1.json",
+  "candidate_sha256": "fd2845d4ef845db84e8188c9fd78cc5c468709e21597f954d3542027c43ea0ac",
+  "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+  "verified_candidate_files": {
+    "kernel/device/io.vt": "efa3db9a2c4c7a3bbbb616bfaba833155019ec9f6ee65e56360ae7ec2e9885ff",
+    "kernel/device/io.s0": "1981585b645bea2317e5428fb26a75c324d8818ac21722ea2d93b6a8c0fcb0d7",
+    "kernel/device/virtio.vt": "a2476058e09054c055eeafd19f4f9376e7b2ba9bf360fa6aa008783f9f898b2d",
+    "tools/check_transport.py": "3ba30ffca567bd24c6dac0fc599b0bb9db04270a88148cf19c742ca02820496e",
+    "tests/k4/transport/block_probe.vt": "141041d71c4921ab0f4cb99c7e4964a3ab67be85c5879d5b4f254a166aa85203",
+    "tests/k4/transport/probe.vt": "15571b5f5d37f2b4ea324c4cd4b61271ec16940a997a523078b829355d2fd9d8",
+    "tests/k4/transport/irq.s0": "2caa5cc8309b67462795b3fca91fc62a026a5d7c633a4ba33651d07dd8647407",
+    "tests/k4/transport/shutdown.s0": "ef993bb8cd216c12dc48533d1d902d3fa69a24409a213ce642f7532478726088",
+    "kernel/machine.vt": "5cb303c104789037885b0123b086e1ce3f8e6aae0447aa1574790fe170dfb937",
+    "kernel/machine.s0": "b1a102676fdd077fefb61a5dc23bb76df61d2f2db2f6c10879105245517b30bd"
+  },
+  "scope": "Only common modern MMIO split queue and fenced scalar access; not full K4/K5",
+  "evidence": {
+    "build/k4-transport-independent-real-r1/verification.json": "8e446aa6504b91e58d4012380035e95de8bd9181c24b58c28f08f6ee9329cb27",
+    "build/k4-transport-independent-real-r1/independent-disk.json": "9c3a9da5b18712401115a35aef52b936c54a16ccdefeb6ddf330bc45f36df873",
+    "build/k4-transport-independent-noirq-r1/verification.json": "a767bc19c2a8222143bf32742daaef2e02a1f9512db8c5692d7f47a7a45d9858",
+    "build/k4-transport-independent-boundaries-r2/verification.json": "52e10a1c62ddd3ddecfb7e9638b716ee82ee2545c1e7e26f8653e7bb91371dac",
+    "build/k4-transport-independent-mutant-r1/verification.json": "871fdaeb39c3f31cf802fb56f046241b82540020ad8ac8187968668b9feb1fe3"
+  },
+  "independent_test_files": {
+    "tests/k4/independent_transport/check.py": "7531a1a16c9fccb035f3a60ca49af83e1e5c02f6a8d552bed10c26b002f8ba7d",
+    "tests/k4/independent_transport/probe.vt": "2107d88bed0ee5b99d2ebb814ce75d4b6026021c7422d52b1e4e03636259667f"
+  },
+  "report_sha256": "87ce8107b296a8cdc91d351107ca54a09bf45ee7c9093e310968df40db7daa7a",
+  "blocking_findings": [],
+  "excluded": [
+    "production PLIC/page mapping",
+    "U-mode IRQ integration",
+    "DMA cancel/lifecycle",
+    "FS",
+    "input/ramfb",
+    "latency targets",
+    "power-loss recovery"
+  ]
+}

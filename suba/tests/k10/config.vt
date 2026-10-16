@@ -1,0 +1,2 @@
+module test::k10_config;
+pub const ROUNDS: usize = 100;

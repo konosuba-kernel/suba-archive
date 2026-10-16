@@ -1,0 +1,71 @@
+{
+  "stage": "K7",
+  "revision": 1,
+  "verdict": "rejected",
+  "passed": false,
+  "reviewer": "/root/k4_review",
+  "candidate_sha256": "b74f96dd7e3914419251e4605479053dded735e097a562b036e7d4a0c5f530b0",
+  "production_kernel_sha256": "0dc8ef589248f4b6845607346b933ff7f592fba67b1b74680554d72db2ef981d",
+  "markdown_sha256": "83eb113084978d9f23e8239e552a7af3f16379a023e6492fe3ed770db6adf2db",
+  "blocking_findings": [
+    {
+      "id": "K7-R1-B1",
+      "summary": "Normally saved and synced disk fails remount with panic70; detached old-reader node rejected by mount_check",
+      "disk_sha256": "17a23ce4a3ae8996a9f90c9abd6a31b9d151f782af9c8dc7e52f14e680df82a9",
+      "node": 10,
+      "flags": 2,
+      "inferred_mount_fault": [
+        4,
+        10
+      ],
+      "actual_panic": 70
+    }
+  ],
+  "evidence": {
+    "build/k7-independent-r1/integrity.json": {
+      "sha256": "7df0e1cefa41495e46c6f1d1722a763a164fb9dc2643f8ee5e2837a457f7d5a0",
+      "reported_passed": true
+    },
+    "build/k7-independent-r1/restart-audit.json": {
+      "sha256": "a0bd5d7efafc2ef7ce5dee3150743c3909cb06479fb4439dc99b855b4ef5fdcf",
+      "reported_passed": false
+    },
+    "build/k7-independent-r1/job/verification.json": {
+      "sha256": "c171f10d3bf9c06cce7f1958bdc9cc9ea2b8e9dfa07bd0cf9107c82184932137",
+      "reported_passed": true
+    },
+    "build/k7-independent-r1/images/verification.json": {
+      "sha256": "98e2e65c5e46e3b0b7331f259795ace8fb3ecee50e2aac2cda768054a2705d75",
+      "reported_passed": true
+    },
+    "build/k7-independent-r1/death/verification.json": {
+      "sha256": "3e254127691e7f6f10a7fecdabb150c3f1edf1790b1d99e5b87810acf3b685c9",
+      "reported_passed": true
+    },
+    "build/k7-independent-r1/job_owner/verification.json": {
+      "sha256": "27e5399598f75650e3255aabf26170561a3985cacfd7c6a1e9c2606a0983e994",
+      "reported_passed": true
+    },
+    "build/k7-independent-r1/invalid/verification.json": {
+      "sha256": "fa78235527e9f09ccd40ffda1249726e5b91afad4e75ee68aff8c525085541b1",
+      "reported_passed": true
+    },
+    "build/k7-independent-r1/seal-negative-r2/verification.json": {
+      "sha256": "bd6d54843c86047db65f8b77d5d4294f60d0d407c19e0b43fbf1eabe7bccae54",
+      "reported_passed": true
+    },
+    "build/k7-desktop-r1/verification.json": {
+      "sha256": "bb33ac78adfa65e31ddfb32547bc0d156d0064eeb9320805e86a76dc14a3ad6e",
+      "reported_passed": false
+    }
+  },
+  "performance_targets_met": false,
+  "unexplained_historical_failure": "job-dma-r1 round61 code100; later passes do not establish a fix",
+  "production_files_modified_by_reviewer": false,
+  "limitations": [
+    "Failed revision, not complete K7 acceptance",
+    "No independent repeated final DMA100 before restart blocker",
+    "GTK executed by coordinator; independently inspected evidence/disk/production path",
+    "K8/K9/K10 completion excluded"
+  ]
+}

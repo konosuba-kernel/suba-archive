@@ -1,0 +1,52 @@
+{
+  "node": "K8",
+  "revision": "r2",
+  "decision": "通过",
+  "status": "accepted",
+  "passed": true,
+  "reviewer": "/root/k4_review",
+  "implementation_contributor": false,
+  "candidate_sha256": "0428adb9b1a9f56337753d9f428da0728cbda5871507f69b37097dc7b09b3d69",
+  "dependency_K7_commit": "08a4d07",
+  "evidence": {
+    "passed": true,
+    "candidate_sha256": "0428adb9b1a9f56337753d9f428da0728cbda5871507f69b37097dc7b09b3d69",
+    "author_verification_sha256": "f8cc16228b98594146a7116afdd7a0c526f9ecfd9035cdbbaef6288d332cbc8c",
+    "author_run_sha256": "e57d1ca867deb893e9a475d0004b5b547b30ac8042cfd5ead6278e56d29c5419",
+    "host_full_byte_equal": [
+      "c1",
+      "hello",
+      "mutant"
+    ],
+    "compiled_report_extra_noncompiled_template": "tests/k0/boot.vt",
+    "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+    "c0_sha256": "872580a5751997a32c7b91c127987117e375a866fa99ecb36292ab443d0bb63c",
+    "controller_sha256": "4c9bfb2acb8b848e73d885fcccc77747d2cc056e0cc18bc18eeb6564adac5ca7",
+    "independent_reports": {
+      "build/k8-independent-r1/integrity.json": "1b52e8957253320cf6c11012e21ea3f2bdab8e91f01cc52c5b3ca3b456c74585",
+      "build/k8-independent-r1/products.json": "8ad17d6d0256238b26b207025d80b6291d095faccd2e0061bff5f0e4a8e2e5b8",
+      "build/k8-independent-r1/verification.json": "75ec5b4da29d83d79553eb6f7aa7482a194bdbc5f3563e8e020215e0cc76301a",
+      "build/k8-independent-r1/summary.json": "55031b6399d2de26a8c26ab271c345d9f4abbdf36f115056ea40a56f7fecd89e"
+    }
+  },
+  "independent_commands": [
+    "python3 build/k8-independent-r1/run.py",
+    "python3 build/k8-independent-r1/products.py",
+    "python3 build/k8-independent-r1/finalize.py"
+  ],
+  "final_evidence_sha256": "7809c8f09997d5fd1db30274b26f19b1761c3df55b4e67300ac2c428d81d3968",
+  "report_sha256": "50ea3b505ae4a9c473c86057fc7b9bc233d6204af3562f1e05855fdcacb06bb7",
+  "required_pending": [],
+  "scope": [
+    "native C0 to C1 to C2 to C3 whole-file fixed point",
+    "guest compiler source mutation and observable exit 2 to 7",
+    "same suba-user target Linux/suba byte equality",
+    "compiler children page/stream/file/request reclamation"
+  ],
+  "limits": [
+    "K9/K10 not accepted by this report",
+    "old K7 panic70 and job DMA code100 remain unattributed",
+    "host seed/bootstrap inputs retained"
+  ],
+  "supersedes_manifest_only": "r1 retained; derived oracle/exported mistakenly included, no production or test source change"
+}

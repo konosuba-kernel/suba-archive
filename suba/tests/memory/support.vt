@@ -1,0 +1,74 @@
+// Test backing only: the allocator implementation is kernel/memory.vt unchanged.
+module test::memory_support;
+import kernel::memory;
+const BACKING_BYTES: usize = memory::PAGE_BYTES * 6_usize;
+static mut BACKING: [BACKING_BYTES]u8 = zero;
+
+// Leaves a full guard page on either side of a three-page aligned donated extent.
+pub unsafe fn storage() -> []u8 {
+    // SAFETY: caller owns BACKING exclusively; rounding leaves a guard page each side.
+    unsafe {
+        let base: usize = core::addr(core::slice_of_mut(BACKING).data);
+        let aligned: usize = (base + memory::PAGE_BYTES * 2_usize - 1_usize) /
+            memory::PAGE_BYTES * memory::PAGE_BYTES;
+        return core::slice_from_raw_parts_mut(core::ptr::<u8>(aligned), memory::PAGE_BYTES * 3_usize);
+    }
+}
+
+pub unsafe fn fill(data: []u8, value: u8) -> () {
+    // SAFETY: caller grants live exclusive RAM; cursor stays below data.len.
+    unsafe {
+        var index: usize = 0;
+        while index < data.len {
+            data[index] = value;
+            index = index + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub unsafe fn all(data: []const u8, value: u8) -> bool {
+    // SAFETY: caller grants live readable RAM; cursor stays below data.len.
+    unsafe {
+        var index: usize = 0;
+        while index < data.len {
+            if data[index] != value { return false; }
+            index = index + 1_usize;
+        }
+    }
+    return true;
+}
+
+pub unsafe fn prepare() -> []u8 {
+    // SAFETY: called only before donation; test owns all of BACKING.
+    unsafe {
+        fill(core::slice_of_mut(BACKING), 173);
+        return storage();
+    }
+}
+
+pub unsafe fn guards() -> bool {
+    // SAFETY: guards lie outside the donated extent and remain readable by the test.
+    unsafe {
+        let region: []u8 = storage();
+        let all_bytes: []const u8 = core::slice_of(BACKING);
+        let prefix: usize = core::addr(region.data) - core::addr(all_bytes.data);
+        let suffix: usize = prefix + region.len;
+        return all(core::slice_from_raw_parts(all_bytes.data, prefix), 173) &&
+            all(core::slice_from_raw_parts(core::ptr_add(all_bytes.data, suffix), all_bytes.len - suffix), 173);
+    }
+}
+
+pub unsafe fn page(frame: memory::Frame) -> []u8 {
+    // SAFETY: caller owns frame; returned view must not be accessed after release.
+    unsafe {
+        match memory::address(frame) {
+            memory::AddressResult::Value(address) => {
+                return core::slice_from_raw_parts_mut(core::ptr::<u8>(address), memory::PAGE_BYTES);
+            },
+            memory::AddressResult::Invalid => {
+                return core::slice_from_raw_parts_mut(core::ptr::<u8>(0), 0);
+            }
+        }
+    }
+}

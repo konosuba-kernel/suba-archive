@@ -1,0 +1,12 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::syscall;
+pub fn run() -> u32 {
+    unsafe {
+        let file: syscall::Reply = files::open("cwd_pin", 14);
+        if file.status != abi::OK || files::write_at(file.value, 0, "correct cwd").status != abi::OK ||
+            syscall::close(file.value).status != abi::OK { return 213; }
+        return 0;
+    }
+}

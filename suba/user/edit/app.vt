@@ -1,0 +1,210 @@
+// Ordinary single-document editor. This module owns all mutable UI storage;
+// Document itself stays on the event loop stack. Build runs in a child process.
+module user::edit::app;
+import suba::abi;
+import suba::syscalls;
+import suba::windows;
+import libsuba::syscall;
+import libsuba::services;
+import libsuba::window_api;
+import libsuba::arguments;
+import libsuba::argument_builder;
+import libsuba::files as fs;
+import runtime::bytes;
+import user::edit::buffer;
+import user::edit::keys;
+import user::edit::paint;
+import user::text::font;
+import user::text::utf8;
+import user::draw;
+import user::build::io;
+import user::build::records;
+import user::build::manifest;
+import user::build::sha256;
+const WIDTH: usize = 640;
+const HEIGHT: usize = 480;
+const BODY_TOP: usize = 80;
+const BODY_ROWS: usize = 18;
+static mut STORAGE: [buffer::MAX_BYTES]u8 = zero;
+static mut SNAPSHOT: [buffer::MAX_BYTES + 1_usize]u8 = zero;
+static mut FONT: [font::FILE_BYTES + 1_usize]u8 = zero;
+static mut PIXELS: [WIDTH * HEIGHT]u32 = zero;
+static mut CLIPBOARD: [65536]u8 = zero;
+static mut CLIP_BYTES: usize = 0;
+static mut PATH: [96]u8 = zero;
+static mut PATH_BYTES: usize = 0;
+static mut MANIFEST: [96]u8 = zero;
+static mut MANIFEST_BYTES: usize = 0;
+static mut OPEN_PATH: [96]u8 = zero;
+static mut OPEN_BYTES: usize = 0;
+enum Prompt { None, File, Manifest }
+static mut PROMPT: Prompt = zero;
+static mut TOKEN: usize = 0;
+static mut TOP_LINE: usize = 0;
+static mut LEFT_PIXEL: usize = 0;
+enum KeyState { Empty, Ready(keys::State) }
+static mut KEY_STATE: KeyState = zero;
+static mut SAVED_VERSION: usize = 0;
+static mut DIRTY: bool = true;
+static mut MESSAGE: []const u8 = "Ctrl+O open / Ctrl+M manifest / Ctrl+B build / Ctrl+R run";
+static mut TASK: Task = zero;
+static mut RUN_CHILD: usize = 0;
+struct Running { child: usize, pipe: usize, cancelling: bool, eof: bool }
+enum Task { Idle, Running(Running) }
+
+unsafe fn key_event(code: usize, value: usize) -> keys::Input {
+    unsafe {
+        var state: keys::State = keys::reset();
+        match KEY_STATE { KeyState::Empty => {}, KeyState::Ready(saved) => { state = saved; } }
+        let action: keys::Input = keys::event(core::addr_of_mut(state), code, value);
+        KEY_STATE = KeyState::Ready(state);
+        return action;
+    }
+}
+unsafe fn extending() -> bool {
+    unsafe { match KEY_STATE { KeyState::Empty => { return false; },
+        KeyState::Ready(state) => { return keys::extending(state); } } }
+}
+
+unsafe fn path() -> []const u8 {
+    unsafe { return core::slice_from_raw_parts(core::slice_of(PATH).data, PATH_BYTES); }
+}
+unsafe fn manifest_path() -> []const u8 {
+    unsafe { return core::slice_from_raw_parts(core::slice_of(MANIFEST).data, MANIFEST_BYTES); }
+}
+unsafe fn set_path(value: []const u8) -> bool {
+    unsafe {
+        if !bytes::path(value) { return false; }
+        var i: usize = 0;
+        while i < value.len { PATH[i] = value[i]; i = i + 1_usize; }
+        PATH_BYTES = value.len;
+    }
+    return true;
+}
+unsafe fn message(value: []const u8) -> () {
+    unsafe { MESSAGE = value; DIRTY = true; }
+    return ();
+}
+enum DocumentOpen { Ready(buffer::Document), Failed(usize) }
+unsafe fn opened(name: []const u8) -> DocumentOpen {
+    unsafe {
+        if !bytes::path(name) { return DocumentOpen::Failed(abi::INVALID); }
+        match io::read(name, core::slice_of_mut(SNAPSHOT)) {
+            io::Read::Failed(error) => { return DocumentOpen::Failed(error); },
+            io::Read::Ready(count) => {
+                let input: []const u8 = core::slice_from_raw_parts(core::slice_of(SNAPSHOT).data, count);
+                match buffer::open(core::slice_of_mut(STORAGE), input) {
+                    buffer::Open::Ready(document) => { return DocumentOpen::Ready(document); },
+                    buffer::Open::InvalidUtf8(at) => { return DocumentOpen::Failed(abi::INVALID); },
+                    buffer::Open::Limit => { return DocumentOpen::Failed(abi::LIMIT); },
+                    buffer::Open::NoMemory => { return DocumentOpen::Failed(abi::NO_MEMORY); },
+                    buffer::Open::Aliased => { return DocumentOpen::Failed(abi::INVALID); }
+                }
+            }
+        }
+    }
+}
+unsafe fn initial_name(index: usize, fallback: []const u8) -> []const u8 {
+    if arguments::count() <= index { return fallback; }
+    match arguments::argument(index) {
+        arguments::BytesResult::Value(value) => { return value; },
+        arguments::BytesResult::Invalid => { return ""; }
+    }
+}
+unsafe fn loop_editor(initial: buffer::Document, face: font::Font) -> u32 {
+    var document: buffer::Document = initial;
+    unsafe {
+        let moved: buffer::Edit = buffer::move(core::addr_of_mut(document), buffer::Motion::Start, false);
+        KEY_STATE = KeyState::Ready(keys::reset());
+        let created: syscall::Reply = window_api::create(WIDTH, HEIGHT);
+        if created.status != abi::OK { return created.status as u32; }
+        TOKEN = created.value;
+        loop {
+            var count: usize = 0;
+            while count < 16_usize {
+                match window_api::event(TOKEN, false) {
+                    window_api::EventRead::Failed(error) => {
+                        if error != abi::WOULD_BLOCK { return error as u32; }
+                        break;
+                    },
+                    window_api::EventRead::Ready(event) => {
+                        if event.kind == abi::EVENT_CLOSE_REQUESTED {
+                            if buffer::state(core::addr_of(document)).version == SAVED_VERSION { return 0; }
+                            message("Unsaved changes: Ctrl-S then close; Ctrl-Alt-Esc discards");
+                        }
+                        if event.kind == windows::EVENT_RESET { KEY_STATE = KeyState::Ready(keys::reset()); }
+                        if event.kind == abi::EVENT_KEY {
+                            act(core::addr_of_mut(document), key_event(event.a, event.b));
+                        }
+                        if event.kind == abi::EVENT_POINTER && (event.c & 1_usize) != 0_usize {
+                            point(core::addr_of_mut(document), face, event.a, event.b);
+                        }
+                    }
+                }
+                count = count + 1_usize;
+            }
+            poll_build();
+            poll_run();
+            if DIRTY {
+                if !render(core::addr_of(document), face) { return abi::IO as u32; }
+                DIRTY = false;
+            }
+            var watches: [4]services::Watch = zero;
+            watches[0] = make services::Watch { handle: TOKEN, events: syscalls::READABLE };
+            var total: usize = 1;
+            match TASK {
+                Task::Idle => {}, Task::Running(task) => {
+                    if !task.eof {
+                        watches[total] = make services::Watch { handle: task.pipe, events: syscalls::READABLE };
+                        total = total + 1_usize;
+                    }
+                    watches[total] = make services::Watch { handle: task.child, events: syscalls::EXITED };
+                    total = total + 1_usize;
+                }
+            }
+            if RUN_CHILD != 0_usize {
+                watches[total] = make services::Watch { handle: RUN_CHILD, events: syscalls::EXITED };
+                total = total + 1_usize;
+            }
+            let active: []const services::Watch = core::slice_from_raw_parts(core::slice_of(watches).data, total);
+            let waited: syscall::Reply = services::wait(active, 0, false);
+            if waited.status != abi::OK { return waited.status as u32; }
+        }
+    }
+    return 0;
+}
+
+pub fn main() -> u32 {
+    unsafe {
+        let source: []const u8 = initial_name(1, "hello.vt");
+        let build: []const u8 = initial_name(2, "program.build");
+        if !set_path(source) || !bytes::path(build) { return abi::INVALID as u32; }
+        var i: usize = 0;
+        while i < build.len { MANIFEST[i] = build[i]; i = i + 1_usize; }
+        MANIFEST_BYTES = build.len;
+        match io::read("/sys/suba-bmp.fnt", core::slice_of_mut(FONT)) {
+            io::Read::Failed(error) => { return error as u32; },
+            io::Read::Ready(count) => { if count != font::FILE_BYTES { return abi::INVALID as u32; } }
+        }
+        let font_bytes: []const u8 = core::slice_from_raw_parts(core::slice_of(FONT).data, font::FILE_BYTES);
+        match font::open(font_bytes) {
+            font::Open::Invalid => { return abi::INVALID as u32; },
+            font::Open::Ready(face) => {
+                match opened(source) {
+                    DocumentOpen::Ready(document) => { return loop_editor(document, face); },
+                    DocumentOpen::Failed(error) => { return error as u32; }
+                }
+            }
+        }
+    }
+}
+
+unsafe fn prompt_label() -> []const u8 {
+    unsafe {
+        match PROMPT {
+            Prompt::None => { return ""; },
+            Prompt::File => { return "Open /work/"; },
+            Prompt::Manifest => { return "Build /work/"; }
+        }
+    }
+}

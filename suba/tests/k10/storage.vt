@@ -1,0 +1,72 @@
+// Current FS loader wrapper for unchanged K4 storage boundary programs.
+module test::storage;
+import suba::abi;
+import suba::syscalls;
+import suba::files;
+import libsuba::syscall;
+import libsuba::services;
+import libsuba::argument_builder;
+import libsuba::files as fs;
+import test::storage_config as config;
+static mut OLD: [4]u8 = zero;
+static mut ARGS: [4096]u8 = zero;
+unsafe fn result(code: usize) -> u32 {
+    unsafe {
+        *core::ptr::<u32>(abi::DISPLAY_BASE) = 0xff0000_u32 | code as u32;
+        if code == 0_usize { *core::ptr::<u32>(abi::DISPLAY_BASE) = 0x00ff00; }
+        let none: [1]services::Watch = zero;
+        loop { let wait: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(none).data, 0), 0, false); }
+    }
+}
+pub fn main() -> u32 {
+    unsafe {
+        *core::ptr::<u32>(abi::DISPLAY_BASE + 4_usize) = services::stats(files::STATS_FS_FREE_BLOCKS).value as u32;
+        *core::ptr::<u32>(abi::DISPLAY_BASE + 8_usize) = services::stats(files::STATS_FS_FREE_NODES).value as u32;
+        let pages: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+        if pages.status != abi::OK || !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), "storage-test") { return result(1); }
+        let child: syscall::Reply = services::spawn("/sys/worker", core::slice_of(ARGS), 0, 0, 0);
+        if child.status != abi::OK { return result(2); }
+        let watches: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED }];
+        if services::wait(core::slice_of(watches), 0, false).status != abi::OK { return result(3); }
+        match services::collect(child.value) {
+            services::Collected::Failed(error) => { return result(4); },
+            services::Collected::Ready(exit) => {
+                if exit.status != 0_usize || exit.cause != 0_usize { return result(exit.status + 256_usize); }
+            }
+        }
+        // Full nodes reject transient creation without epoch or allocation drift.
+        if config::FULL_NODES {
+            let epoch: usize = services::stats(files::STATS_SOURCE_EPOCH).value;
+            if fs::open("/work/temporary", files::WRITE | files::CREATE_NEW | files::TRANSIENT).status != abi::NO_SPACE ||
+                services::stats(files::STATS_SOURCE_EPOCH).value != epoch { return result(7); }
+        }
+        // Full data still permits an empty transient node. A failed write must
+        // stay empty; the caller discards it instead of publishing over probe.
+        if config::FULL_DATA {
+            let temp: syscall::Reply = fs::open("/work/temporary", files::WRITE | files::CREATE_NEW | files::TRANSIENT);
+            if temp.status != abi::OK || fs::write_at(temp.value, 0, "new").status != abi::NO_SPACE { return result(8); }
+            match fs::stat(temp.value) { fs::Stated::Failed(error) => { return result(9); },
+                fs::Stated::Ready(stat) => { if stat.bytes != 0_usize { return result(10); } } }
+            if syscall::close(temp.value).status != abi::OK || fs::unlink("/work/temporary").status != abi::OK { return result(11); }
+        }
+        let old: syscall::Reply = fs::open("/work/probe", files::READ);
+        if old.status != abi::OK || fs::read_at(old.value, 0, core::slice_of_mut(OLD)).value != 3_usize ||
+            OLD[0_usize] != 111_u8 || OLD[1_usize] != 108_u8 || OLD[2_usize] != 100_u8 ||
+            syscall::close(old.value).status != abi::OK { return result(12); }
+        // Unlink detaches immediately; maintenance reaps later. SyncAll flushes
+        // metadata, it does not promise to drain every detached node first.
+        let deadline: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+        while services::stats(files::STATS_FS_DETACHED).value != 0_usize && services::stats(syscalls::STATS_TIME_TICKS).value < deadline {}
+        if services::stats(files::STATS_FS_DETACHED).value != 0_usize { return result(13); }
+        if fs::sync_all().status != abi::OK { return result(5); }
+        let after: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+        let opened: syscall::Reply = services::stats(files::STATS_FS_FILES);
+        let pending: syscall::Reply = services::stats(files::STATS_FS_REQUESTS);
+        if after.status != abi::OK || after.value != pages.value || opened.status != abi::OK ||
+            opened.value != 0_usize || pending.status != abi::OK || pending.value != 0_usize { return result(6); }
+        *core::ptr::<u32>(abi::DISPLAY_BASE + 12_usize) = services::stats(files::STATS_FS_FREE_BLOCKS).value as u32;
+        *core::ptr::<u32>(abi::DISPLAY_BASE + 16_usize) = services::stats(files::STATS_FS_FREE_NODES).value as u32;
+        return result(0);
+    }
+}

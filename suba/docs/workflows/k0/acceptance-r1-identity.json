@@ -1,0 +1,16 @@
+{
+  "candidate_sha256": "5ec2c2947483591cf49ca1eb9aea6d3dc86bc2bf7092ae407d63cd8e30cb5faa",
+  "candidate_files": 420,
+  "mismatches": [],
+  "migration_mismatches": [],
+  "record_mismatches": [],
+  "q_mismatches": [],
+  "cost_mismatches": [],
+  "compiler_hashes": {
+    "e1": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "e2": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "e3": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+  },
+  "seed_mismatches": [],
+  "seed_count": 71
+}

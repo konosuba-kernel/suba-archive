@@ -1,0 +1,128 @@
+// Navigation shares the gap-buffer owner; positions and selections are scalar byte boundaries.
+module user::edit::buffer;
+
+unsafe fn previous_position(document: *const Document, cursor: usize) -> usize {
+    if cursor == 0_usize { return 0; }
+    // SAFETY: cursor is a valid boundary in an already validated document, so <=3 continuation bytes.
+    unsafe {
+        var position: usize = cursor - 1_usize;
+        while position > 0_usize && (byte_at(document, position) & 0xc0_u8) == 0x80_u8 {
+            position = position - 1_usize;
+        }
+        return position;
+    }
+}
+
+unsafe fn next_position(document: *const Document, cursor: usize) -> usize {
+    // SAFETY: caller supplies a valid boundary; EOF does not move.
+    unsafe {
+        match decode(document, cursor) {
+            utf8::Decode::Value(item) => { return item.next; },
+            utf8::Decode::End => { return cursor; },
+            utf8::Decode::Invalid => { return cursor; },
+        }
+    }
+}
+
+unsafe fn line_start(document: *const Document, cursor: usize) -> usize {
+    // SAFETY: UTF-8 LF cannot occur inside a multibyte sequence; cursor decreases within text.
+    unsafe {
+        var position: usize = cursor;
+        while position > 0_usize && byte_at(document, position - 1_usize) != 10_u8 {
+            position = position - 1_usize;
+        }
+        return position;
+    }
+}
+
+unsafe fn line_end(document: *const Document, cursor: usize) -> usize {
+    // SAFETY: same LF boundary proof, monotonically bounded by logical length.
+    unsafe {
+        let bytes: usize = state(document).bytes;
+        var position: usize = cursor;
+        while position < bytes && byte_at(document, position) != 10_u8 { position = position + 1_usize; }
+        return position;
+    }
+}
+
+pub unsafe fn move(document: *Document, motion: Motion, extend: bool) -> Edit {
+    // SAFETY: each helper returns a valid boundary; select checks before changing storage.
+    unsafe {
+        let read: *const Document = core::ptr_const(document);
+        let before: State = state(read);
+        var cursor: usize = before.cursor;
+        match motion {
+            Motion::Left => {
+                cursor = previous_position(read, cursor);
+                if !extend && before.anchor != before.cursor {
+                    cursor = before.anchor;
+                    if cursor > before.cursor { cursor = before.cursor; }
+                }
+            },
+            Motion::Right => {
+                cursor = next_position(read, cursor);
+                if !extend && before.anchor != before.cursor {
+                    cursor = before.anchor;
+                    if cursor < before.cursor { cursor = before.cursor; }
+                }
+            },
+            Motion::LineStart => { cursor = line_start(read, cursor); },
+            Motion::LineEnd => { cursor = line_end(read, cursor); },
+            Motion::Start => { cursor = 0; },
+            Motion::End => { cursor = before.bytes; },
+        }
+        var anchor: usize = cursor;
+        if extend { anchor = before.anchor; }
+        return select(document, anchor, cursor);
+    }
+}
+
+// Up/down preserve the current scalar column where possible, without sticky-column state.
+pub unsafe fn vertical(document: *Document, down: bool, extend: bool) -> Edit {
+    // SAFETY: line helpers and next_position return boundaries in the same immutable logical text.
+    unsafe {
+        let read: *const Document = core::ptr_const(document);
+        let before: State = state(read);
+        let start: usize = line_start(read, before.cursor);
+        var position: usize = start;
+        var column: usize = 0;
+        while position < before.cursor {
+            position = next_position(read, position);
+            column = column + 1_usize;
+        }
+        var target: usize = start;
+        if down {
+            let end: usize = line_end(read, start);
+            if end == before.bytes { return Edit::Done; }
+            target = end + 1_usize;
+        } else {
+            if start == 0_usize { return Edit::Done; }
+            target = line_start(read, start - 1_usize);
+        }
+        let end: usize = line_end(read, target);
+        var i: usize = 0;
+        while i < column && target < end {
+            target = next_position(read, target);
+            i = i + 1_usize;
+        }
+        var anchor: usize = target;
+        if extend { anchor = before.anchor; }
+        return select(document, anchor, target);
+    }
+}
+
+pub unsafe fn erase(document: *Document, backward: bool) -> Edit {
+    // SAFETY: all potential failures are checked before changing selection; empty replacement
+    // cannot fail UTF-8/capacity/alias checks. Existing selection is deleted as one transaction.
+    unsafe {
+        let read: *const Document = core::ptr_const(document);
+        let before: State = state(read);
+        if before.anchor != before.cursor { return replace(document, ""); }
+        var other: usize = next_position(read, before.cursor);
+        if backward { other = previous_position(read, before.cursor); }
+        if other == before.cursor { return Edit::Done; }
+        if before.version == VERSION_MAX { return Edit::VersionLimit; }
+        (*document).anchor = other;
+        return replace(document, "");
+    }
+}

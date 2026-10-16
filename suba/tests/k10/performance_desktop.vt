@@ -1,0 +1,123 @@
+// Appended to the real desktop module in a test snapshot only. Two ordinary
+// native compilers build unchanged complete compiler source trees concurrently.
+module user::desktop::main;
+static mut COST_CHILD: [2]usize = zero;
+static mut COST_PIPE: [2]usize = zero;
+static mut COST_DONE: usize = 0;
+static mut COST_BUFFER: [4096]u8 = zero;
+static mut COST_LOG: [2]usize = zero;
+static mut COST_BYTES: [2]usize = zero;
+static mut COST_STARTED: bool = false;
+static mut COST_WINDOWS: bool = false;
+static mut COST_INPUTS: usize = 0;
+static mut COST_FINISHED: bool = false;
+static mut COST_BASE: [4]usize = zero;
+static mut COST_HAVE_BASE: bool = false;
+// Every warmup/final attempt is recorded. Only startup can update the baseline;
+// final checks must match it three times, bounded to twenty attempts.
+unsafe fn cost_checkpoint(phase: usize, sample: usize) -> bool {
+    unsafe {
+        let selectors: [4]usize = [syscalls::STATS_FREE_PAGES, syscalls::STATS_STREAMS,
+            cost_files::STATS_FS_FILES, cost_files::STATS_FS_REQUESTS];
+        var same: bool = COST_HAVE_BASE;
+        var i: usize = 0;
+        while i < 4_usize {
+            let value: syscall::Reply = services::stats(selectors[i]);
+            let logged: syscall::Reply = syscall::invoke(abi::SYS_STATS, 217, phase * 100_usize + sample,
+                selectors[i], value.status, value.value, 0);
+            if value.status != abi::OK { return false; }
+            if value.value != COST_BASE[i] { same = false; }
+            if phase == 0_usize { COST_BASE[i] = value.value; }
+            i = i + 1_usize;
+        }
+        COST_HAVE_BASE = true;
+        return same;
+    }
+}
+unsafe fn cost_settle(phase: usize) -> bool {
+    unsafe {
+        var attempt: usize = 0;
+        var stable: usize = 0;
+        let watches: [1]services::Watch = zero;
+        while attempt < 20_usize {
+            attempt = attempt + 1_usize;
+            if cost_checkpoint(phase, attempt) { stable = stable + 1_usize; } else { stable = 0; }
+            if stable == 3_usize { return true; }
+            let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+            if now.status != abi::OK { return false; }
+            let paused: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(watches).data, 0),
+                now.value + 500000_usize, false);
+            if paused.status != abi::OK { return false; }
+        }
+    }
+    return false;
+}
+unsafe fn cost_start() -> bool {
+    unsafe {
+        if !cost_settle(0) { return false; }
+        let cleared: syscall::Reply = syscall::invoke(abi::SYS_STATS, 210, 0, 0, 0, 0, 0);
+        var i: usize = 0;
+        while i < 2_usize {
+            let page: []u8 = core::slice_of_mut(LAUNCH_ARGUMENTS);
+            var name: []const u8 = "cost0.build";
+            var log: []const u8 = "cost0.log";
+            if i == 1_usize { name = "cost1.build"; log = "cost1.log"; }
+            if !argument_builder::initialize(page, "/work") || !argument_builder::append(page, "compiler") ||
+                !argument_builder::append(page, "build") || !argument_builder::append(page, name) { return false; }
+            var pair: services::StreamPair = zero;
+            match services::streams() { services::Streams::Failed(error) => { return false; },
+                services::Streams::Ready(value) => { pair = value; } }
+            let child: syscall::Reply = services::spawn("/sys/compiler.elf", core::slice_of(LAUNCH_ARGUMENTS), pair.write, pair.write, 0);
+            if child.status != abi::OK || syscall::close(pair.write).status != abi::OK { return false; }
+            let file: syscall::Reply = cost_fs::open(log, cost_files::WRITE | cost_files::CREATE_NEW | cost_files::TRANSIENT);
+            if file.status != abi::OK { return false; }
+            COST_CHILD[i] = child.value; COST_PIPE[i] = pair.read; COST_LOG[i] = file.value;
+            i = i + 1_usize;
+        }
+        COST_STARTED = true;
+        let marker: syscall::Reply = syscall::invoke(abi::SYS_STATS, 211, COST_CHILD[0_usize], COST_CHILD[1_usize], 0, 0, 0);
+        if marker.status != abi::OK { return false; }
+    }
+    return true;
+}
+unsafe fn cost_poll() -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < 2_usize {
+            if COST_PIPE[i] != 0_usize {
+                let read: syscall::Reply = services::read(COST_PIPE[i], core::slice_of_mut(COST_BUFFER), true);
+                if read.status == abi::OK {
+                    if read.value != 0_usize {
+                        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(COST_BUFFER).data, read.value);
+                        let written: syscall::Reply = cost_fs::write_at(COST_LOG[i], COST_BYTES[i], data);
+                        if written.status != abi::OK || written.value != read.value { return false; }
+                        COST_BYTES[i] = COST_BYTES[i] + read.value;
+                    } else {
+                        if syscall::close(COST_PIPE[i]).status != abi::OK || cost_fs::sync(COST_LOG[i], true).status != abi::OK ||
+                            syscall::close(COST_LOG[i]).status != abi::OK { return false; }
+                        COST_PIPE[i] = 0; COST_LOG[i] = 0;
+                    }
+                } else { if read.status != abi::WOULD_BLOCK { return false; } }
+            }
+            if COST_CHILD[i] != 0_usize && COST_PIPE[i] == 0_usize {
+                match services::collect(COST_CHILD[i]) {
+                    services::Collected::Failed(error) => { if error != abi::WOULD_BLOCK { return false; } },
+                    services::Collected::Ready(exit) => {
+                        if exit.status != 0_usize || exit.cause != 0_usize { return false; }
+                        let collected: syscall::Reply = syscall::invoke(abi::SYS_STATS, 219, i, exit.status, exit.cause, 0, 0);
+                        COST_CHILD[i] = 0; COST_DONE = COST_DONE + 1_usize;
+                    }
+                }
+            }
+            i = i + 1_usize;
+        }
+        if COST_DONE == 2_usize && COST_INPUTS >= 100_usize && !COST_FINISHED {
+            if cost_fs::sync_all().status != abi::OK { return false; }
+            let stopped: syscall::Reply = syscall::invoke(abi::SYS_STATS, 218, 0, 0, 0, 0, 0);
+            if !cost_settle(1) { return false; }
+            let report: syscall::Reply = syscall::invoke(abi::SYS_STATS, 214, 0, 0, 0, 0, 0);
+            COST_FINISHED = true;
+        }
+    }
+    return true;
+}

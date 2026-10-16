@@ -1,0 +1,22 @@
+// Deliberately no writes before FileRead: blkdebug must hit guest input data.
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::syscall;
+static mut BUFFER: [64]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        let opened: syscall::Reply = files::open("/work/中文.vt", 1);
+        if opened.status != abi::OK { return 1; }
+        let read: syscall::Reply = files::read_at(opened.value, 0, core::slice_of_mut(BUFFER));
+        let expected: []const u8 = "module hello; // 中文\n";
+        if read.status != abi::OK || read.value != expected.len { return 2; }
+        var i: usize = 0;
+        while i < expected.len {
+            if BUFFER[i] != expected[i] { return 3; }
+            i = i + 1_usize;
+        }
+        if syscall::close(opened.value).status != abi::OK { return 4; }
+    }
+    return 0;
+}

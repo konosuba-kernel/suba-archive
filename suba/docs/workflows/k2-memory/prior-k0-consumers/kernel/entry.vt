@@ -1,0 +1,88 @@
+// Kernel K0 entry: owns the boot handoff check and trusted fatal path.
+// This is an early S-mode kernel, with no processes, paging or runtime drivers.
+module kernel::entry;
+import suba::abi;
+import kernel::machine;
+
+unsafe fn word(info: usize, offset: usize, width: usize) -> usize {
+    var value: usize = 0;
+    var i: usize = 0;
+    // SAFETY: caller first bounds the whole BootInfo in the permanent stage0 area.
+    unsafe {
+        let data: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(info)), abi::BOOT_INFO_BYTES);
+        while i < width {
+            value = value | ((data[offset + i] as usize) << (i * 8_usize));
+            i = i + 1_usize;
+        }
+    }
+    return value;
+}
+
+fn valid_info(info: usize) -> bool {
+    if info < abi::BOOT_BASE || info % 8_usize != 0_usize { return false; }
+    if info - abi::BOOT_BASE > abi::BOOT_BYTES - abi::BOOT_INFO_BYTES { return false; }
+    // SAFETY: bare S-mode mapping; stage0 area is reserved readable RAM by platform contract.
+    unsafe {
+        if word(info, abi::BOOT_INFO_MAGIC, 8) != abi::BOOT_MAGIC { return false; }
+        if word(info, abi::BOOT_INFO_VERSION, 4) != abi::VERSION as usize { return false; }
+        if word(info, abi::BOOT_INFO_LENGTH, 4) != abi::BOOT_INFO_BYTES { return false; }
+        if word(info, abi::BOOT_INFO_RAM_BASE, 8) != abi::RAM_BASE { return false; }
+        if word(info, abi::BOOT_INFO_RAM_BYTES, 8) != abi::RAM_BYTES { return false; }
+        if word(info, abi::BOOT_INFO_KERNEL_BASE, 8) != abi::KERNEL_BASE { return false; }
+        let end: usize = word(info, abi::BOOT_INFO_KERNEL_END, 8);
+        if end <= abi::KERNEL_BASE || end - abi::KERNEL_BASE > abi::IMAGE_BYTES_MAX { return false; }
+        let dtb: usize = word(info, abi::BOOT_INFO_DTB_BASE, 8);
+        let length: usize = word(info, abi::BOOT_INFO_DTB_BYTES, 8);
+        if dtb < abi::BOOT_BASE || dtb - abi::BOOT_BASE > abi::BOOT_BYTES { return false; }
+        if length < 40_usize || length > abi::BOOT_BYTES - (dtb - abi::BOOT_BASE) { return false; }
+        if word(info, abi::BOOT_INFO_SLOT, 4) > 1_usize { return false; }
+        // K0 admits the one reservation used by its fixture. K1 must replace this
+        // narrow admission with full validated FDT/reservation ingestion.
+        if word(info, abi::BOOT_INFO_RESERVATION_COUNT, 4) != 1_usize { return false; }
+        if word(info, abi::BOOT_INFO_RESERVATIONS, 8) != abi::BOOT_BASE { return false; }
+        if word(info, abi::BOOT_INFO_RESERVATIONS + 8_usize, 8) != abi::BOOT_BYTES { return false; }
+    }
+    return true;
+}
+
+pub fn start(info: usize) -> u32 {
+    machine::initialize();
+    if !valid_info(info) { return panic(1); }
+    if (machine::status() & 2_usize) != 0_usize { return panic(2); }
+    // SAFETY: static diagnostic bytes remain valid throughout the synchronous write.
+    unsafe { machine::text("suba kernel K0: handoff accepted\n"); }
+    machine::halt();
+    return 0;
+}
+
+pub fn dispatch(frame: usize) -> usize {
+    // No ordinary trap is supported until K2. Never pretend to resume a process.
+    let ignored: u32 = panic(3);
+    return 0;
+}
+
+fn reason_text(reason: u32) -> () {
+    var digits: [10]u8 = [0;10];
+    var value: u32 = reason;
+    var at: usize = 10;
+    loop {
+        at = at - 1_usize;
+        // SAFETY: u32 decimal needs at most ten digits; at remains in 0..10.
+        unsafe { digits[at] = ((value % 10_u32) as u8) + 48_u8; }
+        value = value / 10_u32;
+        if value == 0_u32 { break; }
+    }
+    // SAFETY: local digit storage remains readable until synchronous output ends.
+    unsafe {
+        machine::text(core::slice_from_raw_parts(core::ptr_add(core::slice_of(digits).data, at), 10_usize - at));
+    }
+    return ();
+}
+
+pub fn panic(reason: u32) -> u32 {
+    unsafe { machine::text("suba kernel panic reason="); }
+    reason_text(reason);
+    unsafe { machine::text("\n"); }
+    machine::halt();
+    return reason;
+}

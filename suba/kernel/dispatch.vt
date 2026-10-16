@@ -1,0 +1,364 @@
+// Serialized syscall and teardown coordinator. Leaf owners never call back here.
+// One request/cleanup slice per scheduler pass; scratch views are not retained.
+// All unsafe functions in this module require serialized S-mode with a live direct
+// map. Owner APIs validate identities; user addresses pass only through usercopy.
+module kernel::dispatch;
+import suba::abi;
+import suba::syscalls;
+import suba::argument_wire;
+import kernel::process;
+import kernel::space;
+import kernel::memory;
+import kernel::objects;
+import kernel::stream;
+import kernel::request;
+import kernel::children;
+import kernel::jobs;
+import kernel::ranges;
+import kernel::usercopy;
+import kernel::machine;
+import kernel::boot_images;
+import suba::image as elf;
+import kernel::loader;
+import kernel::image_reads;
+import suba::windows;
+import kernel::window;
+import kernel::device::input;
+import kernel::fs;
+import suba::files;
+import kernel::fs::path;
+enum Owner { Empty, Attached(objects::Owner) }
+enum Cleanup { Cancel, Children, Handles, Release(objects::Object), Pages, Tail, Done }
+static mut OWNERS: [process::CAPACITY]Owner = zero;
+static mut CLEANUP: [process::CAPACITY]Cleanup = zero;
+static mut ROOTS: [process::CAPACITY]bool = zero;
+static mut CURSOR: usize = 0;
+static mut POLL_CHILD: bool = false;
+static mut POLL_WINDOW: bool = false;
+static mut SCRATCH: [4096]u8 = zero;
+static mut SLICE_MAX: usize = 0;
+static mut SLICE_KIND: usize = 0;
+static mut CURRENT_KIND: usize = 0;
+
+pub unsafe fn attach(id: process::Id, root: bool) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY { return false; }
+        match objects::attach(slot, process::generation(id)) {
+            objects::OwnerResult::Invalid => { return false; },
+            objects::OwnerResult::Ready(owner) => {
+                if !ranges::attach(id, process::generation(id)) {
+                    let removed: bool = objects::detach(owner);
+                    return false;
+                }
+                if !fs::attach_client(client(id)) { return false; }
+                OWNERS[slot] = Owner::Attached(owner);
+                CLEANUP[slot] = Cleanup::Cancel;
+                ROOTS[slot] = root;
+                return true;
+            }
+        }
+    }
+}
+
+unsafe fn handle(id: process::Id, token: usize, rights: u32) -> objects::LookupResult {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY { return objects::LookupResult::BadHandle; }
+        match OWNERS[slot] {
+            Owner::Empty => { return objects::LookupResult::BadHandle; },
+            Owner::Attached(owner) => { return objects::lookup(owner, token, rights); }
+        }
+    }
+}
+unsafe fn insert(id: process::Id, object: objects::Object, rights: u32) -> objects::InsertResult {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY { return objects::InsertResult::Invalid; }
+        match OWNERS[slot] {
+            Owner::Empty => { return objects::InsertResult::Invalid; },
+            Owner::Attached(owner) => { return objects::insert(owner, object, rights); }
+        }
+    }
+}
+unsafe fn release(object: objects::Object) -> bool {
+    unsafe {
+        match object {
+            objects::Object::StreamRead(value) => { return stream::release(value, false); },
+            objects::Object::StreamWrite(value) => { return stream::release(value, true); },
+            objects::Object::Child(value) => { return children::release(value); },
+            objects::Object::Job(value) => { fs::end_domain(value); if !children::cancel_job(value) { return false; } return jobs::release(value); },
+            objects::Object::Empty => { return false; },
+            objects::Object::File(value) => { return fs::release_file(value); },
+            objects::Object::Window(value) => { return window::release(value); },
+            objects::Object::Desktop(value) => { return true; }
+        }
+    }
+}
+unsafe fn close(id: process::Id, token: usize) -> usize {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY { return abi::BAD_HANDLE; }
+        match OWNERS[slot] {
+            Owner::Empty => { return abi::BAD_HANDLE; },
+            Owner::Attached(owner) => {
+                match objects::close(owner, token) {
+                    objects::CloseResult::BadHandle => { return abi::BAD_HANDLE; },
+                    objects::CloseResult::Closed(object) => {
+                        if !release(object) { return abi::IO; }
+                        return abi::OK;
+                    }
+                }
+            }
+        }
+    }
+}
+unsafe fn answer(id: process::Id, status: usize, value: usize) -> bool {
+    unsafe { return process::complete(id, status, value); }
+}
+unsafe fn pending(id: process::Id, operation: request::Operation) -> bool {
+    unsafe {
+        match request::start(id, operation) {
+            request::Started::Invalid => { return false; },
+            request::Started::Busy => { return false; },
+            request::Started::Limit => { return false; },
+            request::Started::Ready(token) => { return process::block(id); }
+        }
+    }
+}
+unsafe fn finish(work: request::Pending, status: usize, value: usize) -> bool {
+    unsafe {
+        if !request::active(work.owner, work.token) { return false; }
+        if !request::finish(work.owner, work.token) { return false; }
+        return answer(work.owner, status, value);
+    }
+}
+
+// Request owns a reserved Child reference until it is installed in the parent handle
+// table. Bound process resources still use ordinary subtree teardown.
+unsafe fn cancel_metadata(operation: request::Operation) -> bool {
+    unsafe {
+        match operation {
+            request::Operation::Preparing(value) => { return cancel_preparing(value); },
+            request::Operation::Installing(value) => {
+                return image_reads::close(value.source) && fs::directory_release(value.directory) && children::release(value.reservation);
+            },
+            request::Operation::File(value) => { return fs::cancel(value.ticket); },
+            request::Operation::Job(value) => { return fs::cancel(value.ticket); },
+            request::Operation::WindowCreate(value) => { return window::abort(value); },
+            request::Operation::WindowCopy(value) => {},
+            request::Operation::Idle => {},
+            request::Operation::Loading(value) => { fs::abort_grant(client(value.child)); return image_reads::close(value.source); }, request::Operation::Pages(value) => {},
+            request::Operation::Read(value) => {}, request::Operation::Write(value) => {},
+            request::Operation::Wait(value) => {}
+        }
+        return true;
+    }
+}
+
+unsafe fn reap(id: process::Id) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        match CLEANUP[slot] {
+            Cleanup::Cancel => {
+                // Identity is already Dying, so active() denies every late copyout.
+                // Endpoints stay in handles, pages in space, and bound processes in
+                // the tree. Request owns a Child reference until handle installation.
+                // Future device/FS requests transfer submitted cleanup references here.
+                match request::cancel(id) {
+                    request::Peek::Empty => {},
+                    request::Peek::Ready(work) => { if !cancel_metadata(work.operation) { return false; } }
+                }
+                match request::peek(slot) { request::Peek::Empty => {}, request::Peek::Ready(work) => { return false; } }
+                if !fs::end_client(client(id)) { return false; }
+                window::revoke_owner(id);
+                CLEANUP[slot] = Cleanup::Children;
+            },
+            Cleanup::Children => {
+                if !children::cancel_parent(id) { return false; }
+                CLEANUP[slot] = Cleanup::Handles;
+            },
+            Cleanup::Handles => {
+                match OWNERS[slot] {
+                    Owner::Empty => { CLEANUP[slot] = Cleanup::Pages; },
+                    Owner::Attached(owner) => {
+                        match objects::drain_one(owner) {
+                            objects::DrainResult::Invalid => { return false; },
+                            objects::DrainResult::Closed(object) => { CLEANUP[slot] = Cleanup::Release(object); },
+                            objects::DrainResult::Empty => {
+                                if !objects::detach(owner) || !ranges::detach(id, process::generation(id)) { return false; }
+                                OWNERS[slot] = Owner::Empty;
+                                CLEANUP[slot] = Cleanup::Pages;
+                            }
+                        }
+                    }
+                }
+            },
+            Cleanup::Release(object) => {
+                if !release(object) { return false; }
+                CLEANUP[slot] = Cleanup::Handles;
+            },
+            Cleanup::Pages => {
+                match process::reap_id(id) {
+                    space::Progress::Invalid => { return false; },
+                    space::Progress::More => {},
+                    space::Progress::Done => { CLEANUP[slot] = Cleanup::Tail; }
+                }
+            },
+            Cleanup::Tail => {
+                if !children::settled(id) || !fs::settled(client(id)) || !window::owner_settled(id) { return true; }
+                // FS owns submitted DMA and transient cleanup until its identity gate settles.
+                if !process::publish_exit(id) { return false; }
+                CLEANUP[slot] = Cleanup::Done;
+            },
+            Cleanup::Done => { return false; }
+        }
+        return true;
+    }
+}
+
+unsafe fn advance(work: request::Pending) -> bool {
+    unsafe {
+        if !request::active(work.owner, work.token) { return true; }
+        match work.operation {
+            request::Operation::Job(value) => { CURRENT_KIND = 119; return job_step(work, value); },
+            request::Operation::File(value) => { CURRENT_KIND = 116; return file_step(work, value); },
+            request::Operation::WindowCreate(value) => { CURRENT_KIND = 117; return create_window_step(work, value); },
+            request::Operation::WindowCopy(value) => { CURRENT_KIND = 118; return surface_step(work, value); },
+            request::Operation::Idle => { return false; },
+            request::Operation::Read(value) => { CURRENT_KIND = 105; return transfer_step(work, value, false); },
+            request::Operation::Write(value) => { CURRENT_KIND = 106; return transfer_step(work, value, true); },
+            request::Operation::Wait(value) => { CURRENT_KIND = 108; return wait_step(work, value); },
+            request::Operation::Preparing(value) => { return prepare_spawn(work, value); },
+            request::Operation::Installing(value) => { CURRENT_KIND = 109; return install_child(work, value); },
+            request::Operation::Loading(value) => { CURRENT_KIND = 104; return spawn_step(work, value); },
+            request::Operation::Pages(value) => { CURRENT_KIND = 107; return pages_step(work, value); }
+        }
+    }
+}
+
+// One owned process slot or one child record per call. Never recursively schedules.
+pub unsafe fn step() -> bool {
+    unsafe {
+        let start: usize = machine::time();
+        let result: bool = step_inner();
+        let elapsed: usize = machine::time() - start;
+        if elapsed > SLICE_MAX { SLICE_MAX = elapsed; SLICE_KIND = CURRENT_KIND; }
+        return result;
+    }
+}
+unsafe fn step_inner() -> bool {
+    unsafe {
+        if !job_tail_step() { return false; }
+        POLL_WINDOW = !POLL_WINDOW;
+        if POLL_WINDOW && window::has_work() {
+            CURRENT_KIND = 202;
+            return window::reap_step();
+        }
+        CURRENT_KIND = 200;
+        POLL_CHILD = !POLL_CHILD;
+        if POLL_CHILD && children::live_count() != 0_usize {
+            return children::poll_next();
+        }
+        var scan: usize = 0;
+        while scan < process::CAPACITY {
+            scan = scan + 1_usize;
+            let slot: usize = CURSOR;
+            CURSOR = (CURSOR + 1_usize) % process::CAPACITY;
+            match process::at(slot) {
+                process::Found::Empty => {},
+                process::Found::Ready(id) => {
+                    match process::state(id) {
+                        process::State::Dying => { CURRENT_KIND = 201; return reap(id); },
+                        process::State::Exited => {
+                            if ROOTS[slot] {
+                                match process::collect(id) {
+                                    process::Collected::Ready(exit) => {
+                                        ROOTS[slot] = false;
+                                        machine::text("suba K3: root exit "); number(exit.status); machine::text("\n");
+                                    },
+                                    process::Collected::Pending => { return false; },
+                                    process::Collected::Invalid => { return false; }
+                                }
+                            }
+                        },
+                        process::State::Blocked => {
+                            match request::peek(slot) {
+                                request::Peek::Empty => { return false; },
+                                request::Peek::Ready(work) => { return advance(work); }
+                            }
+                        },
+                        process::State::Loading => {}, process::State::Prepared => {},
+                        process::State::Ready => {}, process::State::Running => {},
+                        process::State::Vacant => { return false; }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}
+// Diagnostic counters, no authority or internal table references escape.
+pub unsafe fn quiescent() -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < process::CAPACITY {
+            match process::at(i) { process::Found::Ready(id) => { return false; }, process::Found::Empty => {} }
+            i = i + 1_usize;
+        }
+        return stream::live_count() == 0_usize && children::live_count() == 0_usize && jobs::live_count() == 0_usize;
+    }
+}
+pub unsafe fn max_slice_kind() -> usize { unsafe { return SLICE_KIND; } }
+pub unsafe fn max_slice_ticks() -> usize { unsafe { return SLICE_MAX; } }
+pub unsafe fn number(value: usize) -> () {
+    var digits: [20]u8 = zero;
+    var rest: usize = value;
+    var at: usize = 20;
+    unsafe {
+        loop { at = at - 1_usize; digits[at] = ((rest % 10_usize) as u8) + 48_u8;
+            rest = rest / 10_usize; if rest == 0_usize { break; } }
+        machine::text(core::slice_from_raw_parts(core::ptr_add(core::slice_of(digits).data, at), 20_usize - at));
+    }
+    return ();
+}
+
+pub unsafe fn has_work() -> bool {
+    unsafe {
+        if window::has_work() || jobs::storage_pending() { return true; }
+        var slot: usize = 0;
+        while slot < process::CAPACITY {
+            match process::at(slot) {
+                process::Found::Empty => {},
+                process::Found::Ready(id) => {
+                    match process::state(id) {
+                        process::State::Dying => { return true; }, process::State::Exited => { return true; },
+                        process::State::Blocked => {
+                            match request::peek(slot) {
+                                request::Peek::Empty => {},
+                                request::Peek::Ready(work) => {
+                                    match work.operation {
+                                        request::Operation::Preparing(value) => { return true; },
+                                        request::Operation::Installing(value) => { return true; },
+                                        request::Operation::Loading(value) => { return true; },
+                                        request::Operation::Pages(value) => { return true; },
+                                        request::Operation::File(value) => {},
+                                        request::Operation::Job(value) => {},
+                                        request::Operation::WindowCreate(value) => { return true; },
+                                        request::Operation::WindowCopy(value) => { return true; },
+                                        request::Operation::Idle => {}, request::Operation::Read(value) => {},
+                                        request::Operation::Write(value) => {}, request::Operation::Wait(value) => {}
+                                    }
+                                }
+                            }
+                        },
+                        process::State::Loading => {}, process::State::Prepared => {}, process::State::Ready => {},
+                        process::State::Running => {}, process::State::Vacant => {}
+                    }
+                }
+            }
+            slot = slot + 1_usize;
+        }
+        return false;
+    }
+}

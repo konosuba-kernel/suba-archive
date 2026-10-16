@@ -1,0 +1,12 @@
+format 1
+profile suba-boot
+entry boot::ram::start
+bind panic=boot::ram::panic
+source abi/contract.vt
+source abi/ram_start.vt
+source abi/image.vt
+source kernel/machine.vt
+source boot/fw_cfg.vt
+source boot/ram.vt
+assembly kernel/machine.s0
+output build/ram-boot.elf

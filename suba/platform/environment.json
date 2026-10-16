@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "purpose": "K0 local acceptance platform; clang only independent assembler test oracle",
+  "tools": {
+    "qemu-system-riscv64": {
+      "path": "/usr/bin/qemu-system-riscv64",
+      "sha256": "a1cfcceb6c688f9b0a290d512211ed08cf465b92b26a04cfb032280a53625718",
+      "version": "QEMU emulator version 11.1.1"
+    },
+    "qemu-riscv64": {
+      "path": "/usr/bin/qemu-riscv64",
+      "sha256": "f9937664b4107120a6b0a9727f27a2c215de3af57c467f7c575d1a13303b0bd2",
+      "version": "qemu-riscv64 version 11.1.1"
+    },
+    "clang": {
+      "path": "/usr/bin/clang-23",
+      "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+      "version": "clang version 23.1.1"
+    }
+  },
+  "firmware": {
+    "path": "/usr/share/qemu/opensbi-riscv64-generic-fw_dynamic.bin",
+    "sha256": "894e2aef99590fc07ec6c60ab00282b8bc5d5d5bb2a1d0c6ada0c52df24274c0"
+  }
+}

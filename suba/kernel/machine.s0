@@ -1,0 +1,117 @@
+# Fixed QEMU virt UART 16550 boundary. S-mode, C scalar ABI, sp untouched.
+# Inputs a0 byte; output a0 0/1. Clobbers t0/t1/t2/t3; preserves x27.
+__suba_uart_byte:
+addi x5, x0, 1
+slli x5, x5, 28
+csrrs x6, 384, x0
+beq x6, x0, .uart_physical
+addi x6, x0, 1
+slli x6, x6, 30
+add x5, x5, x6
+.uart_physical:
+addi x7, x0, 1
+slli x7, x7, 20
+.uart_wait:
+lbu x6, 5(x5)
+addi x28, x0, 32
+and x6, x6, x28
+bne x6, x0, .uart_ready
+addi x7, x7, -1
+bne x7, x0, .uart_wait
+addi x10, x0, 1
+jalr x0, 0(x1)
+.uart_ready:
+sb x10, 0(x5)
+fence
+addi x10, x0, 0
+jalr x0, 0(x1)
+
+# Boot and trusted supervisor fatal vector; user frames are handled in trap.s0.
+# stvec direct mode, all S interrupts disabled, x27 preserved.
+__suba_machine_init:
+csrrci x0, 256, 2
+csrrw x0, 260, x0
+address x5, __suba_emergency
+csrrw x0, 261, x5
+sfence.vma x0, x0
+fence.i
+jalr x0, 0(x1)
+
+__suba_status:
+csrrs x10, 256, x0
+jalr x0, 0(x1)
+
+# Caller has validated/loaded entry and BootInfo. a0 entry, a1 info.
+# Tail transfer, no old stack dependency at destination; instruction publication fence.
+__suba_jump:
+addi x5, x10, 0
+addi x10, x11, 0
+fence
+fence.i
+jalr x0, 0(x5)
+
+# Trusted failure: S-mode, no return, sp/x27 unused. wfi may resume spuriously.
+__suba_halt:
+csrrci x0, 256, 2
+csrrw x0, 260, x0
+.halted:
+wfi
+jump .halted
+
+align 4
+__suba_emergency:
+csrrci x0, 256, 2
+addi x10, x0, 33
+call __suba_uart_byte
+csrrs x10, 322, x0
+call .fatal_hex
+addi x10, x0, 58
+call __suba_uart_byte
+csrrs x10, 321, x0
+call .fatal_hex
+addi x10, x0, 58
+call __suba_uart_byte
+csrrs x10, 323, x0
+call .fatal_hex
+addi x10, x0, 10
+call __suba_uart_byte
+jump __suba_halt
+
+# Emergency-only, no stack. Print exactly sixteen hex digits.
+# Clobbers x18/x19/x20 plus UART scratch; fatal path never resumes interrupted code.
+.fatal_hex:
+addi x18, x1, 0
+addi x19, x10, 0
+addi x20, x0, 60
+.hex_digit:
+srl x10, x19, x20
+addi x6, x0, 15
+and x10, x10, x6
+addi x6, x0, 10
+bltu x10, x6, .hex_decimal
+addi x10, x10, 87
+jump .hex_write
+.hex_decimal:
+addi x10, x10, 48
+.hex_write:
+call __suba_uart_byte
+beq x20, x0, .hex_done
+addi x20, x20, -4
+jump .hex_digit
+.hex_done:
+jalr x0, 0(x18)
+
+# S-mode C scalar ABI: a0 address, a1 validated u16 value. Preserves sp/x27.
+# Caller owns MMIO access. Full fences order prior/following device transactions.
+__suba_store16:
+fence
+sh x11, 0(x10)
+fence
+jalr x0, 0(x1)
+
+# S-mode C scalar ABI: a0 byte-readable MMIO address, returns zero-extended byte.
+__suba_load8:
+fence
+lbu x10, 0(x10)
+fence
+jalr x0, 0(x1)

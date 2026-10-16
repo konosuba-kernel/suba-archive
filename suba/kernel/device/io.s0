@@ -1,0 +1,38 @@
+# S-mode C scalar ABI. Aligned mapped MMIO/owned DMA addresses only.
+# No stack; x27 and callee-saved registers preserved. Full fences surround memory.
+__suba_io_read32:
+fence
+lwu x10, 0(x10)
+fence
+jalr x0, 0(x1)
+__suba_io_write32:
+fence
+sw x11, 0(x10)
+fence
+jalr x0, 0(x1)
+__suba_io_write64:
+fence
+sd x11, 0(x10)
+fence
+jalr x0, 0(x1)
+__suba_io_barrier:
+fence
+jalr x0, 0(x1)
+__suba_io_time:
+csrrs x10, 3073, x0
+jalr x0, 0(x1)
+__suba_io_write16:
+fence
+sh x11, 0(x10)
+fence
+jalr x0, 0(x1)
+__suba_io_read8:
+fence
+lbu x10, 0(x10)
+fence
+jalr x0, 0(x1)
+__suba_io_write8:
+fence
+sb x11, 0(x10)
+fence
+jalr x0, 0(x1)

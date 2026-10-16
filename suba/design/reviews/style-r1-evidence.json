@@ -1,0 +1,333 @@
+{
+  "date": "2026-10-14",
+  "reviewer": "/root/suba_style_review",
+  "candidate": "S1-r1",
+  "scope": "independent document and Linux-user example acceptance, not kernel tests",
+  "compiler_sha256": "7e1de550da39c31e203c83d0bce7e13dd5deb64923f3c5e4428aad8fbd7d7d20",
+  "identity": [
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "CODE_STYLE.md",
+      "expected": "000bae0954805fb5de69f7317314103051788a21898ccf157b3e84b1a4505aad",
+      "actual": "000bae0954805fb5de69f7317314103051788a21898ccf157b3e84b1a4505aad",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "README.md",
+      "expected": "5ef82add5517d6cfb0ea6a960050e54f9a2f5835d643b59f6b37ff43fa5b6870",
+      "actual": "5ef82add5517d6cfb0ea6a960050e54f9a2f5835d643b59f6b37ff43fa5b6870",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "docs/examples/style/README.md",
+      "expected": "b36b6e19b9acaed2c7037f37f7d76ef7439db777dda3c5552fda3de284e81094",
+      "actual": "b36b6e19b9acaed2c7037f37f7d76ef7439db777dda3c5552fda3de284e81094",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "docs/examples/style/bytes.vt",
+      "expected": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+      "actual": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "docs/examples/style/main.vt",
+      "expected": "4690c0589ad343c017be6fca091730ea86d0345e7303ab474251e654a298db0c",
+      "actual": "4690c0589ad343c017be6fca091730ea86d0345e7303ab474251e654a298db0c",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "docs/examples/style/program.build",
+      "expected": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b",
+      "actual": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "docs/examples/style/ranges.vt",
+      "expected": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+      "actual": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "style-candidate-r1.json",
+      "path": "docs/examples/style/verification.json",
+      "expected": "238f21565e727563abc34cc015107cc4de375ca225b1e047ba1628a98652446e",
+      "actual": "238f21565e727563abc34cc015107cc4de375ca225b1e047ba1628a98652446e",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "README.md",
+      "expected": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17",
+      "actual": "5ef82add5517d6cfb0ea6a960050e54f9a2f5835d643b59f6b37ff43fa5b6870",
+      "matches": false,
+      "allowed_navigation_change": true
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "REQUIREMENTS.md",
+      "expected": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a",
+      "actual": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "design/ARCHITECTURE.md",
+      "expected": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b",
+      "actual": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "design/CONTRACTS.md",
+      "expected": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f",
+      "actual": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "design/IMPLEMENTATION.md",
+      "expected": "502c9afc65287399f2e18ccbf63d39cabee770c14b0a01851accbe998e527770",
+      "actual": "502c9afc65287399f2e18ccbf63d39cabee770c14b0a01851accbe998e527770",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "design/research/platform.md",
+      "expected": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb",
+      "actual": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "design/research/toolchain.md",
+      "expected": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245",
+      "actual": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245",
+      "matches": true,
+      "allowed_navigation_change": false
+    },
+    {
+      "manifest": "candidate-r3.json",
+      "path": "design/research/toolchain-evidence.json",
+      "expected": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039",
+      "actual": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039",
+      "matches": true,
+      "allowed_navigation_change": false
+    }
+  ],
+  "commands": [
+    {
+      "name": "original",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/original",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=3445 assembly=0 names=86 name_bytes=1349 decls=9 types=22 fields=6 params=6 max_ast=77 max_ir=176 max_frame=1040 max_bindings=6 max_defers=0 max_loops=0 max_slots=135 max_args=14 max_params=3 text=7576 data=0 objects=0 symbols=144 fixups=231 relocations=0 elf=16385\n",
+      "input_sha256": {
+        "main.vt": "4690c0589ad343c017be6fca091730ea86d0345e7303ab474251e654a298db0c",
+        "ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+        "bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+        "program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b"
+      },
+      "elf_exists": true
+    },
+    {
+      "name": "original_execute",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/original",
+      "argv": [
+        "qemu-riscv64",
+        "program.elf"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "private_make",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/private_make",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "E_NAME file=3 byte=89\n",
+      "input_sha256": {
+        "main.vt": "46bc994e11d0ba16cd941a64707609d4c3a6f98a25579911f0821b19a2811a1a",
+        "ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+        "bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+        "program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b"
+      },
+      "elf_exists": false
+    },
+    {
+      "name": "private_zero",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/private_zero",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "E_NAME file=3 byte=108\n",
+      "input_sha256": {
+        "main.vt": "217510efab27fbd27bbe2e093a4ee9a0713946d6e97eb67df5f9f540ba7e7917",
+        "ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+        "bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+        "program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b"
+      },
+      "elf_exists": false
+    },
+    {
+      "name": "private_read",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/private_read",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "E_NAME file=3 byte=161\n",
+      "input_sha256": {
+        "main.vt": "ddd3708c8d4c47da5c592351ddf303aadc3a51b72fad6ff0264e8f7e33bcabef",
+        "ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+        "bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+        "program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b"
+      },
+      "elf_exists": false
+    },
+    {
+      "name": "unsafe_call",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/unsafe_call",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "E_PERMISSION file=3 byte=118\n",
+      "input_sha256": {
+        "main.vt": "486a1f9142a90f4b6bba97a1d12b213e03dce6fcd3dc18918f396ea2ab6b8c5f",
+        "ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+        "bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+        "program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b"
+      },
+      "elf_exists": false
+    },
+    {
+      "name": "private_make_control",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/private_make_control",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=1679 assembly=0 names=57 name_bytes=776 decls=7 types=19 fields=6 params=6 max_ast=63 max_ir=176 max_frame=1040 max_bindings=6 max_defers=0 max_loops=0 max_slots=135 max_args=0 max_params=3 text=4732 data=0 objects=0 symbols=90 fixups=152 relocations=0 elf=16385\n",
+      "elf_exists": true
+    },
+    {
+      "name": "private_zero_control",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/private_zero_control",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=1643 assembly=0 names=57 name_bytes=776 decls=7 types=19 fields=6 params=6 max_ast=63 max_ir=176 max_frame=1040 max_bindings=6 max_defers=0 max_loops=0 max_slots=135 max_args=0 max_params=3 text=4884 data=0 objects=0 symbols=95 fixups=161 relocations=0 elf=16385\n",
+      "elf_exists": true
+    },
+    {
+      "name": "private_read_control",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/private_read_control",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=1752 assembly=0 names=64 name_bytes=923 decls=7 types=19 fields=6 params=6 max_ast=63 max_ir=176 max_frame=1040 max_bindings=6 max_defers=0 max_loops=0 max_slots=135 max_args=3 max_params=3 text=5024 data=0 objects=0 symbols=95 fixups=162 relocations=0 elf=16385\n",
+      "elf_exists": true
+    },
+    {
+      "name": "unsafe_call_control",
+      "cwd": "/tmp/suba-style-independent-k7d_sdb_/unsafe_call_control",
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=1694 assembly=0 names=65 name_bytes=887 decls=7 types=22 fields=6 params=6 max_ast=63 max_ir=176 max_frame=1040 max_bindings=6 max_defers=0 max_loops=0 max_slots=135 max_args=2 max_params=3 text=4948 data=0 objects=0 symbols=91 fixups=156 relocations=0 elf=16385\n",
+      "elf_exists": true
+    }
+  ],
+  "elf_sha256": "bec2fffd31b33f05d9ddf69441197b4fe1d7d543ebf697aaefb64ee9e10886b4",
+  "generated_cases": {
+    "original": null,
+    "private_make": "let r = make ranges::ByteRange { offset: 0_usize, length: 0_usize }; return 0;",
+    "private_zero": "let r: ranges::ByteRange = zero; return 0;",
+    "private_read": "match ranges::checked_range(0,0,0) { ranges::RangeResult::Value(r) => { let n = r.offset; return 0; }, ranges::RangeResult::Outside => { return 1; }, }",
+    "unsafe_call": "let data: [4]u8 = [0,0,0,0]; let r = bytes::read_u32_le(core::slice_of(data),0); return 0;"
+  },
+  "readme_old_hash_after_removing_single_navigation_line": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17"
+}

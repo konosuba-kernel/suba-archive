@@ -1,0 +1,28 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+static mut BUFFER: [16]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        let start: usize = services::stats(1).value;
+        while services::stats(8).value < 63_usize {
+            if services::stats(1).value - start > 50000000_usize { return 30; }
+        }
+        let nodes: usize = services::stats(7).value;
+        let last: syscall::Reply = files::open("shared", 1);
+        if last.status != abi::OK || services::stats(8).value != 64_usize { return 31; }
+        // This process has free handle slots: failure comes from the global File table.
+        if files::open("shared", 1).status != abi::LIMIT { return 32; }
+        if files::open("global_overflow", 14).status != abi::LIMIT { return 33; }
+        if services::stats(7).value != nodes || services::stats(8).value != 64_usize { return 34; }
+        let read: syscall::Reply = files::read_at(last.value, 0, core::slice_of_mut(BUFFER));
+        if read.status != abi::OK || read.value != 6_usize || BUFFER[0_usize] != 115_u8 { return 35; }
+        if syscall::close(last.value).status != abi::OK { return 36; }
+        let recovered: syscall::Reply = files::open("after_close", 14);
+        if recovered.status != abi::OK || files::write_at(recovered.value, 0, "temporary").status != abi::OK ||
+            syscall::close(recovered.value).status != abi::OK { return 37; }
+        return 0;
+    }
+}

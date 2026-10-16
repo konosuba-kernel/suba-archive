@@ -1,0 +1,64 @@
+module style::main;
+
+import style::ranges;
+import style::bytes;
+
+fn check_ranges() -> u32 {
+    match ranges::checked_range(4, 3, 7) {
+        ranges::RangeResult::Value(range) => {
+            if ranges::end(range) != 7_usize {
+                return 1;
+            }
+        },
+        ranges::RangeResult::Outside => { return 2; },
+    }
+    match ranges::checked_range(7, 0, 7) {
+        ranges::RangeResult::Value(range) => {
+            if ranges::end(range) != 7_usize {
+                return 3;
+            }
+        },
+        ranges::RangeResult::Outside => { return 4; },
+    }
+    match ranges::checked_range(8, 0, 7) {
+        ranges::RangeResult::Value(_) => { return 5; },
+        ranges::RangeResult::Outside => {},
+    }
+    match ranges::checked_range(0xffffffffffffffff, 1, 0xffffffffffffffff) {
+        ranges::RangeResult::Value(_) => { return 6; },
+        ranges::RangeResult::Outside => {},
+    }
+    return 0;
+}
+
+fn check_bytes() -> u32 {
+    let data: [5]u8 = [0, 0x78, 0x56, 0x34, 0x12];
+    // SAFETY: data is live, immutable local storage for every decoder call.
+    unsafe {
+        match bytes::read_u32_le(core::slice_of(data), 1) {
+            bytes::ReadResult::Value(value) => {
+                if value != 0x12345678_u32 {
+                    return 7;
+                }
+            },
+            bytes::ReadResult::Truncated => { return 8; },
+        }
+        match bytes::read_u32_le(core::slice_of(data), 2) {
+            bytes::ReadResult::Value(_) => { return 9; },
+            bytes::ReadResult::Truncated => {},
+        }
+        match bytes::read_u32_le(core::slice_of(data), 0xffffffffffffffff) {
+            bytes::ReadResult::Value(_) => { return 10; },
+            bytes::ReadResult::Truncated => {},
+        }
+    }
+    return 0;
+}
+
+fn run() -> u32 {
+    let range_status = check_ranges();
+    if range_status != 0_u32 {
+        return range_status;
+    }
+    return check_bytes();
+}

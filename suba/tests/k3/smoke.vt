@@ -1,0 +1,35 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::syscall;
+import libsuba::services;
+pub fn run() -> u32 {
+    let unsupported: syscall::Reply = syscall::invoke(999, 0, 0, 0, 0, 0, 0);
+    if unsupported.status != abi::UNSUPPORTED { return 1; }
+    let before: syscall::Reply = syscall::invoke(abi::SYS_STATS, syscalls::STATS_FREE_PAGES, 0, 0, 0, 0, 0);
+    let pages: syscall::Reply = services::allocate_pages(2);
+    if pages.status != abi::OK { return 2; }
+    unsafe {
+        *core::ptr::<usize>(pages.value) = 123;
+        *core::ptr::<usize>(pages.value + 4096_usize) = 456;
+        if *core::ptr::<usize>(pages.value) != 123_usize { return 3; }
+    }
+    let freed: syscall::Reply = services::free_pages(pages.value, 2);
+    let after: syscall::Reply = syscall::invoke(abi::SYS_STATS, syscalls::STATS_FREE_PAGES, 0, 0, 0, 0, 0);
+    if freed.status != abi::OK || before.value != after.value { return 4; }
+    match services::streams() {
+        services::Streams::Failed(status) => { return 5; },
+        services::Streams::Ready(pair) => {
+            let closed: syscall::Reply = syscall::close(pair.write);
+            if closed.status != abi::OK { return 6; }
+            var buffer: [1]u8 = zero;
+            unsafe {
+                let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(buffer), false);
+                if read.status != abi::OK || read.value != 0_usize { return 7; }
+            }
+            let closed_read: syscall::Reply = syscall::close(pair.read);
+            if closed_read.status != abi::OK { return 8; }
+        }
+    }
+    return 0;
+}

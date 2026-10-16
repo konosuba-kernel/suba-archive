@@ -1,0 +1,124 @@
+{
+  "reviewer": "/root/suba_design_review",
+  "candidate": "C-r3",
+  "checks": [
+    {
+      "name": "r3:README.md",
+      "pass": true,
+      "detail": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17"
+    },
+    {
+      "name": "r3:REQUIREMENTS.md",
+      "pass": true,
+      "detail": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a"
+    },
+    {
+      "name": "r3:design/ARCHITECTURE.md",
+      "pass": true,
+      "detail": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b"
+    },
+    {
+      "name": "r3:design/CONTRACTS.md",
+      "pass": true,
+      "detail": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f"
+    },
+    {
+      "name": "r3:design/IMPLEMENTATION.md",
+      "pass": true,
+      "detail": "502c9afc65287399f2e18ccbf63d39cabee770c14b0a01851accbe998e527770"
+    },
+    {
+      "name": "r3:design/research/platform.md",
+      "pass": true,
+      "detail": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb"
+    },
+    {
+      "name": "r3:design/research/toolchain.md",
+      "pass": true,
+      "detail": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245"
+    },
+    {
+      "name": "r3:design/research/toolchain-evidence.json",
+      "pass": true,
+      "detail": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039"
+    },
+    {
+      "name": "preserved-r2:README.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:REQUIREMENTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:design/ARCHITECTURE.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:design/CONTRACTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:design/IMPLEMENTATION.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:design/research/platform.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:design/research/toolchain.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r2:design/research/toolchain-evidence.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "only-two-declared-files-changed",
+      "pass": true,
+      "detail": [
+        "design/CONTRACTS.md",
+        "design/IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "name": "current-s0-no-sh",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "current-s0-sb-sw-sd",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "start-before-functions-and-s0",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "actual-qtest-writew",
+      "pass": true,
+      "detail": null
+    }
+  ],
+  "source_hashes": {
+    "biomiya/core-s/next/q/main.vt": "f30ba4a2641da8f6a43f4cbc263f9fbfb2b4c49b3fe1d5cdcc8cdcc3572cb5f4",
+    "biomiya/core-s/next/q/s0.vt": "c90d59a279926a1491fc43307deddc4e04acc0d9754a64aad56fe850fe53d9b7",
+    "suba/design/research/platform-ramfb-probe.py": "d1c80906769bf046a14862dcf913296c2fd7e220d0575b7a810c92721c1682ba"
+  },
+  "external_check": {
+    "url": "https://raw.githubusercontent.com/qemu/qemu/master/docs/specs/fw_cfg.rst",
+    "result": "Official selector width=16-bit, MMIO endian=big; DMA register width=64-bit. qemu.org rendered URL timed out, official source retrieved successfully."
+  },
+  "scope": "Final architecture delta/identity review only; no guest product test."
+}

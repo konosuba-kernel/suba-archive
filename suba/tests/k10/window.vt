@@ -1,0 +1,268 @@
+// Migrated K5 fixture: ordinary children use the current persistent FS loader.
+// Protected U fixtures. The designated test desktop uses the same boot grant,
+// syscalls, spawn/collect and mappings as the real desktop; no kernel shortcuts.
+module test::k10_window;
+import suba::abi;
+import suba::windows;
+import suba::syscalls;
+import libsuba::window_api;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::arguments;
+import libsuba::argument_builder;
+import test::k10_config as config;
+static mut PIXELS: [65536]u8 = zero;
+static mut ARGUMENTS: [4096]u8 = zero;
+static mut LIST: window_api::List = zero;
+static mut CAPABILITY: usize = 0;
+fn rectangle() -> window_api::Rect { return make window_api::Rect { x: 0, y: 0, width: 128, height: 128 }; }
+
+fn tick() -> () {
+    let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+    let empty: [1]services::Watch = zero;
+    unsafe {
+        let ignored: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(empty).data, 0),
+            now.value + 10000_usize, false);
+    }
+    return ();
+}
+fn capability() -> usize {
+    match arguments::argument(1) {
+        arguments::BytesResult::Invalid => { return 0; },
+        arguments::BytesResult::Value(bytes) => {
+            var value: usize = 0;
+            var i: usize = 0;
+            unsafe {
+                while i < bytes.len {
+                    if bytes[i] < 48_u8 || bytes[i] > 57_u8 { return 0; }
+                    value = value * 10_usize + (bytes[i] - 48_u8) as usize;
+                    i = i + 1_usize;
+                }
+            }
+            return value;
+        }
+    }
+}
+unsafe fn marker(value: u32) -> () {
+    // SAFETY: this entry runs only in the designated desktop's borrowed display mapping.
+    unsafe { *core::ptr::<u32>(abi::DISPLAY_BASE) = value; }
+    return ();
+}
+unsafe fn spawn(role: []const u8, stdout: usize) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGUMENTS), "/") ||
+            !argument_builder::append(core::slice_of_mut(ARGUMENTS), role) {
+            return make syscall::Reply { status: abi::INVALID, value: 0 };
+        }
+        return services::spawn("/sys/worker", core::slice_of(ARGUMENTS), stdout, 0, 0);
+    }
+}
+unsafe fn ready_window() -> bool {
+    unsafe {
+        loop {
+            if window_api::list(CAPABILITY, core::addr_of_mut(LIST)) != abi::OK { return false; }
+            if LIST.count == 1_usize && LIST.items[0_usize].damage >= 33_usize { return true; }
+            tick();
+        }
+    }
+    return false;
+}
+fn collected(child: usize, expected: usize) -> bool {
+    loop {
+        match services::collect(child) {
+            services::Collected::Failed(status) => { if status != abi::WOULD_BLOCK { return false; } tick(); },
+            services::Collected::Ready(exit) => {
+                return exit.status == expected && exit.cause == 0_usize;
+            }
+        }
+    }
+    return false;
+}
+unsafe fn restored(baseline: usize) -> bool {
+    unsafe {
+        if window_api::list(CAPABILITY, core::addr_of_mut(LIST)) != abi::OK || LIST.count != 0_usize { return false; }
+        return services::stats(syscalls::STATS_FREE_PAGES).value == baseline &&
+            services::stats(syscalls::STATS_STREAMS).value == 0_usize;
+    }
+}
+
+unsafe fn rounds(race: bool) -> u32 {
+    unsafe {
+        let baseline: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+        if syscall::invoke(abi::SYS_STATS, 202, 0, 0, 0, 0, 0).status != abi::OK { return 49; }
+        var old: window_api::Id = zero;
+        var round: usize = 0;
+        var limit: usize = config::ROUNDS;
+        if race { limit = config::ROUNDS + 2_usize; }
+        while round < limit {
+            let child: syscall::Reply = spawn("busy", 0);
+            if child.status != abi::OK { return 1; }
+            if !ready_window() { return 2; }
+            let id: window_api::Id = LIST.items[0_usize].id;
+            if round != 0_usize {
+                if id.slot != old.slot || id.generation == old.generation { return 3; }
+                if window_api::copy(CAPABILITY, old, rectangle(), 512, core::slice_of_mut(PIXELS)).status != abi::BAD_HANDLE { return 4; }
+            }
+            let before: usize = LIST.layout;
+            if window_api::layout(CAPABILITY, id, before, 20, 20, true).status != abi::OK { return 5; }
+            if window_api::layout(CAPABILITY, id, before, 40, 40, true).status != abi::BUSY { return 6; }
+            if window_api::list(CAPABILITY, core::addr_of_mut(LIST)) != abi::OK { return 7; }
+            if window_api::route(CAPABILITY, id, before, LIST.focus, 1).status != abi::BUSY { return 8; }
+            if window_api::route(CAPABILITY, id, LIST.layout, LIST.focus - 1_usize, 1).status != abi::BUSY { return 9; }
+            let copied: syscall::Reply = window_api::copy(CAPABILITY, id, rectangle(), 512, core::slice_of_mut(PIXELS));
+            if race && round == 0_usize {
+                if copied.status != abi::BAD_HANDLE || copied.value != 0_usize { return 10; }
+            } else {
+                if copied.status != abi::OK || copied.value != 65536_usize { return 11; }
+                var i: usize = 0;
+                while i < 65536_usize { if PIXELS[i] != 90_u8 { return 12; } i = i + 1_usize; }
+                if window_api::close_app(CAPABILITY, id, true).status != abi::OK { return 13; }
+            }
+            var status: usize = abi::CANCELLED;
+            if race && round == 1_usize { status = 42; }
+            if !collected(child.value, status) { return 14; }
+            if !restored(baseline) { return 15; }
+            let recorded: syscall::Reply = syscall::invoke(abi::SYS_STATS, 201, round + 1_usize, 0, 0, 0, 0);
+            if recorded.status != abi::OK { return 48; }
+            old = id;
+            round = round + 1_usize;
+            marker(0x00010000_u32 | round as u32);
+        }
+    }
+    return 0;
+}
+
+unsafe fn queue_test() -> u32 {
+    unsafe {
+        let baseline: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+        if syscall::invoke(abi::SYS_STATS, 202, 0, 0, 0, 0, 0).status != abi::OK { return 49; }
+        var pipe: services::StreamPair = zero;
+        match services::streams() {
+            services::Streams::Failed(status) => { return 34; },
+            services::Streams::Ready(value) => { pipe = value; }
+        }
+        let child: syscall::Reply = spawn("queue", pipe.write);
+        if child.status != abi::OK || syscall::close(pipe.write).status != abi::OK || !ready_window() { return 21; }
+        let id: window_api::Id = LIST.items[0_usize].id;
+        if window_api::layout(CAPABILITY, id, LIST.layout, 20, 20, true).status != abi::OK { return 22; }
+        if window_api::list(CAPABILITY, core::addr_of_mut(LIST)) != abi::OK { return 23; }
+        // Queue CloseRequested before overflow; it must survive clearing ordinary events.
+        if window_api::close_app(CAPABILITY, id, false).status != abi::OK { return 24; }
+        marker(0x0000ffff);
+        var received: usize = 0;
+        while received < 100_usize {
+            match window_api::event(CAPABILITY, true) {
+                window_api::EventRead::Failed(status) => { if status != abi::WOULD_BLOCK { return 25; } tick(); },
+                window_api::EventRead::Ready(event) => {
+                    if event.kind == windows::EVENT_RESET { return 26; }
+                    if event.kind == abi::EVENT_KEY {
+                        if received == 0_usize {
+                            if window_api::route(CAPABILITY, id, LIST.layout - 1_usize, LIST.focus, event.sequence).status != abi::BUSY { return 31; }
+                            if window_api::route(CAPABILITY, id, LIST.layout, LIST.focus - 1_usize, event.sequence).status != abi::BUSY { return 32; }
+                        }
+                        if window_api::route(CAPABILITY, id, LIST.layout, LIST.focus, event.sequence).status != abi::OK { return 27; }
+                        if window_api::route(CAPABILITY, id, LIST.layout, LIST.focus, event.sequence).status != abi::BUSY { return 33; }
+                        received = received + 1_usize;
+                    }
+                }
+            }
+        }
+        // Release the producer only after routing all100 edges. Its65537-byte
+        // write cannot finish in the65536-byte stream until this drain begins.
+        var drained: usize = 0;
+        while drained < 65537_usize {
+            let read: syscall::Reply = services::read(pipe.read, core::slice_of_mut(PIXELS), false);
+            if read.status != abi::OK || read.value == 0_usize { return 35; }
+            drained = drained + read.value;
+        }
+        if syscall::close(pipe.read).status != abi::OK || !collected(child.value, 0) { return 29; }
+        if !restored(baseline) { return 30; }
+        if syscall::invoke(abi::SYS_STATS, 201, 1, 0, 0, 0, 0).status != abi::OK { return 48; }
+    }
+    return 0;
+}
+
+fn desktop(mode: usize) -> u32 {
+    unsafe {
+        CAPABILITY = capability();
+        if CAPABILITY == 0_usize { return 99; }
+        var result: u32 = 0;
+        if mode == 2_usize { result = queue_test(); }
+        else { result = rounds(mode == 1_usize); }
+        if result == 0_u32 { marker(0x0000ff00); }
+        else { marker(0x00ff0000_u32 | result); }
+        loop { tick(); }
+    }
+    return 0;
+}
+pub fn lifecycle() -> u32 { return desktop(0); }
+pub fn copy_race() -> u32 { return desktop(1); }
+pub fn queues() -> u32 { return desktop(2); }
+
+// Dedicated in-flight update cancellation; the observer only holds after an
+// actual first piece. All termination is initiated by this U parent.
+pub fn updating() -> u32 {
+    unsafe {
+        CAPABILITY = capability();
+        if CAPABILITY == 0_usize { marker(0x00ff003c); return 60; }
+        let pages: usize = services::stats(syscalls::STATS_FREE_PAGES).value;
+        var failure: u32 = 0;
+        if syscall::invoke(abi::SYS_STATS, 202, 0, 0, 0, 0, 0).status != abi::OK { failure = 61; }
+        var round: usize = 0;
+        while failure == 0_u32 && round < config::ROUNDS {
+            let child: syscall::Reply = spawn("busy", 0);
+            if child.status != abi::OK { failure = 62; break; }
+            let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+            var state: usize = 0;
+            while state != 3_usize && services::stats(syscalls::STATS_TIME_TICKS).value < until {
+                state = syscall::invoke(abi::SYS_STATS, 200, child.value, 0, 0, 0, 0).value;
+            }
+            if state != 3_usize { failure = 63; break; }
+            if syscall::kill_child(child.value).status != abi::OK || !collected(child.value, abi::CANCELLED) { failure = 64; break; }
+            if !restored(pages) || syscall::invoke(abi::SYS_STATS, 201, round + 1_usize, 5, 0, 0, 0).status != abi::OK { failure = 65; break; }
+            round = round + 1_usize;
+        }
+        if failure == 0_u32 { marker(0x0000ff00); } else { marker(0x00ff0000_u32 | failure); }
+        loop { tick(); }
+    }
+    return 0;
+}
+
+pub fn producer() -> u32 {
+    let created: syscall::Reply = window_api::create(128, 128);
+    if created.status != abi::OK { return 41; }
+    unsafe {
+        var i: usize = 0;
+        while i < 65536_usize { PIXELS[i] = 90; i = i + 1_usize; }
+        if window_api::update(created.value, rectangle(), 512, core::slice_of(PIXELS)).status != abi::OK { return 42; }
+        var queue: bool = false;
+        match arguments::argument(0) {
+            arguments::BytesResult::Invalid => {},
+            arguments::BytesResult::Value(role) => { if role.len == 5_usize && role[0_usize] == 113_u8 { queue = true; } }
+        }
+        if !queue { loop {} }
+        // Deterministic backpressure barrier, independent of host/QEMU speed.
+        var written: usize = 0;
+        while written < 65537_usize {
+            var count: usize = 65537_usize - written;
+            if count > 65536_usize { count = 65536; }
+            let sent: syscall::Reply = services::write(arguments::output(false),
+                core::slice_from_raw_parts(core::slice_of(PIXELS).data, count), false);
+            if sent.status != abi::OK || sent.value == 0_usize { return 47; }
+            written = written + sent.value;
+        }
+        var seen: usize = 0;
+        while seen < 3_usize {
+            match window_api::event(created.value, false) {
+                window_api::EventRead::Failed(status) => { return 43; },
+                window_api::EventRead::Ready(event) => {
+                    if seen == 0_usize && (event.kind != windows::EVENT_RESET || event.flags != windows::RESET_SOFTWARE) { return 44; }
+                    if seen == 1_usize && (event.kind != abi::EVENT_FOCUS || event.a != 1_usize) { return 45; }
+                    if seen == 2_usize && event.kind != abi::EVENT_CLOSE_REQUESTED { return 46; }
+                }
+            }
+            seen = seen + 1_usize;
+        }
+    }
+    return 0;
+}

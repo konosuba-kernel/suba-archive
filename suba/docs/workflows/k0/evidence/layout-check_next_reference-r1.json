@@ -1,0 +1,143 @@
+{
+  "version": "S-next 0.1",
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "inputs": {
+    "docs/reference/s-next-0.1.md": "87a1405366ecbca491b9d3e58aac902480a279e0b0085739223fca1bb86d4aa0",
+    "docs/reference/s-next-0.1.json": "d34116585940e42d38b22144b51c2cc5038504d4c0b0df923c5db0698e52adc1",
+    "tools/check_next_reference.py": "d642668e7155c14da1e872841608102106fcf7544a24865743529e7dc82b79f9",
+    "tools/check_reference.py": "591660808e68594e2fa2464ecf810dcfe901999009193d99cac67302492e90a2",
+    "tools/check_next.py": "cda9db957266291b5b9f973039b5a0f891c259b34de549520da41b2a71c473df"
+  },
+  "cases": [
+    {
+      "name": "hello",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-check_next_reference-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=43 assembly=0 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-check_next_reference-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=43 assembly=0 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "zero",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-check_next_reference-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=162 assembly=0 names=12 name_bytes=48 decls=2 types=11 fields=2 params=0 max_ast=20 max_ir=43 max_frame=272 max_bindings=2 max_defers=0 max_loops=0 max_slots=32 max_args=0 max_params=0 text=860 data=0 objects=0 symbols=20 fixups=29 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-check_next_reference-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=162 assembly=0 names=12 name_bytes=48 decls=2 types=11 fields=2 params=0 max_ast=20 max_ir=43 max_frame=272 max_bindings=2 max_defers=0 max_loops=0 max_slots=32 max_args=0 max_params=0 text=860 data=0 objects=0 symbols=20 fixups=29 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "enum",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-check_next_reference-r1/compiler.elf",
+            "check",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=369 assembly=0 names=23 name_bytes=175 decls=3 types=13 fields=5 params=0 max_ast=30 max_ir=70 max_frame=384 max_bindings=2 max_defers=0 max_loops=0 max_slots=46 max_args=0 max_params=0 text=1148 data=0 objects=0 symbols=24 fixups=36 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-check_next_reference-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=0 source=369 assembly=0 names=23 name_bytes=175 decls=3 types=13 fields=5 params=0 max_ast=30 max_ir=70 max_frame=384 max_bindings=2 max_defers=0 max_loops=0 max_slots=46 max_args=0 max_params=0 text=1148 data=0 objects=0 symbols=24 fixups=36 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "program.elf"
+          ],
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "passed": 3
+}

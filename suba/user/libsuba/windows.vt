@@ -1,0 +1,170 @@
+// Window and desktop ABI v1. Borrowed pixel/record buffers live until syscall return.
+module libsuba::window_api;
+import suba::abi;
+import suba::windows;
+import suba::argument_wire;
+import libsuba::syscall;
+pub struct Id { pub slot: usize, pub generation: usize }
+pub struct Rect { pub x: usize, pub y: usize, pub width: usize, pub height: usize }
+pub struct Window {
+    pub id: Id, pub width: usize, pub height: usize, pub x: usize, pub y: usize,
+    pub rank: usize, pub focused: bool, pub damage: usize,
+}
+pub struct List { pub count: usize, pub layout: usize, pub focus: usize,
+    pub items: [windows::WINDOW_CAPACITY]Window }
+pub struct Event { pub kind: u32, pub flags: u32, pub sequence: usize,
+    pub a: usize, pub b: usize, pub c: usize, pub d: usize }
+pub enum EventRead { Ready(Event), Failed(usize) }
+
+pub fn create(width: usize, height: usize) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_WINDOW_CREATE, width, height, 0, 0, 0, 0);
+}
+pub fn destroy(token: usize) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_WINDOW_DESTROY, token, 0, 0, 0, 0, 0);
+}
+
+unsafe fn rectangle(bytes: []u8, rect: Rect, stride: usize, address: usize) -> bool {
+    if rect.x > 0xffffffff_usize || rect.y > 0xffffffff_usize ||
+        rect.width > 0xffffffff_usize || rect.height > 0xffffffff_usize || stride > 0xffffffff_usize {
+        return false;
+    }
+    unsafe {
+        argument_wire::put(bytes, 0, 1, 4);
+        argument_wire::put(bytes, 4, windows::RECT_BYTES, 4);
+        argument_wire::put(bytes, windows::RECT_X, rect.x, 4);
+        argument_wire::put(bytes, windows::RECT_Y, rect.y, 4);
+        argument_wire::put(bytes, windows::RECT_WIDTH, rect.width, 4);
+        argument_wire::put(bytes, windows::RECT_HEIGHT, rect.height, 4);
+        argument_wire::put(bytes, windows::RECT_STRIDE, stride, 4);
+        argument_wire::put(bytes, windows::RECT_RESERVED, 0, 4);
+        argument_wire::put(bytes, windows::RECT_ADDRESS, address, 8);
+    }
+    return true;
+}
+
+// The whole touched extent must be available; the kernel also validates every page.
+fn extent(rect: Rect, stride: usize, bytes: usize) -> bool {
+    if rect.width == 0_usize || rect.width > windows::SCREEN_WIDTH ||
+        rect.height == 0_usize || rect.height > windows::SCREEN_HEIGHT { return false; }
+    let row: usize = rect.width * windows::PIXEL_BYTES;
+    if stride < row || stride > 65536_usize || bytes < row || bytes > 65536_usize { return false; }
+    return rect.height - 1_usize <= (bytes - row) / stride;
+}
+
+pub unsafe fn update(token: usize, rect: Rect, stride: usize, pixels: []const u8) -> syscall::Reply {
+    var record: [windows::RECT_BYTES]u8 = zero;
+    unsafe {
+        if !extent(rect, stride, pixels.len) || !rectangle(core::slice_of_mut(record), rect, stride, core::addr(pixels.data)) {
+            return make syscall::Reply { status: abi::INVALID, value: 0 };
+        }
+        return syscall::invoke(abi::SYS_WINDOW_UPDATE, token, core::addr(core::slice_of(record).data),
+            windows::RECT_BYTES, 0, 0, 0);
+    }
+}
+
+// BadHandle after partial copying has value=0; discard all pixels of that snapshot.
+pub unsafe fn copy(desktop: usize, id: Id, rect: Rect,
+    stride: usize, pixels: []u8) -> syscall::Reply {
+    var record: [windows::RECT_BYTES]u8 = zero;
+    unsafe {
+        if !extent(rect, stride, pixels.len) || !rectangle(core::slice_of_mut(record), rect, stride, core::addr(pixels.data)) {
+            return make syscall::Reply { status: abi::INVALID, value: 0 };
+        }
+        return syscall::invoke(abi::SYS_DESKTOP_COPY, desktop, id.slot, id.generation,
+            core::addr(core::slice_of(record).data), windows::RECT_BYTES, 0);
+    }
+}
+
+pub fn event(token: usize, desktop: bool) -> EventRead {
+    var record: [abi::EVENT_BYTES]u8 = zero;
+    var operation: usize = abi::SYS_WINDOW_TRY_EVENT;
+    if desktop { operation = windows::SYS_DESKTOP_TRY_EVENT; }
+    let result: syscall::Reply = syscall::invoke(operation, token,
+        core::addr(core::slice_of_mut(record).data), abi::EVENT_BYTES, 0, 0, 0);
+    if result.status != abi::OK { return EventRead::Failed(result.status); }
+    unsafe {
+        let bytes: []const u8 = core::slice_of(record);
+        if argument_wire::word(bytes, 0, 4) != 1_usize ||
+            argument_wire::word(bytes, 4, 4) != abi::EVENT_BYTES { return EventRead::Failed(abi::INVALID); }
+        return EventRead::Ready(make Event {
+            kind: argument_wire::word(bytes, abi::EVENT_KIND, 4) as u32,
+            flags: argument_wire::word(bytes, abi::EVENT_FLAGS, 4) as u32,
+            sequence: argument_wire::word(bytes, abi::EVENT_SEQUENCE, 8),
+            a: argument_wire::word(bytes, abi::EVENT_PAYLOAD, 8),
+            b: argument_wire::word(bytes, abi::EVENT_PAYLOAD + 8_usize, 8),
+            c: argument_wire::word(bytes, abi::EVENT_PAYLOAD + 16_usize, 8),
+            d: argument_wire::word(bytes, abi::EVENT_PAYLOAD + 24_usize, 8) });
+    }
+}
+
+pub unsafe fn list(desktop: usize, output: *List) -> usize {
+    var record: [windows::LIST_BYTES]u8 = zero;
+    let result: syscall::Reply = syscall::invoke(abi::SYS_DESKTOP_LIST, desktop,
+        core::addr(core::slice_of_mut(record).data), windows::LIST_BYTES, 0, 0, 0);
+    if result.status != abi::OK { return result.status; }
+    // SAFETY: caller owns output; fixed record comes from successful kernel copyout.
+    unsafe {
+        let bytes: []const u8 = core::slice_of(record);
+        if argument_wire::word(bytes, 0, 4) != 1_usize ||
+            argument_wire::word(bytes, 4, 4) != windows::LIST_BYTES { return abi::INVALID; }
+        let count: usize = argument_wire::word(bytes, windows::LIST_COUNT, 4);
+        if count > windows::WINDOW_CAPACITY { return abi::INVALID; }
+        (*output).count = count;
+        (*output).layout = argument_wire::word(bytes, windows::LIST_LAYOUT, 8);
+        (*output).focus = argument_wire::word(bytes, windows::LIST_FOCUS, 8);
+        var i: usize = 0;
+        while i < count {
+            let at: usize = windows::LIST_HEADER_BYTES + i * windows::WINDOW_RECORD_BYTES;
+            (*output).items[i] = make Window {
+                id: make Id { slot: argument_wire::word(bytes, at + windows::WINDOW_SLOT, 8),
+                    generation: argument_wire::word(bytes, at + windows::WINDOW_GENERATION, 8) },
+                width: argument_wire::word(bytes, at + windows::WINDOW_WIDTH, 4),
+                height: argument_wire::word(bytes, at + windows::WINDOW_HEIGHT, 4),
+                x: argument_wire::word(bytes, at + windows::WINDOW_X, 4),
+                y: argument_wire::word(bytes, at + windows::WINDOW_Y, 4),
+                rank: argument_wire::word(bytes, at + windows::WINDOW_Z, 4),
+                focused: argument_wire::word(bytes, at + windows::WINDOW_FLAGS, 4) != 0_usize,
+                damage: argument_wire::word(bytes, at + windows::WINDOW_DAMAGE, 8) };
+            i = i + 1_usize;
+        }
+    }
+    return abi::OK;
+}
+
+pub fn layout(desktop: usize, id: Id, expected: usize, x: usize, y: usize, focus: bool) -> syscall::Reply {
+    var record: [windows::LAYOUT_BYTES]u8 = zero;
+    if x > windows::SCREEN_WIDTH || y > windows::SCREEN_HEIGHT { return make syscall::Reply { status: abi::INVALID, value: 0 }; }
+    unsafe {
+        let bytes: []u8 = core::slice_of_mut(record);
+        argument_wire::put(bytes, 0, 1, 4);
+        argument_wire::put(bytes, 4, windows::LAYOUT_BYTES, 4);
+        argument_wire::put(bytes, windows::LAYOUT_SLOT, id.slot, 8);
+        argument_wire::put(bytes, windows::LAYOUT_GENERATION, id.generation, 8);
+        argument_wire::put(bytes, windows::LAYOUT_EXPECTED, expected, 8);
+        argument_wire::put(bytes, windows::LAYOUT_X, x, 4);
+        argument_wire::put(bytes, windows::LAYOUT_Y, y, 4);
+        if focus { argument_wire::put(bytes, windows::LAYOUT_FOCUS, 1, 4); }
+        return syscall::invoke(abi::SYS_DESKTOP_LAYOUT, desktop, core::addr(bytes.data), bytes.len, 0, 0, 0);
+    }
+}
+
+pub fn route(desktop: usize, id: Id, layout: usize, focus: usize, sequence: usize) -> syscall::Reply {
+    var record: [windows::ROUTE_BYTES]u8 = zero;
+    unsafe {
+        let bytes: []u8 = core::slice_of_mut(record);
+        argument_wire::put(bytes, 0, 1, 4);
+        argument_wire::put(bytes, 4, windows::ROUTE_BYTES, 4);
+        argument_wire::put(bytes, windows::ROUTE_SLOT, id.slot, 8);
+        argument_wire::put(bytes, windows::ROUTE_GENERATION, id.generation, 8);
+        argument_wire::put(bytes, windows::ROUTE_LAYOUT, layout, 8);
+        argument_wire::put(bytes, windows::ROUTE_FOCUS, focus, 8);
+        argument_wire::put(bytes, windows::ROUTE_SEQUENCE, sequence, 8);
+        return syscall::invoke(abi::SYS_DESKTOP_ROUTE, desktop, core::addr(bytes.data), bytes.len, 0, 0, 0);
+    }
+}
+
+pub fn close_app(desktop: usize, id: Id, force: bool) -> syscall::Reply {
+    var operation: usize = abi::SYS_DESKTOP_CLOSE;
+    if force { operation = abi::SYS_DESKTOP_KILL; }
+    return syscall::invoke(operation, desktop, id.slot, id.generation, 0, 0, 0);
+}

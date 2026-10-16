@@ -1,0 +1,6 @@
+# suba-user profile return/panic endpoint. a0 exit status, a7 SYS_EXIT.
+__suba_exit:
+addi x17, x0, 1
+ecall
+.unreachable:
+jump .unreachable

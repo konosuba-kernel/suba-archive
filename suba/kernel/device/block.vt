@@ -1,0 +1,188 @@
+// One split block queue, one command, permanent kernel-owned DMA. No hidden wait.
+// Serialized S-mode. Cancellation belongs to the caller; submitted DMA always drains.
+module kernel::device::block;
+import kernel::device::io;
+import kernel::device::virtio;
+const PAGE: usize = 4096;
+const SECTORS: usize = 524288;
+static mut DMA: [6_usize * PAGE]u8 = zero;
+static mut BASE: usize = 0;
+static mut DEVICE: virtio::DeviceRead = zero;
+static mut QUEUE: virtio::QueueRead = zero;
+pub enum State { Offline, Idle, Submitted, Completed, Failed }
+static mut STATE: State = zero;
+static mut EXPECTED: usize = 0;
+static mut BEGAN: usize = 0;
+static mut COMPLETIONS: usize = 0;
+pub enum Command { Read(usize), Write(usize), Flush }
+// First failure is retained until halt. Codes: 1 state, 2 IRQ bits, 3 used ring,
+// 4 unsolicited completion, 5 completion length, 6 device status, 7 watchdog,
+// 8 missing queue/device. Diagnostic reads never accept or recycle DMA.
+pub struct Diagnostic {
+    pub code: usize, pub state: State, pub command: usize, pub block: usize,
+    pub began: usize, pub observed: usize, pub irq: u32, pub notified: u32,
+    pub queue: virtio::QueueStatus, pub status: u8,
+}
+static mut FAILURE: Diagnostic = zero;
+static mut LAST_COMMAND: usize = 0;
+static mut LAST_BLOCK: usize = 0;
+static mut LAST_IRQ: u32 = 0;
+unsafe fn fail(code: usize) -> bool {
+    unsafe {
+        if FAILURE.code == 0_usize {
+            FAILURE.code = code;
+            FAILURE.state = STATE;
+            FAILURE.command = LAST_COMMAND;
+            FAILURE.block = LAST_BLOCK;
+            FAILURE.began = BEGAN;
+            FAILURE.notified = LAST_IRQ;
+            FAILURE.observed = io::time();
+            match DEVICE {
+                virtio::DeviceRead::Ready(device) => { FAILURE.irq = virtio::interrupt(device); },
+                virtio::DeviceRead::Missing => {}, virtio::DeviceRead::Invalid => {}
+            }
+            match QUEUE {
+                virtio::QueueRead::Ready(queue) => { FAILURE.queue = virtio::queue_status(queue); },
+                virtio::QueueRead::Invalid => {}
+            }
+            if BASE != 0_usize { FAILURE.status = io::read8(BASE + 3_usize * PAGE + 16_usize); }
+        }
+        STATE = State::Failed;
+        return false;
+    }
+}
+pub unsafe fn diagnostic() -> Diagnostic { unsafe { return FAILURE; } }
+
+
+// Uses mapped MMIO base + physical fixed-platform slot identity.
+pub unsafe fn initialize(device: virtio::Device) -> bool {
+    unsafe {
+        match STATE { State::Offline => {}, State::Idle => { return false; },
+            State::Submitted => { return false; }, State::Completed => { return false; },
+            State::Failed => { return false; } }
+        if virtio::id(device) != 2_u32 || !virtio::begin(device, 0x200, 0x20) { return false; }
+        let generation: u32 = virtio::config_generation(device);
+        if virtio::config32(device, 0) != SECTORS as u32 || virtio::config32(device, 4) != 0_u32 { return false; }
+        if generation != virtio::config_generation(device) { return false; }
+        // BSS is zero, reserved with the kernel image, identity mapped and never freed.
+        BASE = (core::addr(core::slice_of_mut(DMA).data) + PAGE - 1_usize) / PAGE * PAGE;
+        match virtio::queue(device, 0, BASE, BASE + PAGE, BASE + 2_usize * PAGE) {
+            virtio::QueueRead::Invalid => { return false; },
+            virtio::QueueRead::Ready(queue) => { QUEUE = virtio::QueueRead::Ready(queue); }
+        }
+        if !virtio::ready(device) { return false; }
+        DEVICE = virtio::DeviceRead::Ready(device);
+        STATE = State::Idle;
+        return true;
+    }
+}
+// Borrow ends before submit; only Idle/Completed grants CPU access to the bounce page.
+pub unsafe fn buffer() -> []u8 {
+    unsafe { return core::slice_from_raw_parts_mut(core::ptr::<u8>(BASE + 4_usize * PAGE), PAGE); }
+}
+unsafe fn put(at: usize, width: usize, value: usize) -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < width { *core::ptr::<u8>(at + i) = (value >> (i * 8_usize)) as u8; i = i + 1_usize; }
+    }
+    return ();
+}
+pub unsafe fn submit(command: Command) -> bool {
+    unsafe {
+        match STATE { State::Idle => {}, State::Offline => { return false; },
+            State::Submitted => { return false; }, State::Completed => { return false; }, State::Failed => { return false; } }
+        var kind: usize = 4;
+        var block: usize = 0;
+        match command { Command::Read(value) => { kind = 0; block = value; },
+            Command::Write(value) => { kind = 1; block = value; }, Command::Flush => {} }
+        if block >= SECTORS / 8_usize { return false; }
+        match QUEUE {
+            virtio::QueueRead::Invalid => { return false; },
+            virtio::QueueRead::Ready(value) => {
+                var queue: virtio::Queue = value;
+                let header: usize = BASE + 3_usize * PAGE;
+                let status: usize = header + 16_usize;
+                put(header, 4, kind); put(header + 4_usize, 4, 0); put(header + 8_usize, 8, block * 8_usize);
+                put(status, 1, 255);
+                if !virtio::descriptor(core::addr_of(queue), 0, header, 16, 1, 1) { return false; }
+                EXPECTED = 1;
+                if kind == 4_usize {
+                    if !virtio::descriptor(core::addr_of(queue), 1, status, 1, 2, 0) { return false; }
+                } else {
+                    var flags: usize = 1;
+                    if kind == 0_usize { flags = 3; EXPECTED = PAGE + 1_usize; }
+                    if !virtio::descriptor(core::addr_of(queue), 1, BASE + 4_usize * PAGE, PAGE, flags, 2) { return false; }
+                    if !virtio::descriptor(core::addr_of(queue), 2, status, 1, 2, 0) { return false; }
+                }
+                if !virtio::publish(core::addr_of_mut(queue), 0) { return false; }
+                LAST_COMMAND = kind;
+                LAST_BLOCK = block;
+                BEGAN = io::time(); STATE = State::Submitted;
+                virtio::kick(core::addr_of(queue));
+                QUEUE = virtio::QueueRead::Ready(queue);
+            }
+        }
+        return true;
+    }
+}
+// Called only after PLIC claims this device. No used-ring polling outside IRQ service.
+pub unsafe fn interrupt() -> bool {
+    unsafe {
+        match STATE {
+            State::Offline => { return fail(1); }, State::Failed => { return false; },
+            State::Idle => {}, State::Submitted => {}, State::Completed => {}
+        }
+        match DEVICE {
+            virtio::DeviceRead::Ready(device) => {
+                let bits: u32 = virtio::interrupt(device);
+                LAST_IRQ = bits;
+                // PLIC may retain a notification after the device deasserts it.
+                if bits == 0_u32 { return true; }
+                if bits != 1_u32 || !virtio::acknowledge(device, bits) { return fail(2); }
+            },
+            virtio::DeviceRead::Missing => { return fail(8); },
+            virtio::DeviceRead::Invalid => { return fail(8); }
+        }
+        match QUEUE {
+            virtio::QueueRead::Invalid => { return fail(8); },
+            virtio::QueueRead::Ready(value) => {
+                var queue: virtio::Queue = value;
+                match virtio::take(core::addr_of_mut(queue)) {
+                    // Notifications do not promise a new used entry (Virtio 1.2
+                    // section2.7.7.1). Preserve the request and its original timer.
+                    virtio::Poll::Empty => { return true; },
+                    virtio::Poll::Invalid => { return fail(3); },
+                    virtio::Poll::Done(item) => {
+                        match STATE {
+                            State::Submitted => {}, State::Offline => { return fail(4); },
+                            State::Idle => { return fail(4); }, State::Completed => { return fail(4); },
+                            State::Failed => { return false; }
+                        }
+                        if item.head != 0_usize || item.bytes != EXPECTED { return fail(5); }
+                        if io::read8(BASE + 3_usize * PAGE + 16_usize) != 0_u8 { return fail(6); }
+                    }
+                }
+                QUEUE = virtio::QueueRead::Ready(queue);
+            }
+        }
+        STATE = State::Completed; COMPLETIONS = COMPLETIONS + 1_usize;
+        return true;
+    }
+}
+pub unsafe fn state() -> State {
+    unsafe {
+        match STATE {
+            State::Submitted => { if io::time() - BEGAN > 10000000_usize { let failed: bool = fail(7); } },
+            State::Offline => {}, State::Idle => {}, State::Completed => {}, State::Failed => {}
+        }
+        return STATE;
+    }
+}
+pub unsafe fn finish() -> bool {
+    unsafe {
+        match STATE { State::Completed => { STATE = State::Idle; return true; },
+            State::Offline => {}, State::Idle => {}, State::Submitted => {}, State::Failed => {} }
+        return false;
+    }
+}
+pub unsafe fn completions() -> usize { unsafe { return COMPLETIONS; } }

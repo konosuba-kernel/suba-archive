@@ -1,0 +1,244 @@
+{
+  "scope": "K10 preparatory complete-ledger exploration, not stage acceptance",
+  "timebase_hz": 10000000,
+  "production_latency_evidence": false,
+  "runs": [
+    {
+      "path": "build/k10-ledger-windowrace-r2/verification.json",
+      "sha256": "d5a81dfaefec5d008714d01ee239105ef717b987d71237f3af3a54e576743fa1",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "windowrace",
+      "ordinary_rounds": 3,
+      "observed_rounds": 5,
+      "source_kernel": "build/k7-system-r5",
+      "source_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+      "observer_kernel_sha256": "cc75d7a0443da698260f2c661b19e7797ab07d0e1251a33332cdb12c16b11c6d",
+      "ledger_samples": 6,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        141590,
+        77837,
+        77337,
+        80375,
+        83746,
+        81498
+      ],
+      "uart_ticks": [
+        33224,
+        38314,
+        31427,
+        30024,
+        39533,
+        30358
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-ready-r1/verification.json",
+      "sha256": "84ddc718f0d7568e0de4b647afc61027aeae235e226951179433e95ab777bc3d",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "ready",
+      "ordinary_rounds": 3,
+      "observed_rounds": 3,
+      "source_kernel": "build/k7-system-r5",
+      "source_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+      "observer_kernel_sha256": "cc75d7a0443da698260f2c661b19e7797ab07d0e1251a33332cdb12c16b11c6d",
+      "ledger_samples": 4,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        141280,
+        86189,
+        85442,
+        85175
+      ],
+      "uart_ticks": [
+        38236,
+        37286,
+        32618,
+        32259
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-streamwait-r1/verification.json",
+      "sha256": "b97bc3e34cda9f3134db10f4a4f2ac68edc96de130b06c7d5070f1255d23b40b",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "streamwait",
+      "ordinary_rounds": 3,
+      "observed_rounds": 3,
+      "source_kernel": "build/k7-system-r5",
+      "source_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+      "observer_kernel_sha256": "cc75d7a0443da698260f2c661b19e7797ab07d0e1251a33332cdb12c16b11c6d",
+      "ledger_samples": 4,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        145966,
+        86473,
+        88184,
+        91148
+      ],
+      "uart_ticks": [
+        38847,
+        32085,
+        33396,
+        37428
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-control-r1/verification.json",
+      "sha256": "96f9e83625f96177d72bcc7e27c0c38e02de61b870a0d329e3360ed093926491",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "ledgercontrol",
+      "ordinary_rounds": 3,
+      "observed_rounds": 1,
+      "source_kernel": "build/k7-system-r5",
+      "source_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+      "observer_kernel_sha256": "cc75d7a0443da698260f2c661b19e7797ab07d0e1251a33332cdb12c16b11c6d",
+      "ledger_samples": 3,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        146149,
+        108910,
+        87219
+      ],
+      "uart_ticks": [
+        40202,
+        37940,
+        32625
+      ],
+      "expected_ledger_rejection": true
+    },
+    {
+      "path": "build/k10-ledger-identity-r1/verification.json",
+      "sha256": "416ef0c2afa6e9c8e2691d7f874d7e01da5d509aeb200eccf7b3c39eb9d29c7b",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "identity",
+      "ordinary_rounds": 3,
+      "observed_rounds": 1,
+      "source_kernel": "build/k7-system-r5",
+      "source_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+      "observer_kernel_sha256": "cc75d7a0443da698260f2c661b19e7797ab07d0e1251a33332cdb12c16b11c6d",
+      "ledger_samples": 2,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        248996,
+        90900
+      ],
+      "uart_ticks": [
+        76601,
+        34716
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-isolation-r1/verification.json",
+      "sha256": "ff3dde23f931004d67fee2af547558eb7abf6d05d721b2c054d5b1e7ee2b4ee2",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "isolation",
+      "ordinary_rounds": 3,
+      "observed_rounds": 1,
+      "source_kernel": "build/k7-system-r5",
+      "source_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+      "observer_kernel_sha256": "cc75d7a0443da698260f2c661b19e7797ab07d0e1251a33332cdb12c16b11c6d",
+      "ledger_samples": 2,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        226859,
+        97599
+      ],
+      "uart_ticks": [
+        47379,
+        56972
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-loading-r1/verification.json",
+      "sha256": "d75c8454ca11bd675390c68da7e4f88a1f17d96af8edb977e0883a766e043ada",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "loading",
+      "ordinary_rounds": 3,
+      "observed_rounds": 3,
+      "source_kernel": "build/k7-panic-production-r2",
+      "source_kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "observer_kernel_sha256": "d33d2cbecaafddd3fff14dd9e926f92106f922a3c4835ee3163f7bad66bf6791",
+      "ledger_samples": 4,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        151730,
+        87170,
+        106751,
+        87753
+      ],
+      "uart_ticks": [
+        38023,
+        32542,
+        36634,
+        32925
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-dma-r1/verification.json",
+      "sha256": "c66b9d41dbef953026342462ca9030debcbeef61082fd40bdf9c27c35c9e00e5",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "dma",
+      "ordinary_rounds": 3,
+      "observed_rounds": 3,
+      "source_kernel": "build/k7-panic-production-r2",
+      "source_kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "observer_kernel_sha256": "d33d2cbecaafddd3fff14dd9e926f92106f922a3c4835ee3163f7bad66bf6791",
+      "ledger_samples": 4,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        201271,
+        99146,
+        89762,
+        127432
+      ],
+      "uart_ticks": [
+        42408,
+        34855,
+        35415,
+        36471
+      ],
+      "expected_ledger_rejection": false
+    },
+    {
+      "path": "build/k10-ledger-update-r1/verification.json",
+      "sha256": "3bc6a4325fe9359abce182a9a3647ff24bb3f8e0bf83f03a1d72988081271e8a",
+      "passed": true,
+      "stage_acceptance": false,
+      "mode": "windowupdate",
+      "ordinary_rounds": 3,
+      "observed_rounds": 3,
+      "source_kernel": "build/k7-panic-production-r2",
+      "source_kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "observer_kernel_sha256": "815bac0448271097723af46f94b23bf51844b5e835e33286edc950b4c0c3265c",
+      "ledger_samples": 4,
+      "ledger_entries": 304,
+      "snapshot_ticks": [
+        153501,
+        86352,
+        87298,
+        102237
+      ],
+      "uart_ticks": [
+        38355,
+        42787,
+        44783,
+        99354
+      ],
+      "expected_ledger_rejection": false
+    }
+  ]
+}

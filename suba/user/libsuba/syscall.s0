@@ -1,0 +1,27 @@
+# User C ABI: a0 operation, a1..a6 inputs, a7 writable result-value pointer.
+# ecall ABI: a7 operation, a0..a5 inputs; returns a0 status, a1 value.
+# Kernel preserves every other user register; x28 holds the pointer across trap.
+# Clobbers a0..a7/x28; preserves sp/x27/ra. Pointer is ordinary user-owned memory.
+__suba_call:
+addi x28, x17, 0
+addi x17, x10, 0
+addi x10, x11, 0
+addi x11, x12, 0
+addi x12, x13, 0
+addi x13, x14, 0
+addi x14, x15, 0
+addi x15, x16, 0
+ecall
+sd x11, 0(x28)
+jalr x0, 0(x1)
+
+# a0 exit status. No return; fallback keeps trapping if a broken kernel returns.
+__suba_exit:
+addi x17, x0, 1
+ecall
+jump __suba_exit
+
+# x27 is the process-lifetime read-only argument page supplied by the kernel.
+__suba_arguments:
+addi x10, x27, 0
+jalr x0, 0(x1)

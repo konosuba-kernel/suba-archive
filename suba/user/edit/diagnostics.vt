@@ -1,0 +1,131 @@
+// Diagnostics retain the compiler's file-id mapping and content hash. A byte
+// offset is used only when the current bytes still equal that build snapshot.
+module user::edit::app;
+struct Number { value: usize, next: usize, valid: bool }
+struct Location { file: usize, offset: usize, found: bool }
+struct Source { path: []const u8, digest: []const u8, found: bool }
+unsafe fn number_at(data: []const u8, first: usize) -> Number {
+    var result: Number = make Number { value: 0, next: first, valid: false };
+    unsafe {
+        while result.next < data.len && data[result.next] >= 48_u8 && data[result.next] <= 57_u8 {
+            let digit: usize = (data[result.next] - 48_u8) as usize;
+            if result.value > (0xffffffffffffffff_usize - digit) / 10_usize { result.valid = false; return result; }
+            result.value = result.value * 10_usize + digit;
+            result.next = result.next + 1_usize;
+            result.valid = true;
+        }
+    }
+    return result;
+}
+unsafe fn starts(data: []const u8, at: usize, text: []const u8) -> bool {
+    if at > data.len || text.len > data.len - at { return false; }
+    unsafe { return bytes::equal(bytes::view(data, at, at + text.len), text); }
+}
+unsafe fn location(data: []const u8) -> Location {
+    unsafe {
+        var line: usize = 0;
+        while line < data.len {
+            var end: usize = line;
+            while end < data.len && data[end] != 10_u8 { end = end + 1_usize; }
+            if starts(data, line, "E_") || starts(data, line, "I_") {
+                var at: usize = line;
+                while at < end {
+                    if starts(data, at, " file=") {
+                        let file: Number = number_at(bytes::view(data, 0, end), at + 6_usize);
+                        if file.valid && starts(data, file.next, " byte=") {
+                            let offset: Number = number_at(bytes::view(data, 0, end), file.next + 6_usize);
+                            if offset.valid { return make Location { file: file.value, offset: offset.value, found: true }; }
+                        }
+                    }
+                    at = at + 1_usize;
+                }
+            }
+            line = end;
+            if line < data.len { line = line + 1_usize; }
+        }
+    }
+    return zero;
+}
+unsafe fn source(data: []const u8, file: usize) -> Source {
+    unsafe {
+        var line: usize = 0;
+        while line < data.len {
+            var end: usize = line;
+            while end < data.len && data[end] != 10_u8 { end = end + 1_usize; }
+            if starts(data, line, "input ") {
+                let id: Number = number_at(bytes::view(data, 0, end), line + 6_usize);
+                if id.valid && id.value == file && id.next < end && data[id.next] == 32_u8 &&
+                    end - id.next > 66_usize && data[id.next + 65_usize] == 32_u8 {
+                    return make Source { path: bytes::view(data, id.next + 66_usize, end),
+                        digest: bytes::view(data, id.next + 1_usize, id.next + 65_usize), found: true };
+                }
+            }
+            line = end;
+            if line < data.len { line = line + 1_usize; }
+        }
+    }
+    return zero;
+}
+unsafe fn current_hash(data: []const u8, expected: []const u8) -> bool {
+    var hash: sha256::State = sha256::begin();
+    var digest: [32]u8 = zero;
+    var encoded: [64]u8 = zero;
+    unsafe {
+        if !sha256::update(core::addr_of_mut(hash), data) ||
+            !sha256::finish(core::addr_of_mut(hash), core::slice_of_mut(digest)) ||
+            !records::hex(core::slice_of_mut(encoded), core::slice_of(digest)) { return false; }
+        return bytes::equal(core::slice_of(encoded), expected);
+    }
+}
+unsafe fn diagnostic(document: *buffer::Document) -> () {
+    unsafe {
+        match TASK { Task::Running(task) => { message("Wait for build completion before jumping"); return (); }, Task::Idle => {} }
+        let log: []const u8 = core::slice_from_raw_parts(core::slice_of(LOG).data, LOG_BYTES);
+        let at: Location = location(log);
+        if !at.found { message("No retained compiler diagnostic"); return (); }
+        if at.file == 0_usize { message("Diagnostic is in generated manifest or compiler command"); return (); }
+        let input: Source = source(log, at.file);
+        if !input.found { message("Source map was truncated; rebuild for diagnostic navigation"); return (); }
+        let same: bool = bytes::equal(input.path, path());
+        var count: usize = 0;
+        if same {
+            match buffer::snapshot(core::ptr_const(document), core::slice_of_mut(SNAPSHOT)) {
+                buffer::Copy::Done(value) => { count = value; },
+                buffer::Copy::NoMemory => { message("Diagnostic snapshot too large"); return (); },
+                buffer::Copy::Aliased => { message("Aliased snapshot rejected"); return (); }
+            }
+        } else {
+            if buffer::state(core::ptr_const(document)).version != SAVED_VERSION {
+                message("Save changes before opening diagnostic source"); return ();
+            }
+            match io::read(input.path, core::slice_of_mut(SNAPSHOT)) {
+                io::Read::Failed(error) => { message("Cannot open diagnostic source"); return (); },
+                io::Read::Ready(value) => { count = value; }
+            }
+        }
+        let text: []const u8 = core::slice_from_raw_parts(core::slice_of(SNAPSHOT).data, count);
+        if !current_hash(text, input.digest) { message("Stale diagnostic: source has changed; rebuild"); return (); }
+        if !same {
+            match buffer::open(core::slice_of_mut(STORAGE), text) {
+                buffer::Open::Ready(next) => { *document = next; },
+                buffer::Open::InvalidUtf8(offset) => { message("Cannot edit invalid UTF-8 source"); return (); },
+                buffer::Open::Limit => { message("Source exceeds editor limit"); return (); },
+                buffer::Open::NoMemory => { message("Cannot allocate source"); return (); },
+                buffer::Open::Aliased => { message("Aliased source rejected"); return (); }
+            }
+            if !set_path(input.path) { message("Invalid diagnostic path"); return (); }
+            SAVED_VERSION = 0; TOP_LINE = 0; LEFT_PIXEL = 0;
+        }
+        let selected: buffer::Edit = buffer::select(document, at.offset, at.offset);
+        match selected {
+            buffer::Edit::Done => { message("Diagnostic source matches frozen input"); },
+            buffer::Edit::InvalidPosition => { message("Diagnostic offset is outside a UTF-8 boundary"); },
+            buffer::Edit::InvalidUtf8(at) => { edited(selected); },
+            buffer::Edit::Limit => { edited(selected); },
+            buffer::Edit::NoMemory => { edited(selected); },
+            buffer::Edit::Aliased => { edited(selected); },
+            buffer::Edit::VersionLimit => { edited(selected); }
+        }
+    }
+    return ();
+}

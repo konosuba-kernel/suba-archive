@@ -1,0 +1,57 @@
+{
+  "records": [
+    {
+      "command": [
+        "clang",
+        "--target=riscv64-unknown-elf",
+        "-march=rv64imac_zicsr",
+        "-mabi=lp64",
+        "-nostdlib",
+        "-fuse-ld=lld",
+        "-Wl,-Ttext=0x80200000",
+        "-Wl,-e,_start",
+        "-o",
+        "/tmp/suba-entry-b05kbkb0/entry.elf",
+        "/home/mii/code/konOSuba/suba/design/research/platform-entry-probe.S"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "qemu-system-riscv64",
+        "-machine",
+        "virt,aclint=off,aia=none,acpi=off,iommu-sys=off",
+        "-accel",
+        "tcg",
+        "-cpu",
+        "rv64",
+        "-smp",
+        "1",
+        "-m",
+        "512M",
+        "-bios",
+        "default",
+        "-kernel",
+        "/tmp/suba-entry-b05kbkb0/entry.elf",
+        "-display",
+        "none",
+        "-serial",
+        "stdio",
+        "-monitor",
+        "none"
+      ],
+      "timeout": true,
+      "stdout": "\r\nOpenSBI v1.8.1\r\n   ____                    _____ ____ _____\r\n  / __ \\                  / ____|  _ \\_   _|\r\n | |  | |_ __   ___ _ __ | (___ | |_) || |\r\n | |  | | '_ \\ / _ \\ '_ \\ \\___ \\|  _ < | |\r\n | |__| | |_) |  __/ | | |____) | |_) || |_\r\n  \\____/| .__/ \\___|_| |_|_____/|____/_____|\r\n        | |\r\n        |_|\r\n\r\nPlatform Name               : riscv-virtio,qemu\r\nPlatform Features           : medeleg\r\nPlatform HART Count         : 1\r\nPlatform HART Protection    : pmp\r\nPlatform IPI Device         : aclint-mswi\r\nPlatform Timer Device       : aclint-mtimer @ 10000000Hz\r\nPlatform Console Device     : uart8250\r\nPlatform HSM Device         : ---\r\nPlatform PMU Device         : ---\r\nPlatform Reboot Device      : syscon-reboot\r\nPlatform Shutdown Device    : syscon-poweroff\r\nPlatform Suspend Device     : ---\r\nPlatform CPPC Device        : ---\r\nFirmware Base               : 0x80000000\r\nFirmware Size               : 321 KB\r\nFirmware RW Offset          : 0x40000\r\nFirmware RW Size            : 65 KB\r\nFirmware Heap Offset        : 0x47000\r\nFirmware Heap Size          : 37 KB (total), 0 KB (reserved), 12 KB (used), 23 KB (free)\r\nFirmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)\r\nRuntime SBI Version         : 3.0\r\nStandard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse\r\nExperimental SBI Extensions : none\r\n\r\nDomain0 Name                : root\r\nDomain0 Boot HART           : 0\r\nDomain0 HARTs               : 0*\r\nDomain0 Region00            : 0x0000000080040000-0x000000008005ffff M: (F,R,W) S/U: ()\r\nDomain0 Region01            : 0x0000000080000000-0x000000008003ffff M: (F,R,X) S/U: ()\r\nDomain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()\r\nDomain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)\r\nDomain0 Next Address        : 0x0000000000010000\r\nDomain0 Next Arg1           : 0x000000009fe00000\r\nDomain0 Next Mode           : S-mode\r\nDomain0 SysReset            : yes\r\nDomain0 SysSuspend          : yes\r\n\r\nBoot HART ID                : 0\r\nBoot HART Domain            : root\r\nBoot HART Priv Version      : v1.12\r\nBoot HART Base ISA          : rv64imafdch\r\nBoot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu\r\nBoot HART PMP Count         : 16\r\nBoot HART PMP Granularity   : 2 bits\r\nBoot HART PMP Address Bits  : 54\r\nBoot HART MHPM Info         : 16 (0x0007fff8)\r\nBoot HART Debug Triggers    : 2 triggers\r\nBoot HART MIDELEG           : 0x0000000000001666\r\nBoot HART MEDELEG           : 0x0000000000f4b509\r\n",
+      "stderr": ""
+    }
+  ],
+  "binary_sha256": "9deba887f48ef3c3e3ccf8ff3e9709ac192f81bd72f63d28d5b5373d01c073d2",
+  "checks": {
+    "reboot_first_mark": false,
+    "reboot_second_mark": false,
+    "firmware_two_entries": false,
+    "shutdown_success": false
+  }
+}

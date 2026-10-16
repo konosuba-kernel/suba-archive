@@ -1,0 +1,115 @@
+{
+  "kind": "author evidence, not independent acceptance",
+  "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+  "current_kernel_fixture": "build/k4-filesystem-r5",
+  "current_kernel_sha256": "87451fecfd59ed3df7f64f2a6e15e19448b1990ec7ed2274eb724ca14e405127",
+  "checks": [
+    {
+      "directory": "build/k4-filesystem-r5",
+      "case": "filesystem",
+      "passed": true,
+      "report_sha256": "bd3e4cf3c44de73bd42c50c7428cd87115ffb317fb143a89892c5cf5e5d067ef",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-transient-owner-r1",
+      "case": "transient_owner",
+      "passed": true,
+      "report_sha256": "73b103204ee4a716e96713359aed1d4f94699beed0323bc6a5f57e94f4f6525a",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-cwd-identity-r1",
+      "case": "cwd_identity",
+      "passed": true,
+      "report_sha256": "c1f8f160f9a8381c9142fdb7fb0e2e49fcf1614455d13b3424a4cb55a71b6444",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-cwd-r4",
+      "case": "cwd",
+      "passed": true,
+      "report_sha256": "2dc1be2d3dbc6d01a4edd498f343a702fb9ea3416c38b1d5991ddd5a452af449",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-unlink-reader-r2",
+      "case": "unlink_reader",
+      "passed": true,
+      "report_sha256": "5da73f5efe4d6f59c64e8d447d5c34a2e1cc7e8d73d7016e05adef47071dd59b",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-boundaries-r4",
+      "case": "boundaries",
+      "passed": true,
+      "report_sha256": "e3f91b0c1de707e50edaf565cf53fa9eb50f425b43e324d34ff978079cfcb436",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-disk-full-r4",
+      "case": "disk_full",
+      "passed": true,
+      "report_sha256": "c29dc641720e3b472e1ee9f2dff0ea3fc4456b6d75626860aa4e49af756c57e1",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-node-full-r4",
+      "case": "node_full",
+      "passed": true,
+      "report_sha256": "99f14826e78c8a51516643cc1be6b7456dd4ed0612e2877e401e26dcecbb2eed",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-disk-partial-r3",
+      "case": "disk_partial",
+      "passed": true,
+      "report_sha256": "3345ffb84baa5d869bd195c2804855b6ef6f796e33df13684372cdd7e5a6820c",
+      "production_input_changes": []
+    },
+    {
+      "directory": "build/k4-cancel-pre-r3",
+      "case": "cancel_pre",
+      "passed": true,
+      "report_sha256": "c8278d881dd7e659d5b9ddc6060ce35f44bc8adab2b1c056d36f8c6b71691f07",
+      "production_input_changes": [
+        "kernel/dispatch_spawn.vt",
+        "kernel/fs/files.vt",
+        "kernel/fs/lifecycle.vt",
+        "kernel/fs/operations.vt"
+      ]
+    },
+    {
+      "directory": "build/k4-cancel-reserve-r3",
+      "case": "cancel_reserve",
+      "passed": true,
+      "report_sha256": "15134284d839e288572f3146fbfddcaf3542ac3e255fedff7f71da5a6b058175",
+      "production_input_changes": [
+        "kernel/dispatch_spawn.vt",
+        "kernel/fs/files.vt",
+        "kernel/fs/lifecycle.vt",
+        "kernel/fs/operations.vt"
+      ]
+    },
+    {
+      "directory": "build/k4-cancel-dma-r5",
+      "case": "cancel_dma",
+      "passed": true,
+      "report_sha256": "e1685f79b97d49666f8761131ccdea936d3b552bd790c7828bc81cec97dcb342",
+      "production_input_changes": [],
+      "user_external_traps": [
+        392,
+        398
+      ]
+    },
+    {
+      "directory": "build/k4-cancel-no-irq-r3",
+      "case": "cancel_no_irq",
+      "passed": true,
+      "report_sha256": "cdda6cc7adfb7747835a5d630644a997ab8ac4ce85401832d8426ae48fb605e1",
+      "production_input_changes": []
+    }
+  ],
+  "prior_cancellation_scope": "pre/reserve use pre-review-fix production inputs. The four later production files change transient namespace access and empty-cwd inheritance; these fixtures use the owner and explicit /work cwd, so their paths remain unchanged. DMA cancellation was repeated with final production inputs.",
+  "dma_cancellation": "100 cancellations per boot, two boots; each targeted completion waits for a new actual U external trap. SEIE-off negative reaches original block deadline panic73."
+}

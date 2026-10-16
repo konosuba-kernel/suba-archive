@@ -1,0 +1,51 @@
+// Fixed-cell bitmap text. Scalar positions preserve UTF-8 bytes; no shaping.
+module user::edit::paint;
+import user::text::font;
+import user::text::utf8;
+import user::draw;
+
+// Font and canvas storage remain live, respectively immutable and exclusive.
+pub unsafe fn scalar(canvas: draw::Canvas, face: font::Font, value: u32,
+    x: usize, y: usize, color: u32) -> usize {
+    unsafe {
+        let glyph: font::Glyph = font::glyph(face, value);
+        var row: usize = 0;
+        while row < 16_usize {
+            if y >= canvas.height || row >= canvas.height - y { break; }
+            var column: usize = 0;
+            while column < glyph.width {
+                if x >= canvas.width || column >= canvas.width - x { break; }
+                if font::pixel(glyph, column, row) {
+                    *core::ptr::<u32>(canvas.address + (y + row) * canvas.stride + (x + column) * 4_usize) = color;
+                }
+                column = column + 1_usize;
+            }
+            row = row + 1_usize;
+        }
+        return glyph.width;
+    }
+}
+
+// Invalid UTF-8 in diagnostics is rendered as a box one byte at a time; source
+// editing uses buffer::open and rejects invalid input before reaching this path.
+pub unsafe fn line(canvas: draw::Canvas, face: font::Font, data: []const u8,
+    x: usize, y: usize, color: u32) -> () {
+    unsafe {
+        var at: usize = 0;
+        var column: usize = x;
+        while at < data.len && column < canvas.width {
+            var value: u32 = 0xfffd;
+            var next: usize = at + 1_usize;
+            match utf8::decode(data, at) {
+                utf8::Decode::End => { break; },
+                utf8::Decode::Invalid => {},
+                utf8::Decode::Value(item) => { value = item.value; next = item.next; }
+            }
+            if value == 10_u32 || value == 13_u32 { break; }
+            if value == 9_u32 { column = column + 32_usize; }
+            else { column = column + scalar(canvas, face, value, column, y, color); }
+            at = next;
+        }
+    }
+    return ();
+}

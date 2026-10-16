@@ -1,0 +1,220 @@
+// A single-owner UTF-8 gap buffer. Caller owns storage and serializes all operations.
+// Document is copyable in S-next: copies are aliases, not independent owners. No global state.
+module user::edit::buffer;
+import user::text::utf8;
+pub const MAX_BYTES: usize = 4194304;
+const VERSION_MAX: usize = 18446744073709551615;
+pub struct Document { storage: []u8, low: usize, high: usize, anchor: usize, version: usize }
+pub enum Open { Ready(Document), InvalidUtf8(usize), Limit, NoMemory, Aliased }
+pub enum Edit { Done, InvalidUtf8(usize), InvalidPosition, Limit, NoMemory, Aliased, VersionLimit }
+pub enum Copy { Done(usize), NoMemory, Aliased }
+pub enum Motion { Left, Right, LineStart, LineEnd, Start, End }
+pub struct State { pub bytes: usize, pub capacity: usize, pub cursor: usize,
+    pub anchor: usize, pub version: usize }
+pub struct Spans { pub prefix: []const u8, pub suffix: []const u8 }
+
+fn overlaps(a: usize, alen: usize, b: usize, blen: usize) -> bool {
+    if alen == 0_usize || blen == 0_usize { return false; }
+    if a <= b { return b - a < alen; }
+    return a - b < blen;
+}
+
+// Input is live immutable RAM; storage is exclusively writable and stays live with Document.
+// On failure neither storage nor input is modified. Input/storage overlap is rejected.
+pub unsafe fn open(storage: []u8, input: []const u8) -> Open {
+    if input.len > MAX_BYTES { return Open::Limit; }
+    if input.len > storage.len { return Open::NoMemory; }
+    if overlaps(core::addr(storage.data), storage.len, core::addr(input.data), input.len) {
+        return Open::Aliased;
+    }
+    // SAFETY: caller grants both buffers; validation and all failure checks precede writes.
+    unsafe {
+        match utf8::validate(input) {
+            utf8::Validation::Invalid(offset) => { return Open::InvalidUtf8(offset); },
+            utf8::Validation::Valid => {},
+        }
+        var capacity: usize = storage.len;
+        if capacity > MAX_BYTES { capacity = MAX_BYTES; }
+        var i: usize = 0;
+        while i < input.len { storage[i] = input[i]; i = i + 1_usize; }
+        return Open::Ready(make Document {
+            storage: core::slice_from_raw_parts_mut(storage.data, capacity),
+            low: input.len, high: capacity, anchor: input.len, version: 0
+        });
+    }
+}
+
+// All document pointers must refer to an unmodified result of open(), with live owned backing.
+pub unsafe fn state(document: *const Document) -> State {
+    // SAFETY: the owner guarantees Document validity and serialized access.
+    unsafe {
+        return make State { bytes: (*document).storage.len - ((*document).high - (*document).low),
+            capacity: (*document).storage.len, cursor: (*document).low,
+            anchor: (*document).anchor, version: (*document).version };
+    }
+}
+
+// Borrow expires at the next modifying operation; concatenation is the exact file byte sequence.
+pub unsafe fn spans(document: *const Document) -> Spans {
+    // SAFETY: gap indices were established by open/replace/select and remain within backing.
+    unsafe {
+        let data: *const u8 = core::ptr_const((*document).storage.data);
+        return make Spans { prefix: core::slice_from_raw_parts(data, (*document).low),
+            suffix: core::slice_from_raw_parts(core::ptr_add(data, (*document).high),
+                (*document).storage.len - (*document).high) };
+    }
+}
+
+unsafe fn byte_at(document: *const Document, offset: usize) -> u8 {
+    // SAFETY: caller checked logical offset < length; gap invariants map it into live storage.
+    unsafe {
+        if offset < (*document).low { return (*document).storage[offset]; }
+        return (*document).storage[offset + ((*document).high - (*document).low)];
+    }
+}
+
+unsafe fn boundary(document: *const Document, offset: usize) -> bool {
+    // SAFETY: byte_at is only used below the logical length; document content is validated UTF-8.
+    unsafe {
+        let bytes: usize = state(document).bytes;
+        if offset > bytes { return false; }
+        if offset == bytes { return true; }
+        return (byte_at(document, offset) & 0xc0_u8) != 0x80_u8;
+    }
+}
+
+pub unsafe fn decode(document: *const Document, offset: usize) -> utf8::Decode {
+    var scratch: [4]u8 = zero;
+    // SAFETY: only existing logical bytes are copied into the four-byte local decoder view.
+    unsafe {
+        let bytes: usize = state(document).bytes;
+        if offset == bytes { return utf8::Decode::End; }
+        if offset > bytes { return utf8::Decode::Invalid; }
+        var count: usize = bytes - offset;
+        if count > 4_usize { count = 4; }
+        var i: usize = 0;
+        while i < count { scratch[i] = byte_at(document, offset + i); i = i + 1_usize; }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(scratch).data, count);
+        match utf8::decode(data, 0) {
+            utf8::Decode::Value(item) => {
+                return utf8::Decode::Value(make utf8::Scalar { value: item.value, next: offset + item.next });
+            },
+            utf8::Decode::End => { return utf8::Decode::End; },
+            utf8::Decode::Invalid => { return utf8::Decode::Invalid; },
+        }
+    }
+}
+
+unsafe fn move_gap(document: *Document, position: usize) -> () {
+    // SAFETY: position is a validated logical boundary; overlap copy proceeds in the safe direction.
+    // At most MAX_BYTES are moved. No allocation or failure is possible after this step begins.
+    unsafe {
+        while (*document).low > position {
+            (*document).low = (*document).low - 1_usize;
+            (*document).high = (*document).high - 1_usize;
+            (*document).storage[(*document).high] = (*document).storage[(*document).low];
+        }
+        while (*document).low < position {
+            (*document).storage[(*document).low] = (*document).storage[(*document).high];
+            (*document).low = (*document).low + 1_usize;
+            (*document).high = (*document).high + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub unsafe fn select(document: *Document, anchor: usize, cursor: usize) -> Edit {
+    // SAFETY: document owner contract; both boundaries are checked before moving any data.
+    unsafe {
+        let read: *const Document = core::ptr_const(document);
+        if !boundary(read, anchor) || !boundary(read, cursor) { return Edit::InvalidPosition; }
+        move_gap(document, cursor);
+        (*document).anchor = anchor;
+    }
+    return Edit::Done;
+}
+
+pub unsafe fn replace(document: *Document, input: []const u8) -> Edit {
+    // SAFETY: owned document plus immutable disjoint insertion bytes; all failures precede mutation.
+    unsafe {
+        let before: State = state(core::ptr_const(document));
+        var left: usize = before.anchor;
+        var right: usize = before.cursor;
+        if left > right { left = before.cursor; right = before.anchor; }
+        let kept: usize = before.bytes - (right - left);
+        if input.len > MAX_BYTES - kept { return Edit::Limit; }
+        if input.len > before.capacity - kept { return Edit::NoMemory; }
+        if before.version == VERSION_MAX { return Edit::VersionLimit; }
+        if overlaps(core::addr((*document).storage.data), before.capacity,
+            core::addr(input.data), input.len) { return Edit::Aliased; }
+        match utf8::validate(input) {
+            utf8::Validation::Invalid(offset) => { return Edit::InvalidUtf8(offset); },
+            utf8::Validation::Valid => {},
+        }
+        move_gap(document, left);
+        (*document).high = (*document).high + (right - left);
+        var i: usize = 0;
+        while i < input.len {
+            (*document).storage[(*document).low] = input[i];
+            (*document).low = (*document).low + 1_usize;
+            i = i + 1_usize;
+        }
+        (*document).anchor = (*document).low;
+        (*document).version = before.version + 1_usize;
+    }
+    return Edit::Done;
+}
+
+unsafe fn copy_range(document: *const Document, first: usize, last: usize, output: []u8) -> Copy {
+    if last - first > output.len { return Copy::NoMemory; }
+    // SAFETY: first/last are validated logical boundaries from state; output is exclusively writable.
+    unsafe {
+        if overlaps(core::addr((*document).storage.data), (*document).storage.len,
+            core::addr(output.data), output.len) { return Copy::Aliased; }
+        var i: usize = first;
+        while i < last { output[i - first] = byte_at(document, i); i = i + 1_usize; }
+    }
+    return Copy::Done(last - first);
+}
+
+pub unsafe fn snapshot(document: *const Document, output: []u8) -> Copy {
+    // SAFETY: document owner and output storage contracts; copy_range validates capacity/aliasing.
+    unsafe { return copy_range(document, 0, state(document).bytes, output); }
+}
+
+pub unsafe fn copy_selection(document: *const Document, output: []u8) -> Copy {
+    // SAFETY: selection endpoints are always valid boundaries; no mutation of Document.
+    unsafe {
+        let current: State = state(document);
+        if current.anchor < current.cursor {
+            return copy_range(document, current.anchor, current.cursor, output);
+        }
+        return copy_range(document, current.cursor, current.anchor, output);
+    }
+}
+
+// Owner supplies a newly allocated replacement. On failure the old Document stays unchanged.
+// On success the old backing is no longer referenced by Document and may be reclaimed by owner.
+pub unsafe fn rehome(document: *Document, replacement: []u8) -> Edit {
+    // SAFETY: replacement is exclusive live writable RAM; old backing remains live during copying.
+    unsafe {
+        let before: State = state(core::ptr_const(document));
+        if replacement.len < before.bytes { return Edit::NoMemory; }
+        if overlaps(core::addr((*document).storage.data), before.capacity,
+            core::addr(replacement.data), replacement.len) { return Edit::Aliased; }
+        var capacity: usize = replacement.len;
+        if capacity > MAX_BYTES { capacity = MAX_BYTES; }
+        let high: usize = capacity - (before.bytes - before.cursor);
+        var i: usize = 0;
+        while i < before.bytes {
+            var destination: usize = i;
+            if i >= before.cursor { destination = high + (i - before.cursor); }
+            replacement[destination] = byte_at(core::ptr_const(document), i);
+            i = i + 1_usize;
+        }
+        (*document).storage = core::slice_from_raw_parts_mut(replacement.data, capacity);
+        (*document).low = before.cursor;
+        (*document).high = high;
+    }
+    return Edit::Done;
+}

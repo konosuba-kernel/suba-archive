@@ -1,0 +1,163 @@
+// Stream owns bounded buffers and endpoint references. Serialized kernel-only calls.
+// It reports readiness; dispatch owns waiting/wakeup and user memory validation.
+module kernel::stream;
+import suba::abi;
+import kernel::objects;
+const CAPACITY: usize = 32;
+const BUFFER_BYTES: usize = 65536;
+const REFERENCE_LIMIT: usize = 4096;
+struct State { live: bool, generation: usize, readers: usize, writers: usize,
+    head: usize, used: usize }
+static mut STATES: [CAPACITY]State = zero;
+static mut BYTES: [2097152]u8 = zero;
+pub enum CreateResult { Ready(objects::Identity), Limit }
+pub enum ReadResult { Count(usize), Eof, WouldBlock, Invalid }
+pub enum WriteResult { Count(usize), BrokenStream, WouldBlock, Invalid }
+pub struct Status { pub readable: bool, pub writable: bool, pub eof: bool, pub broken: bool }
+pub enum StatusResult { Ready(Status), Invalid }
+
+unsafe fn valid(id: objects::Identity) -> bool {
+    if id.slot >= CAPACITY || id.generation == 0_usize { return false; }
+    // SAFETY: checked index into private serialized table.
+    unsafe { return STATES[id.slot].live && STATES[id.slot].generation == id.generation; }
+}
+
+// Ready transfers one read and one write reference to caller. No old buffered byte
+// is observable: count starts at zero and new writes initialize every readable byte.
+pub unsafe fn create() -> CreateResult {
+    // SAFETY: exclusive global state, bounded32 scan; no retained external pointer.
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            if !STATES[i].live && STATES[i].generation < abi::HANDLE_GENERATION_MAX {
+                STATES[i].generation = STATES[i].generation + 1_usize;
+                STATES[i].readers = 1;
+                STATES[i].writers = 1;
+                STATES[i].head = 0;
+                STATES[i].used = 0;
+                STATES[i].live = true;
+                return CreateResult::Ready(make objects::Identity { slot: i,
+                    generation: STATES[i].generation });
+            }
+            i = i + 1_usize;
+        }
+    }
+    return CreateResult::Limit;
+}
+
+// Duplicate an already held endpoint, never resurrect a closed direction.
+pub unsafe fn retain(id: objects::Identity, writer: bool) -> bool {
+    // SAFETY: caller owns endpoint being duplicated; table is serialized.
+    unsafe {
+        if !valid(id) { return false; }
+        if writer {
+            if STATES[id.slot].writers == 0_usize || STATES[id.slot].writers == REFERENCE_LIMIT {
+                return false;
+            }
+            STATES[id.slot].writers = STATES[id.slot].writers + 1_usize;
+            return true;
+        }
+        if STATES[id.slot].readers == 0_usize || STATES[id.slot].readers == REFERENCE_LIMIT {
+            return false;
+        }
+        STATES[id.slot].readers = STATES[id.slot].readers + 1_usize;
+    }
+    return true;
+}
+
+// Caller consumes exactly one held endpoint. Buffer is reusable only after both end counts vanish.
+pub unsafe fn release(id: objects::Identity, writer: bool) -> bool {
+    // SAFETY: valid live object and checked nonzero reference count; no user pointers.
+    unsafe {
+        if !valid(id) { return false; }
+        if writer {
+            if STATES[id.slot].writers == 0_usize { return false; }
+            STATES[id.slot].writers = STATES[id.slot].writers - 1_usize;
+        } else {
+            if STATES[id.slot].readers == 0_usize { return false; }
+            STATES[id.slot].readers = STATES[id.slot].readers - 1_usize;
+        }
+        if STATES[id.slot].readers == 0_usize && STATES[id.slot].writers == 0_usize {
+            STATES[id.slot].live = false;
+        }
+    }
+    return true;
+}
+
+pub unsafe fn status(id: objects::Identity) -> StatusResult {
+    // SAFETY: returns a value snapshot; dispatcher checks and registers waits serially.
+    unsafe {
+        if !valid(id) { return StatusResult::Invalid; }
+        return StatusResult::Ready(make Status {
+            readable: STATES[id.slot].used != 0_usize || STATES[id.slot].writers == 0_usize,
+            writable: STATES[id.slot].used < BUFFER_BYTES || STATES[id.slot].readers == 0_usize,
+            eof: STATES[id.slot].used == 0_usize && STATES[id.slot].writers == 0_usize,
+            broken: STATES[id.slot].readers == 0_usize
+        });
+    }
+}
+
+// Caller holds a read endpoint and grants a live, exclusive kernel buffer <=64KiB.
+pub unsafe fn read(id: objects::Identity, destination: []u8) -> ReadResult {
+    if destination.len > abi::IO_BYTES_MAX { return ReadResult::Invalid; }
+    // SAFETY: destination is caller-owned kernel memory; source indices are bounded
+    // by slot and modular ring offset. At most destination.len bytes are copied.
+    unsafe {
+        if !valid(id) || STATES[id.slot].readers == 0_usize { return ReadResult::Invalid; }
+        if destination.len == 0_usize { return ReadResult::Count(0); }
+        if STATES[id.slot].used == 0_usize {
+            if STATES[id.slot].writers == 0_usize { return ReadResult::Eof; }
+            return ReadResult::WouldBlock;
+        }
+        var count: usize = destination.len;
+        if count > STATES[id.slot].used { count = STATES[id.slot].used; }
+        let base: usize = id.slot * BUFFER_BYTES;
+        var i: usize = 0;
+        while i < count {
+            let offset: usize = (STATES[id.slot].head + i) % BUFFER_BYTES;
+            destination[i] = BYTES[base + offset];
+            i = i + 1_usize;
+        }
+        STATES[id.slot].head = (STATES[id.slot].head + count) % BUFFER_BYTES;
+        STATES[id.slot].used = STATES[id.slot].used - count;
+        return ReadResult::Count(count);
+    }
+}
+
+// Caller holds a write endpoint and grants immutable kernel bytes <=64KiB.
+pub unsafe fn write(id: objects::Identity, source: []const u8) -> WriteResult {
+    if source.len > abi::IO_BYTES_MAX { return WriteResult::Invalid; }
+    // SAFETY: source is caller-owned kernel memory; ring operations are serialized.
+    unsafe {
+        if !valid(id) || STATES[id.slot].writers == 0_usize { return WriteResult::Invalid; }
+        if STATES[id.slot].readers == 0_usize { return WriteResult::BrokenStream; }
+        if source.len == 0_usize { return WriteResult::Count(0); }
+        if STATES[id.slot].used == BUFFER_BYTES { return WriteResult::WouldBlock; }
+        var count: usize = source.len;
+        if count > BUFFER_BYTES - STATES[id.slot].used {
+            count = BUFFER_BYTES - STATES[id.slot].used;
+        }
+        let base: usize = id.slot * BUFFER_BYTES;
+        let tail: usize = (STATES[id.slot].head + STATES[id.slot].used) % BUFFER_BYTES;
+        var i: usize = 0;
+        while i < count {
+            BYTES[base + (tail + i) % BUFFER_BYTES] = source[i];
+            i = i + 1_usize;
+        }
+        STATES[id.slot].used = STATES[id.slot].used + count;
+        return WriteResult::Count(count);
+    }
+}
+
+pub unsafe fn live_count() -> usize {
+    var count: usize = 0;
+    // SAFETY: serialized read of32 entries; no side effects or external references.
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            if STATES[i].live { count = count + 1_usize; }
+            i = i + 1_usize;
+        }
+    }
+    return count;
+}

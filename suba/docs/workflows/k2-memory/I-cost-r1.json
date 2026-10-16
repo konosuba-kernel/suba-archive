@@ -1,0 +1,249 @@
+{
+  "method": "Physical source lines including blanks/comments; generated ELF PT_LOAD sizes; compiler max_frame is not whole-call-chain stack usage",
+  "groups": {
+    "kernel_vt": {
+      "files": {
+        "kernel/bootstrap_memory.vt": {
+          "lines": 25,
+          "bytes": 1277,
+          "sha256": "7724eb2be912c6a15f0fba561ad7ad60af8493174d4f4b68bd407ee67427675a"
+        },
+        "kernel/entry.vt": {
+          "lines": 99,
+          "bytes": 4415,
+          "sha256": "4233162c804f9d7e374f36b98e8155e5d886c3002ffdfd66a629734064f07193"
+        },
+        "kernel/machine.vt": {
+          "lines": 64,
+          "bytes": 2364,
+          "sha256": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca"
+        },
+        "kernel/memory.vt": {
+          "lines": 164,
+          "bytes": 6491,
+          "sha256": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+        }
+      },
+      "lines": 352,
+      "bytes": 14547
+    },
+    "kernel_s0": {
+      "files": {
+        "kernel/machine.s0": {
+          "lines": 111,
+          "bytes": 2348,
+          "sha256": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde"
+        }
+      },
+      "lines": 111,
+      "bytes": 2348
+    },
+    "shared_abi": {
+      "files": {
+        "abi/contract.vt": {
+          "lines": 199,
+          "bytes": 7766,
+          "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d"
+        }
+      },
+      "lines": 199,
+      "bytes": 7766
+    },
+    "k2_tests": {
+      "files": {
+        "tests/memory/initialize.vt": {
+          "lines": 66,
+          "bytes": 3085,
+          "sha256": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497"
+        },
+        "tests/memory/lifecycle.vt": {
+          "lines": 119,
+          "bytes": 5457,
+          "sha256": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638"
+        },
+        "tests/memory/retirement.vt": {
+          "lines": 62,
+          "bytes": 2657,
+          "sha256": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c"
+        },
+        "tests/memory/support.vt": {
+          "lines": 74,
+          "bytes": 2698,
+          "sha256": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd"
+        },
+        "tests/k2/memory_probe.vt": {
+          "lines": 157,
+          "bytes": 6417,
+          "sha256": "2d5c399ed3004d31cf271cca66b29ac1d449ddd1911354faea1d24b5d8c1be41"
+        }
+      },
+      "lines": 478,
+      "bytes": 20314
+    },
+    "k2_tools": {
+      "files": {
+        "tools/check_memory.py": {
+          "lines": 130,
+          "bytes": 6191,
+          "sha256": "95c59bd0aff4268788f60905713f5125bd23a64df1f504436ece91c39e319fab"
+        },
+        "tools/check_memory_boot.py": {
+          "lines": 109,
+          "bytes": 6238,
+          "sha256": "f19be8897dceba7fc7d9a62f7fdfa366eda03560f3e0e9cdf02be743128d27e1"
+        }
+      },
+      "lines": 239,
+      "bytes": 12429
+    },
+    "shared_k0_observer": {
+      "files": {
+        "tools/check_kernel_entry.py": {
+          "lines": 187,
+          "bytes": 9971,
+          "sha256": "adfebad3a11600153cb2c0b40cf696dd792d114532f28f3ac05a84d9c5084d99"
+        }
+      },
+      "lines": 187,
+      "bytes": 9971
+    }
+  },
+  "production_kernel": {
+    "image": {
+      "entry": 2151677952,
+      "end": 2153676864,
+      "bytes": 32772,
+      "sha256": "17a175778742940534a48a87dd0be701850ada8c291ee249fbb990d29f022f36"
+    },
+    "segments": [
+      {
+        "flags": 5,
+        "address": 2151677952,
+        "file_bytes": 22780,
+        "memory_bytes": 22780,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "address": 2151702528,
+        "file_bytes": 59,
+        "memory_bytes": 59,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "address": 2151706624,
+        "file_bytes": 4,
+        "memory_bytes": 1970240,
+        "bss_bytes": 1970236,
+        "alignment": 4096
+      }
+    ],
+    "compiler_metrics": {
+      "sources": "5",
+      "imports": "6",
+      "assembly_files": "1",
+      "source": "22313",
+      "assembly": "2348",
+      "names": "682",
+      "name_bytes": "13162",
+      "decls": "233",
+      "types": "39",
+      "fields": "21",
+      "params": "25",
+      "max_ast": "409",
+      "max_ir": "294",
+      "max_frame": "1376",
+      "max_bindings": "6",
+      "max_defers": "0",
+      "max_loops": "1",
+      "max_slots": "178",
+      "max_args": "39",
+      "max_params": "3",
+      "text": "22780",
+      "data": "63",
+      "objects": "13",
+      "symbols": "441",
+      "fixups": "759",
+      "relocations": "0",
+      "elf": "32772"
+    }
+  },
+  "probe_kernel": {
+    "image": {
+      "entry": 2151677952,
+      "end": 2153693248,
+      "bytes": 49156,
+      "sha256": "a4bdce3deb44b56c87a2bdf3a686118b4201325faae8a0f7770574ac57c8d10b"
+    },
+    "segments": [
+      {
+        "flags": 5,
+        "address": 2151677952,
+        "file_bytes": 38108,
+        "memory_bytes": 38108,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "address": 2151718912,
+        "file_bytes": 85,
+        "memory_bytes": 85,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "address": 2151723008,
+        "file_bytes": 4,
+        "memory_bytes": 1970240,
+        "bss_bytes": 1970236,
+        "alignment": 4096
+      }
+    ],
+    "compiler_metrics": {
+      "sources": "6",
+      "imports": "8",
+      "assembly_files": "1",
+      "source": "28997",
+      "assembly": "2348",
+      "names": "764",
+      "name_bytes": "15072",
+      "decls": "241",
+      "types": "58",
+      "fields": "21",
+      "params": "35",
+      "max_ast": "409",
+      "max_ir": "294",
+      "max_frame": "3872",
+      "max_bindings": "7",
+      "max_defers": "0",
+      "max_loops": "2",
+      "max_slots": "178",
+      "max_args": "39",
+      "max_params": "3",
+      "text": "38108",
+      "data": "89",
+      "objects": "14",
+      "symbols": "665",
+      "fixups": "1151",
+      "relocations": "0",
+      "elf": "49156"
+    }
+  },
+  "dedicated_pool": {
+    "pages": 64,
+    "page_bytes": 4096,
+    "usable_bytes": 262144,
+    "backing_bytes": 266239
+  },
+  "allocator_metadata": {
+    "slots": 131072,
+    "slot_bytes": 12,
+    "table_bytes": 1572864
+  },
+  "profile_stack_bytes": 131072
+}

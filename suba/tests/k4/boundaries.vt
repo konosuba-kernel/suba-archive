@@ -1,0 +1,50 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+static mut DATA: [65536]u8 = zero;
+unsafe fn pattern() -> () {
+    unsafe { var i: usize = 0; while i < 65536_usize { DATA[i] = ((i * 17_usize + 9_usize) % 251_usize) as u8; i = i + 1_usize; } }
+    return ();
+}
+pub fn run() -> u32 {
+    unsafe {
+        let boot: syscall::Reply = services::stats(5);
+        if boot.value == 1_usize {
+            let opened: syscall::Reply = files::open("boundary", 6);
+            if opened.status != abi::OK { return 40; }
+            let file: usize = opened.value;
+            if files::write_at(file, 0, "x").status != abi::OK { return 41; }
+            pattern();
+            let written: syscall::Reply = files::write_at(file, 1, core::slice_of(DATA));
+            if written.status != abi::OK || written.value != 65536_usize { return 42; }
+            let pages: syscall::Reply = services::allocate_pages(1);
+            if pages.status != abi::OK { return 43; }
+            let bad: []const u8 = core::slice_from_raw_parts(core::ptr::<u8>(pages.value + 4094_usize), 4);
+            *core::ptr::<u8>(pages.value + 4094_usize) = 99;
+            if files::write_at(file, 0, bad).status != abi::INVALID { return 44; }
+            if files::write_at(file, 65538, "x").status != abi::INVALID { return 45; }
+            if files::sync(file, false).status != abi::OK || syscall::close(file).status != abi::OK { return 46; }
+            let read: syscall::Reply = files::open("boundary", 1);
+            if read.status != abi::OK { return 47; }
+            let invalid: []u8 = core::slice_from_raw_parts_mut(core::ptr::<u8>(pages.value + 4094_usize), 4);
+            if files::read_at(read.value, 0, invalid).status != abi::INVALID || *core::ptr::<u8>(pages.value + 4094_usize) != 99_u8 { return 48; }
+            if services::free_pages(pages.value, 1).status != abi::OK || syscall::close(read.value).status != abi::OK { return 49; }
+        }
+        let reader: syscall::Reply = files::open("boundary", 1);
+        if reader.status != abi::OK { return 50; }
+        let first: syscall::Reply = files::read_at(reader.value, 0, core::slice_from_raw_parts_mut(core::slice_of_mut(DATA).data, 1));
+        if first.status != abi::OK || first.value != 1_usize || DATA[0_usize] != 120_u8 { return 51; }
+        let read: syscall::Reply = files::read_at(reader.value, 1, core::slice_of_mut(DATA));
+        if read.status != abi::OK || read.value != 65536_usize { return 52; }
+        var i: usize = 0;
+        while i < 65536_usize {
+            if DATA[i] != ((i * 17_usize + 9_usize) % 251_usize) as u8 { return 53; }
+            i = i + 1_usize;
+        }
+        if files::read_at(reader.value, 65537, core::slice_of_mut(DATA)).value != 0_usize { return 54; }
+        if syscall::close(reader.value).status != abi::OK { return 55; }
+        return 0;
+    }
+}

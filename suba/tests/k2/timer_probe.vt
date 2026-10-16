@@ -1,0 +1,41 @@
+// Test-only supervisor acceptance hook. Uses public process queries, never edits frames.
+module test::timer_probe;
+import kernel::process;
+import kernel::machine;
+static mut TICKS: [16]usize = zero;
+pub unsafe fn tick(id: process::Id) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot >= 2_usize { return false; }
+        var loop_pc: usize = 0;
+        match process::trap_status(id) {
+            process::TrapSnapshot::Invalid => { return false; },
+            process::TrapSnapshot::Value(frame) => { loop_pc = frame.pc; }
+        }
+        var register: usize = 0;
+        while register <= 31_usize {
+            var expected: usize = (slot + 1_usize) * 100_usize + register;
+            if register == 0_usize { expected = 0; }
+            if register == 31_usize { expected = loop_pc; }
+            match process::read_register(id, register) {
+                process::Register::Invalid => { return false; },
+                process::Register::Value(value) => { if value != expected { return false; } }
+            }
+            register = register + 1_usize;
+        }
+        match process::trap_status(id) {
+            process::TrapSnapshot::Invalid => { return false; },
+            process::TrapSnapshot::Value(frame) => {
+                if frame.cause != 0x8000000000000005_usize || frame.pc < 0x10000_usize ||
+                    frame.pc >= 0x20000_usize || frame.value != 0_usize ||
+                    (frame.status & 0xc6702_usize) != 0_usize { return false; }
+            }
+        }
+        TICKS[slot] = TICKS[slot] + 1_usize;
+        if TICKS[slot] == 2_usize {
+            if !process::terminate(id, 0) { return false; }
+            machine::text("suba K2: full frame preempted twice\n");
+        }
+    }
+    return true;
+}

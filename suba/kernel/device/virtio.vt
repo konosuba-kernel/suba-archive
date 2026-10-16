@@ -1,0 +1,149 @@
+// Common modern MMIO split-queue transport. Serialized S-mode, interrupts disabled.
+// Concrete drivers own disjoint queues and permanent DMA; this module tracks heads.
+// Public unsafe operations require the mapped device/DMA lifetime specified below.
+module kernel::device::virtio;
+import kernel::device::io;
+pub struct Device { base: usize, id: u32, irq: u32 }
+pub enum DeviceRead { Missing, Ready(Device), Invalid }
+pub struct Queue {
+    device: Device, number: u32, descriptors: usize, available: usize, used: usize,
+    produced: usize, consumed: usize, outstanding: usize,
+}
+pub enum QueueRead { Invalid, Ready(Queue) }
+pub struct Completion { pub head: usize, pub bytes: usize }
+pub enum Poll { Empty, Done(Completion), Invalid }
+
+// Caller supplies mapped device MMIO base; slot 1..8 is the fixed QEMU routing identity.
+pub unsafe fn probe(base: usize, slot: usize) -> DeviceRead {
+    if slot < 1_usize || slot > 8_usize { return DeviceRead::Invalid; }
+    unsafe {
+        if io::read32(base) != 0x74726976_u32 { return DeviceRead::Missing; }
+        let id: u32 = io::read32(base + 8_usize);
+        if id == 0_u32 { return DeviceRead::Missing; }
+        if io::read32(base + 4_usize) != 2_u32 { return DeviceRead::Invalid; }
+        return DeviceRead::Ready(make Device { base: base, id: id, irq: slot as u32 });
+    }
+}
+pub fn id(device: Device) -> u32 { return device.id; }
+pub fn irq(device: Device) -> u32 { return device.irq; }
+// Required low-word features are explicit per driver. VERSION_1 is always required.
+pub unsafe fn begin(device: Device, required: u32, rejected: u32) -> bool {
+    unsafe {
+        let base: usize = device.base;
+        io::write32(base + 0x70_usize, 0);
+        if io::read32(base + 0x70_usize) != 0_u32 { return false; }
+        io::write32(base + 0x70_usize, 1); io::write32(base + 0x70_usize, 3);
+        io::write32(base + 0x14_usize, 0);
+        let low: u32 = io::read32(base + 0x10_usize);
+        if (low & required) != required || (low & rejected) != 0_u32 { return false; }
+        io::write32(base + 0x14_usize, 1);
+        if (io::read32(base + 0x10_usize) & 1_u32) == 0_u32 { return false; }
+        io::write32(base + 0x24_usize, 0); io::write32(base + 0x20_usize, required);
+        io::write32(base + 0x24_usize, 1); io::write32(base + 0x20_usize, 1);
+        io::write32(base + 0x70_usize, 11);
+        return io::read32(base + 0x70_usize) == 11_u32;
+    }
+}
+unsafe fn address(base: usize, offset: usize, value: usize) -> () {
+    unsafe { io::write32(base + offset, value as u32); io::write32(base + offset + 4_usize, (value >> 32_usize) as u32); }
+    return ();
+}
+// Caller owns three distinct zeroed, pinned, DMA-visible 4KiB pages for the device lifetime.
+// Addresses are accessible identity mappings and physical DMA addresses on this platform.
+pub unsafe fn queue(device: Device, number: u32, descriptors: usize, available: usize, used: usize) -> QueueRead {
+    if descriptors % 4096_usize != 0_usize || available % 4096_usize != 0_usize || used % 4096_usize != 0_usize { return QueueRead::Invalid; }
+    if descriptors == available || descriptors == used || available == used { return QueueRead::Invalid; }
+    unsafe {
+        let base: usize = device.base; io::write32(base + 0x30_usize, number);
+        if io::read32(base + 0x44_usize) != 0_u32 || io::read32(base + 0x34_usize) < 64_u32 { return QueueRead::Invalid; }
+        io::write32(base + 0x38_usize, 64);
+        address(base, 0x80, descriptors); address(base, 0x90, available); address(base, 0xa0, used);
+        io::barrier(); io::write32(base + 0x44_usize, 1);
+    }
+    return QueueRead::Ready(make Queue { device: device, number: number, descriptors: descriptors,
+        available: available, used: used, produced: 0, consumed: 0, outstanding: 0 });
+}
+pub unsafe fn ready(device: Device) -> bool {
+    unsafe { io::write32(device.base + 0x70_usize, 15); return io::read32(device.base + 0x70_usize) == 15_u32; }
+}
+// Explicit wire stores only to driver-owned DMA memory, never arbitrary user memory.
+unsafe fn put(at: usize, width: usize, value: usize) -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < width { *core::ptr_add(core::ptr::<u8>(at), i) = (value >> (i * 8_usize)) as u8; i = i + 1_usize; }
+    }
+    return ();
+}
+// Caller must own the entire chain and all buffers until completion. The transport tracks heads;
+// body-descriptor disjointness is a concrete driver's invariant (block:0..2, input:singleton).
+pub unsafe fn descriptor(q: *const Queue, index: usize, buffer: usize, bytes: usize, flags: usize, next: usize) -> bool {
+    if index >= 64_usize || next >= 64_usize || bytes > 65536_usize || flags > 3_usize { return false; }
+    unsafe {
+        if ((*q).outstanding & (1_usize << index)) != 0_usize { return false; }
+        let at: usize = (*q).descriptors + index * 16_usize;
+        put(at, 8, buffer); put(at + 8_usize, 4, bytes); put(at + 12_usize, 2, flags); put(at + 14_usize, 2, next);
+    }
+    return true;
+}
+pub unsafe fn publish(q: *Queue, head: usize) -> bool {
+    if head >= 64_usize { return false; }
+    unsafe {
+        let bit: usize = 1_usize << head;
+        if ((*q).outstanding & bit) != 0_usize { return false; }
+        put((*q).available + 4_usize + ((*q).produced % 64_usize) * 2_usize, 2, head);
+        (*q).outstanding = (*q).outstanding | bit;
+        (*q).produced = ((*q).produced + 1_usize) & 65535_usize;
+        io::barrier(); io::write16((*q).available + 2_usize, (*q).produced as u32); io::barrier();
+    }
+    return true;
+}
+pub unsafe fn kick(q: *const Queue) -> () {
+    unsafe { io::write32((*q).device.base + 0x50_usize, (*q).number); }
+    return ();
+}
+pub unsafe fn take(q: *Queue) -> Poll {
+    unsafe {
+        let seen: usize = (io::read32((*q).used) >> 16_u32) as usize;
+        let count: usize = (seen -% (*q).consumed) & 65535_usize;
+        if count == 0_usize { return Poll::Empty; }
+        if count > 64_usize || count > (((*q).produced -% (*q).consumed) & 65535_usize) { return Poll::Invalid; }
+        let at: usize = (*q).used + 4_usize + ((*q).consumed % 64_usize) * 8_usize;
+        let head: usize = io::read32(at) as usize;
+        let bytes: usize = io::read32(at + 4_usize) as usize;
+        if head >= 64_usize { return Poll::Invalid; }
+        let bit: usize = 1_usize << head;
+        if ((*q).outstanding & bit) == 0_usize { return Poll::Invalid; }
+        (*q).outstanding = (*q).outstanding ^ bit;
+        (*q).consumed = ((*q).consumed + 1_usize) & 65535_usize;
+        return Poll::Done(make Completion { head: head, bytes: bytes });
+    }
+}
+pub unsafe fn interrupt(device: Device) -> u32 { unsafe { return io::read32(device.base + 0x60_usize); } }
+pub unsafe fn acknowledge(device: Device, bits: u32) -> bool {
+    if bits == 0_u32 || bits > 3_u32 { return false; }
+    unsafe { io::write32(device.base + 0x64_usize, bits); } return true;
+}
+pub unsafe fn config_generation(device: Device) -> u32 { unsafe { return io::read32(device.base + 0xfc_usize); } }
+// Driver promises aligned offset in 0..252, with the whole field implemented by this device.
+pub unsafe fn config32(device: Device, offset: usize) -> u32 {
+    unsafe { return io::read32(device.base + 0x100_usize + offset); }
+}
+// Driver promises the byte config offset exists; input configuration has selector/subselector bytes.
+pub unsafe fn config8(device: Device, offset: usize) -> u8 { unsafe { return io::read8(device.base + 0x100_usize + offset); } }
+pub unsafe fn select8(device: Device, offset: usize, value: u8) -> () { unsafe { io::write8(device.base + 0x100_usize + offset, value); } return (); }
+
+// Failure-only observation: never consumes a completion or changes queue ownership.
+pub struct QueueStatus {
+    pub produced: usize, pub consumed: usize, pub used: usize,
+    pub head: usize, pub bytes: usize,
+}
+pub unsafe fn queue_status(queue: Queue) -> QueueStatus {
+    unsafe {
+        let at: usize = queue.used + 4_usize + (queue.consumed % 64_usize) * 8_usize;
+        return make QueueStatus {
+            produced: queue.produced, consumed: queue.consumed,
+            used: (io::read32(queue.used) >> 16_u32) as usize,
+            head: io::read32(at) as usize, bytes: io::read32(at + 4_usize) as usize,
+        };
+    }
+}

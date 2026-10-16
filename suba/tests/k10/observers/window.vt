@@ -1,0 +1,38 @@
+// TEST ONLY: count surface frame references in the window owner's own storage.
+pub unsafe fn k10_state(slot: usize) -> usize {
+    unsafe {
+        match RECORDS[slot].state { State::Empty => { return 0; }, State::Creating => { return 1; },
+            State::Prepared => { return 2; }, State::Live => { return 3; }, State::Dead => { return 4; } }
+    }
+}
+pub unsafe fn k10_surface(slot: usize) -> usize {
+    unsafe {
+        if RECORDS[slot].allocated > PAGE_LIMIT { return 0xffffffffffffffff; }
+        var i: usize = 0;
+        while i < RECORDS[slot].allocated {
+            match FRAMES[slot * PAGE_LIMIT + i] {
+                SurfacePage::Empty => { return 0xffffffffffffffff; },
+                SurfacePage::Owned(frame) => {
+                    match memory::address(frame) { memory::AddressResult::Invalid => { return 0xffffffffffffffff; }, memory::AddressResult::Value(address) => {} }
+                }
+            }
+            i = i + 1_usize;
+        }
+        return i;
+    }
+}
+pub unsafe fn k10_owner_pages(owner: usize) -> usize {
+    unsafe {
+        var i: usize = 0; var total: usize = 0;
+        while i < CAPACITY {
+            match RECORDS[i].owner {
+                ProcessOwner::Empty => {}, ProcessOwner::Live(id) => {
+                    if process::slot(id) == owner { total = total + RECORDS[i].pages; }
+                }
+            }
+            i = i + 1_usize;
+        }
+        return total;
+    }
+}
+pub unsafe fn k10_reference(slot: usize) -> usize { unsafe { if RECORDS[slot].reference { return 1; } } return 0; }

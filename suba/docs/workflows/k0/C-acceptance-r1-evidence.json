@@ -1,0 +1,68 @@
+{
+  "reviewer": "/root/k0_acceptance",
+  "decision": "Rejected",
+  "input_sha256": {
+    "docs/workflows/k0/C-candidate-r1.json": "4b6c46bfe94c16782de611cb2b2bb37f5e9150a41d92fe1c45720d2a7d859c7f",
+    "docs/workflows/k0/C-r1.md": "8cf1a469f8eb41ca944c5a726956554ee1d3a284ca6d523ecf879c5cab70bcf9",
+    "design/CONTRACTS.md": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f",
+    "CODE_STYLE.md": "980c0a8e13a63e990dd7800bca9315aeac30d892622c8ea28e227e12c949c968",
+    "build/k0-acceptance-c-r1/verification.json": "f1fd766d4313f566106f233a080126b2f2e6c713ffc836d788ced6f0b0bb35be",
+    "build/k0-abi-r1/verification.json": "b3c8ffa90119da8b6e4af09253d8835a5da7e398499696d762fba52f06be196c"
+  },
+  "independent_run": {
+    "compiler_sha256": "8051f3599704a6bf180496b14632691c3463f1239946893641f65aae21969904",
+    "inputs": {
+      "/home/mii/code/konOSuba/suba/abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+      "/home/mii/code/konOSuba/suba/tests/k0/abi.vt": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+      "/home/mii/code/konOSuba/biomiya/core-s/next/q/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+      "/home/mii/code/konOSuba/biomiya/core-s/next/q/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a"
+    },
+    "commands": [
+      {
+        "command": [
+          "qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/behavior-fixes-p4-r1/e3.elf",
+          "build",
+          "program.build"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=1 source=22699 assembly=345 names=769 name_bytes=15168 decls=214 types=38 fields=16 params=40 max_ast=921 max_ir=872 max_frame=71568 max_bindings=7 max_defers=0 max_loops=1 max_slots=696 max_args=260 max_params=4 text=57308 data=22 objects=2 symbols=542 fixups=1084 relocations=0 elf=65537\n"
+      },
+      {
+        "command": [
+          "qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/suba/build/k0-acceptance-c-r1/probe.elf"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/suba/build/k0-acceptance-c-r1/probe.elf"
+        ],
+        "returncode": 12,
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "passed": true,
+    "scope": "ABI constants, seven serialized record byte layouts, six geometry checks; not an OS decoder"
+  },
+  "checks": "C-acceptance-r1-checks.json",
+  "blockers": [
+    {
+      "file": "abi/README.md",
+      "line": 5,
+      "reason": "BootInfo offset56 described as length while authoritative constant and actual probe encode exclusive end address."
+    }
+  ]
+}

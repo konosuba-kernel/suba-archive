@@ -1,0 +1,41 @@
+// Byte oracle for the exact private window RAM copier extracted by the harness.
+// Every source/destination modulo-8 pair includes prefix, words, tail and canaries.
+module kernel::window;
+static mut SOURCE: [4096]u8 = zero;
+static mut TARGET: [4096]u8 = zero;
+pub fn check_copy() -> u32 {
+    let sizes: [12]usize = [0, 1, 7, 8, 9, 31, 32, 33, 255, 1023, 2047, 2048];
+    unsafe {
+        var from: usize = 0;
+        while from < 8_usize {
+            var into: usize = 0;
+            while into < 8_usize {
+                var size: usize = 0;
+                while size < 12_usize {
+                    var i: usize = 0;
+                    while i < 4096_usize {
+                        SOURCE[i] = ((i * 29_usize + 3_usize) % 251_usize) as u8;
+                        TARGET[i] = 0xa5;
+                        i = i + 1_usize;
+                    }
+                    copy_ram(core::addr(core::slice_of(SOURCE).data) + from,
+                        core::addr(core::slice_of_mut(TARGET).data) + 16_usize + into, sizes[size]);
+                    i = 0;
+                    while i < 4096_usize {
+                        var expected: u8 = 0xa5;
+                        if i >= 16_usize + into && i - 16_usize - into < sizes[size] {
+                            expected = SOURCE[i - 16_usize - into + from];
+                        }
+                        if TARGET[i] != expected { return 1; }
+                        if SOURCE[i] != ((i * 29_usize + 3_usize) % 251_usize) as u8 { return 2; }
+                        i = i + 1_usize;
+                    }
+                    size = size + 1_usize;
+                }
+                into = into + 1_usize;
+            }
+            from = from + 1_usize;
+        }
+    }
+    return 0;
+}

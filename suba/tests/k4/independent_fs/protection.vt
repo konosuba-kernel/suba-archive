@@ -1,0 +1,37 @@
+// Parent remains live while children fault on each newly mapped MMIO region.
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut ARGS: [4096]u8 = zero;
+static mut SENTINEL: usize = 0x123456789abcdef;
+unsafe fn probe(role: []const u8, expected: usize) -> bool {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), role) { return false; }
+        let child: syscall::Reply = services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0);
+        if child.status != abi::OK { return false; }
+        var watches: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED };1];
+        let now: syscall::Reply = services::stats(1);
+        let waited: syscall::Reply = services::wait(core::slice_of(watches), now.value + 50000000_usize, false);
+        if waited.status != abi::OK || waited.value != 1_usize { return false; }
+        match services::collect(child.value) {
+            services::Collected::Failed(status) => { return false; },
+            services::Collected::Ready(exit) => { if exit.cause != expected { return false; } }
+        }
+        return SENTINEL == 0x123456789abcdef_usize;
+    }
+}
+pub fn run() -> u32 {
+    unsafe {
+        if !probe("virtio", 13) { return 10; }
+        if !probe("plic", 13) { return 11; }
+        if !probe("kernel", 13) { return 12; }
+        if !probe("guard", 13) { return 13; }
+        if !probe("readonly", 15) { return 14; }
+        if !probe("privileged", 2) { return 15; }
+    }
+    return 0;
+}

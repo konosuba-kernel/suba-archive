@@ -1,0 +1,135 @@
+module kernel::fs;
+
+unsafe fn file_valid(id: objects::Identity) -> bool {
+    unsafe { return id.slot < FILE_CAPACITY && id.generation != 0_usize &&
+        FILES[id.slot].live && FILES[id.slot].generation == id.generation; }
+}
+// Revoked objects retain only closeable references, never an inode lease.
+unsafe fn file_mode(id: objects::Identity, writing: bool) -> bool {
+    unsafe {
+        if !file_valid(id) { return false; }
+        match FILES[id.slot].lease {
+            Lease::Revoked => { return false; },
+            Lease::Read => { return !writing; },
+            Lease::Write => { return writing; }
+        }
+    }
+}
+unsafe fn revoke_file(slot: usize) -> () {
+    unsafe {
+        let node: usize = FILES[slot].node;
+        match FILES[slot].lease {
+            Lease::Revoked => { return (); },
+            Lease::Read => { NODE_USE[node].readers = NODE_USE[node].readers - 1_usize; },
+            Lease::Write => { NODE_USE[node].writer = false; }
+        }
+        FILES[slot].lease = Lease::Revoked;
+        FILES[slot].node = abi::FS_NODE_COUNT;
+    }
+    return ();
+}
+// Transient metadata belongs to its creating process until seal. Apply this to
+// namespace mutation as well as open; a closed writer does not publish ownership.
+unsafe fn accessible(node: usize, client: Client) -> bool {
+    unsafe {
+        return (NODES[node].flags & codec::TRANSIENT) == 0_u32 ||
+            same_client(NODE_USE[node].transient, client);
+    }
+}
+// The caller resolved a live file and checked namespace rights. A successful object
+// transfers one owned reference; failed open leaves inode leases unchanged.
+pub unsafe fn open_existing(node: usize, writing: bool, owner: Client) -> Opened {
+    unsafe {
+        if node >= abi::FS_NODE_COUNT || NODES[node].kind != abi::NODE_FILE ||
+            (NODES[node].flags & codec::DETACHED) != 0_u32 { return Opened::Failed(Error::Invalid); }
+        if !accessible(node, owner) { return Opened::Failed(Error::Denied); }
+        if NODE_USE[node].writer || (writing && NODE_USE[node].readers != 0_usize) {
+            return Opened::Failed(Error::Busy);
+        }
+        var i: usize = 0;
+        while i < FILE_CAPACITY {
+            if !FILES[i].live && FILES[i].generation != 0xffffffffffffffff_usize {
+                FILES[i].generation = FILES[i].generation + 1_usize;
+                FILES[i].live = true;
+                FILES[i].node = node;
+                FILES[i].references = 1;
+                FILES[i].lease = Lease::Read;
+                if writing { FILES[i].lease = Lease::Write; }
+                FILES[i].owner = owner;
+                if writing { NODE_USE[node].writer = true; }
+                else { NODE_USE[node].readers = NODE_USE[node].readers + 1_usize; }
+                return Opened::Ready(make objects::Identity { slot: i, generation: FILES[i].generation });
+            }
+            i = i + 1_usize;
+        }
+        return Opened::Failed(Error::Limit);
+    }
+}
+// A queued request retains its own pin, so closing the handle cannot unpin DMA metadata.
+pub unsafe fn retain_file(id: objects::Identity, writing: bool) -> bool {
+    unsafe {
+        if !file_valid(id) || !file_mode(id, writing) || FILES[id.slot].references == 0xffffffffffffffff_usize {
+            return false;
+        }
+        FILES[id.slot].references = FILES[id.slot].references + 1_usize;
+        return true;
+    }
+}
+pub unsafe fn release_file(id: objects::Identity) -> bool {
+    unsafe {
+        if !file_valid(id) || FILES[id.slot].references == 0_usize { return false; }
+        FILES[id.slot].references = FILES[id.slot].references - 1_usize;
+        if FILES[id.slot].references != 0_usize { return true; }
+        FILES[id.slot].live = false;
+        let node: usize = FILES[id.slot].node;
+        match FILES[id.slot].lease {
+            Lease::Revoked => { return true; },
+            Lease::Write => { NODE_USE[node].writer = false; },
+            Lease::Read => { NODE_USE[node].readers = NODE_USE[node].readers - 1_usize; }
+        }
+        if NODE_USE[node].readers == 0_usize && !NODE_USE[node].writer &&
+            (NODES[node].flags & codec::DETACHED) != 0_u32 {
+            NODE_USE[node].cleanup = FILES[id.slot].owner;
+        }
+        return true;
+    }
+}
+unsafe fn dirty_node(node: usize) -> () {
+    unsafe { DIRTY[abi::FS_NODES_START + node / 32_usize] = true; }
+    return ();
+}
+unsafe fn dirty_fat(block: usize) -> () {
+    unsafe { DIRTY[abi::FS_FAT_START + block / 1024_usize] = true; }
+    return ();
+}
+// Replacement keeps destination readers on the old node. A closed transient
+// source owned by this client publishes at the same commit as its new name.
+unsafe fn replace_nodes(source: usize, destination: usize, name: []const u8, owner: Client) -> bool {
+    unsafe {
+        if source >= abi::FS_NODE_COUNT || NODES[source].kind != abi::NODE_FILE ||
+            (NODES[source].flags & codec::DETACHED) != 0_u32 || NODE_USE[source].writer ||
+            !accessible(source, owner) { return false; }
+        if destination < abi::FS_NODE_COUNT {
+            if destination == source {
+                NODES[source].flags = NODES[source].flags & 0xfffffffe_u32;
+                NODE_USE[source].transient.generation = 0;
+                dirty_node(source);
+                return true;
+            }
+            if NODES[destination].kind != abi::NODE_FILE || NODES[destination].parent != NODES[source].parent ||
+                NODE_USE[destination].writer { return false; }
+            detach_node(destination, owner);
+        }
+        NODES[source].length = name.len;
+        var i: usize = 0;
+        while i < 63_usize {
+            NODES[source].name[i] = 0;
+            if i < name.len { NODES[source].name[i] = name[i]; }
+            i = i + 1_usize;
+        }
+        NODES[source].flags = NODES[source].flags & 0xfffffffe_u32;
+        NODE_USE[source].transient.generation = 0;
+        dirty_node(source);
+        return true;
+    }
+}

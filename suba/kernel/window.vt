@@ -1,0 +1,311 @@
+// Owns window identities, surfaces, events and layout. Serialized S-mode only;
+// no waiting and no retained user pointer. One page is allocated/reaped per step.
+// A dead identity is immediately unreadable; slot reuse waits for handle + pages.
+module kernel::window;
+import suba::abi;
+import suba::windows;
+import kernel::objects;
+import kernel::memory;
+import kernel::space;
+import kernel::process;
+import suba::argument_wire;
+const CAPACITY: usize = windows::WINDOW_CAPACITY;
+const PAGE_LIMIT: usize = windows::SCREEN_PAGES;
+const GENERATION_MAX: usize = 0xffffffffffffffff;
+enum State { Empty, Creating, Prepared, Live, Dead }
+enum ProcessOwner { Empty, Live(process::Id) }
+struct Record {
+    state: State, generation: usize, owner: ProcessOwner, reference: bool,
+    width: usize, height: usize, pages: usize, allocated: usize,
+    x: usize, y: usize, rank: usize, damage: usize,
+    head: usize, count: usize, reset: u32, focus_changed: bool, close: bool,
+}
+static mut RECORDS: [CAPACITY]Record = zero;
+enum SurfacePage { Empty, Owned(memory::Frame) }
+static mut FRAMES: [CAPACITY * PAGE_LIMIT]SurfacePage = zero;
+static mut REAP_CURSOR: usize = 0;
+static mut LAYOUT: usize = 1;
+static mut FOCUS_VERSION: usize = 1;
+static mut FOCUS: objects::Identity = zero;
+static mut CHANGED: bool = false;
+pub enum Create { Ready(objects::Identity), Invalid, Limit, NoMemory }
+pub enum Progress { More, Done, Failed, Invalid }
+pub enum Owner { Ready(process::Id), Invalid }
+
+unsafe fn matches(id: objects::Identity) -> bool {
+    unsafe {
+        if id.slot >= CAPACITY || id.generation == 0_usize { return false; }
+        if RECORDS[id.slot].generation != id.generation { return false; }
+        match RECORDS[id.slot].state {
+            State::Empty => { return false; },
+            State::Creating => {}, State::Prepared => {}, State::Live => {}, State::Dead => {}
+        }
+        return true;
+    }
+}
+
+pub unsafe fn live(id: objects::Identity) -> bool {
+    unsafe {
+        if !matches(id) { return false; }
+        match RECORDS[id.slot].state {
+            State::Live => { return true; },
+            State::Empty => {}, State::Creating => {}, State::Prepared => {}, State::Dead => {}
+        }
+    }
+    return false;
+}
+
+unsafe fn owner_matches(slot: usize, id: process::Id) -> bool {
+    unsafe {
+        match RECORDS[slot].owner {
+            ProcessOwner::Empty => { return false; },
+            ProcessOwner::Live(owner) => {
+                return process::slot(owner) == process::slot(id) &&
+                    process::generation(owner) == process::generation(id);
+            }
+        }
+    }
+}
+
+unsafe fn changed_layout() -> () {
+    // Volatile change counters use modulo 2^64; they are not persistent identities.
+    unsafe { LAYOUT = LAYOUT +% 1_usize; CHANGED = true; }
+    return ();
+}
+
+pub unsafe fn reserve(owner: process::Id, width: usize, height: usize) -> Create {
+    if width == 0_usize || width > windows::SCREEN_WIDTH ||
+        height == 0_usize || height > windows::SCREEN_HEIGHT { return Create::Invalid; }
+    // SAFETY: bounded private tables; process owns quota, this owner holds all Frames.
+    unsafe {
+        if !process::deliverable(owner) { return Create::Invalid; }
+        var count: usize = 0;
+        var empty: usize = CAPACITY;
+        var i: usize = 0;
+        while i < CAPACITY {
+            match RECORDS[i].state {
+                State::Empty => {
+                    if RECORDS[i].generation != GENERATION_MAX && empty == CAPACITY { empty = i; }
+                },
+                State::Creating => { if owner_matches(i, owner) { count = count + 1_usize; } },
+                State::Prepared => { if owner_matches(i, owner) { count = count + 1_usize; } },
+                State::Live => { if owner_matches(i, owner) { count = count + 1_usize; } },
+                State::Dead => { if owner_matches(i, owner) { count = count + 1_usize; } }
+            }
+            i = i + 1_usize;
+        }
+        if count >= windows::OWNER_WINDOWS || empty == CAPACITY { return Create::Limit; }
+        let pages: usize = (width * height * windows::PIXEL_BYTES + 4095_usize) / 4096_usize;
+        if !process::charge(owner, pages) { return Create::NoMemory; }
+        let generation: usize = RECORDS[empty].generation + 1_usize;
+        RECORDS[empty] = zero;
+        RECORDS[empty].generation = generation;
+        RECORDS[empty].state = State::Creating;
+        RECORDS[empty].owner = ProcessOwner::Live(owner);
+        RECORDS[empty].width = width;
+        RECORDS[empty].height = height;
+        RECORDS[empty].pages = pages;
+        return Create::Ready(make objects::Identity { slot: empty, generation: generation });
+    }
+}
+
+pub unsafe fn prepare(id: objects::Identity) -> Progress {
+    // SAFETY: one newly zeroed page becomes privately owned before the next slice.
+    unsafe {
+        if !matches(id) { return Progress::Invalid; }
+        match RECORDS[id.slot].state {
+            State::Prepared => { return Progress::Done; },
+            State::Creating => {},
+            State::Empty => { return Progress::Invalid; },
+            State::Live => { return Progress::Invalid; },
+            State::Dead => { return Progress::Invalid; }
+        }
+        match space::allocate_external() {
+            memory::Allocation::NotReady => { return Progress::Invalid; },
+            memory::Allocation::Exhausted => {
+                RECORDS[id.slot].state = State::Dead;
+                return Progress::Failed;
+            },
+            memory::Allocation::Ready(frame) => {
+                let index: usize = RECORDS[id.slot].allocated;
+                FRAMES[id.slot * PAGE_LIMIT + index] = SurfacePage::Owned(frame);
+                RECORDS[id.slot].allocated = index + 1_usize;
+            }
+        }
+        if RECORDS[id.slot].allocated == RECORDS[id.slot].pages {
+            RECORDS[id.slot].state = State::Prepared;
+            return Progress::Done;
+        }
+    }
+    return Progress::More;
+}
+
+// Call only after inserting the sole Window handle; no observer sees Creating pages.
+pub unsafe fn publish(id: objects::Identity) -> bool {
+    unsafe {
+        if !matches(id) { return false; }
+        match RECORDS[id.slot].state {
+            State::Prepared => {},
+            State::Creating => { return false; }, State::Empty => { return false; },
+            State::Live => { return false; }, State::Dead => { return false; }
+        }
+        RECORDS[id.slot].reference = true;
+        RECORDS[id.slot].state = State::Live;
+        RECORDS[id.slot].x = 40_usize + id.slot * 24_usize;
+        RECORDS[id.slot].y = 40_usize + id.slot * 24_usize;
+        RECORDS[id.slot].rank = CAPACITY;
+        raise(id.slot);
+        RECORDS[id.slot].damage = 1;
+        changed_layout();
+    }
+    return true;
+}
+
+// Cancellation before publish transfers all reserved quota/pages to the reaper.
+pub unsafe fn abort(id: objects::Identity) -> bool {
+    unsafe {
+        if !matches(id) || RECORDS[id.slot].reference { return false; }
+        RECORDS[id.slot].state = State::Dead;
+    }
+    return true;
+}
+
+unsafe fn revoke(id: objects::Identity) -> () {
+    unsafe {
+        if live(id) {
+            var i: usize = 0;
+            while i < CAPACITY {
+                let other: objects::Identity = make objects::Identity {
+                    slot: i, generation: RECORDS[i].generation };
+                if live(other) && RECORDS[i].rank > RECORDS[id.slot].rank {
+                    RECORDS[i].rank = RECORDS[i].rank - 1_usize;
+                }
+                i = i + 1_usize;
+            }
+            if FOCUS.slot == id.slot && FOCUS.generation == id.generation {
+                FOCUS = zero;
+                FOCUS_VERSION = FOCUS_VERSION +% 1_usize;
+            }
+            changed_layout();
+        }
+        RECORDS[id.slot].state = State::Dead;
+        RECORDS[id.slot].count = 0;
+        RECORDS[id.slot].reset = 0;
+        RECORDS[id.slot].close = false;
+    }
+    return ();
+}
+
+// Drops the handle reference and revokes immediately; reclamation is asynchronous.
+pub unsafe fn release(id: objects::Identity) -> bool {
+    unsafe {
+        if !matches(id) || !RECORDS[id.slot].reference { return false; }
+        RECORDS[id.slot].reference = false;
+        revoke(id);
+    }
+    return true;
+}
+
+// Called after request cancellation, before handle drain. <=16 identities, no page loop.
+pub unsafe fn revoke_owner(owner: process::Id) -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            let id: objects::Identity = make objects::Identity { slot: i, generation: RECORDS[i].generation };
+            if matches(id) && owner_matches(i, owner) { revoke(id); }
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+// Fair round-robin page cleanup runs for ordinary close as well as process teardown.
+pub unsafe fn reap_step() -> bool {
+    unsafe {
+        var scanned: usize = 0;
+        while scanned < CAPACITY {
+            let at: usize = REAP_CURSOR;
+            REAP_CURSOR = (REAP_CURSOR + 1_usize) % CAPACITY;
+            scanned = scanned + 1_usize;
+            match RECORDS[at].state {
+                State::Dead => {
+                    if RECORDS[at].allocated != 0_usize {
+                        let index: usize = RECORDS[at].allocated - 1_usize;
+                        match FRAMES[at * PAGE_LIMIT + index] {
+                            SurfacePage::Empty => { return false; },
+                            SurfacePage::Owned(frame) => {
+                                match memory::release(frame) {
+                                    memory::ReleaseResult::Invalid => { return false; },
+                                    memory::ReleaseResult::Released => {}
+                                }
+                            }
+                        }
+                        FRAMES[at * PAGE_LIMIT + index] = SurfacePage::Empty;
+                        RECORDS[at].allocated = index;
+                        return true;
+                    }
+                    if RECORDS[at].pages != 0_usize {
+                        match RECORDS[at].owner {
+                            ProcessOwner::Empty => { return false; },
+                            ProcessOwner::Live(owner) => {
+                                if !process::uncharge(owner, RECORDS[at].pages) { return false; }
+                            }
+                        }
+                        RECORDS[at].pages = 0;
+                    }
+                    if !RECORDS[at].reference { RECORDS[at].state = State::Empty; }
+                    return true;
+                },
+                State::Empty => {}, State::Creating => {}, State::Prepared => {}, State::Live => {}
+            }
+        }
+    }
+    return true;
+}
+
+pub unsafe fn has_work() -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            match RECORDS[i].state {
+                State::Dead => {
+                    if RECORDS[i].pages != 0_usize || !RECORDS[i].reference { return true; }
+                },
+                State::Empty => {}, State::Creating => {}, State::Prepared => {}, State::Live => {}
+            }
+            i = i + 1_usize;
+        }
+    }
+    return false;
+}
+
+pub unsafe fn owner_settled(owner: process::Id) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            let id: objects::Identity = make objects::Identity { slot: i, generation: RECORDS[i].generation };
+            if matches(id) && owner_matches(i, owner) { return false; }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+pub unsafe fn owner(id: objects::Identity) -> Owner {
+    unsafe {
+        if !live(id) { return Owner::Invalid; }
+        match RECORDS[id.slot].owner {
+            ProcessOwner::Empty => { return Owner::Invalid; },
+            ProcessOwner::Live(owner) => { return Owner::Ready(owner); }
+        }
+    }
+}
+
+pub unsafe fn surface_pages() -> usize {
+    unsafe {
+        var total: usize = 0;
+        var i: usize = 0;
+        while i < CAPACITY { total = total + RECORDS[i].allocated; i = i + 1_usize; }
+        return total;
+    }
+}

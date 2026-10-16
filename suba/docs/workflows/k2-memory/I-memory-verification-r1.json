@@ -1,0 +1,212 @@
+{
+  "passed": true,
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "inputs": {
+    "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "kernel/entry.vt": "4233162c804f9d7e374f36b98e8155e5d886c3002ffdfd66a629734064f07193",
+    "kernel/machine.vt": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca",
+    "kernel/machine.s0": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde",
+    "kernel/kernel.build": "5d1e6b97f0c6da12b0828b2f4c4d4286246a9fcafb75566382831a76fd9aa19f",
+    "kernel/memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4",
+    "kernel/bootstrap_memory.vt": "7724eb2be912c6a15f0fba561ad7ad60af8493174d4f4b68bd407ee67427675a",
+    "tests/k0/boot.vt": "3c100e990f995446be631c92289d07fa5c3da00818c24a66967fbcc4a3dbe8bb",
+    "tests/k0/fw_cfg.vt": "607ad68e260adf0b0c638ecdf4389de51c2f8a615088349399d64f7f24c7ddc6",
+    "tests/k2/memory_probe.vt": "2d5c399ed3004d31cf271cca66b29ac1d449ddd1911354faea1d24b5d8c1be41"
+  },
+  "tools": {
+    "tools/check_memory_boot.py": "f19be8897dceba7fc7d9a62f7fdfa366eda03560f3e0e9cdf02be743128d27e1",
+    "tools/check_kernel_entry.py": "adfebad3a11600153cb2c0b40cf696dd792d114532f28f3ac05a84d9c5084d99"
+  },
+  "firmware_sha256": "894e2aef99590fc07ec6c60ab00282b8bc5d5d5bb2a1d0c6ada0c52df24274c0",
+  "qemu_sha256": "a1cfcceb6c688f9b0a290d512211ed08cf465b92b26a04cfb032280a53625718",
+  "scope": "64-page kernel BSS donor only; no FDT admission, page tables or user isolation",
+  "cases": [
+    {
+      "name": "valid",
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "kernel/kernel.build"
+          ],
+          "cwd": "/home/mii/code/konOSuba/suba/build/k2-integration-r1/valid",
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=6 imports=8 assembly_files=1 source=28997 assembly=2348 names=764 name_bytes=15072 decls=241 types=58 fields=21 params=35 max_ast=409 max_ir=294 max_frame=3872 max_bindings=7 max_defers=0 max_loops=2 max_slots=178 max_args=39 max_params=3 text=38108 data=89 objects=14 symbols=665 fixups=1151 relocations=0 elf=49156\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "boot.build"
+          ],
+          "cwd": "/home/mii/code/konOSuba/suba/build/k2-integration-r1/valid",
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=5 imports=5 assembly_files=1 source=15324 assembly=2348 names=572 name_bytes=10603 decls=208 types=22 fields=2 params=20 max_ast=324 max_ir=274 max_frame=1424 max_bindings=5 max_defers=0 max_loops=1 max_slots=187 max_args=44 max_params=3 text=12248 data=49 objects=5 symbols=235 fixups=385 relocations=0 elf=20481\n"
+        }
+      ],
+      "expected_outcome": "memory verified",
+      "case_inputs": {
+        "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "kernel/entry.vt": "c2932bf55fb5078751ca5299468285cdbf9e6c0c4cbf1937ef6f09384e3ef0d7",
+        "kernel/machine.vt": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca",
+        "kernel/machine.s0": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde",
+        "kernel/kernel.build": "00c3fae1c862c74d5bc8001c9529ea6ecc7ce0a76f7f991767b4562962d86463",
+        "kernel/memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4",
+        "kernel/bootstrap_memory.vt": "7724eb2be912c6a15f0fba561ad7ad60af8493174d4f4b68bd407ee67427675a",
+        "tests/k0/boot.vt": "3c100e990f995446be631c92289d07fa5c3da00818c24a66967fbcc4a3dbe8bb",
+        "tests/k0/fw_cfg.vt": "607ad68e260adf0b0c638ecdf4389de51c2f8a615088349399d64f7f24c7ddc6",
+        "tests/k2/memory_probe.vt": "2d5c399ed3004d31cf271cca66b29ac1d449ddd1911354faea1d24b5d8c1be41"
+      },
+      "kernel": {
+        "entry": 2151677952,
+        "end": 2153693248,
+        "bytes": 49156,
+        "sha256": "a4bdce3deb44b56c87a2bdf3a686118b4201325faae8a0f7770574ac57c8d10b"
+      },
+      "boot": {
+        "entry": 2149580800,
+        "end": 2149794320,
+        "bytes": 20481,
+        "sha256": "9a8ae4974439e28e66379295c9ee2be8222b94cd46508838b71f55dc81e83be9"
+      },
+      "execution": {
+        "command": [
+          "qemu-system-riscv64",
+          "-machine",
+          "virt",
+          "-accel",
+          "tcg",
+          "-m",
+          "512M",
+          "-smp",
+          "1",
+          "-nographic",
+          "-bios",
+          "/usr/share/qemu/opensbi-riscv64-generic-fw_dynamic.bin",
+          "-kernel",
+          "/home/mii/code/konOSuba/suba/build/k2-integration-r1/valid/build/boot.elf",
+          "-device",
+          "loader,file=/home/mii/code/konOSuba/suba/build/k2-integration-r1/valid/build/kernel.elf",
+          "-device",
+          "ramfb",
+          "-no-reboot"
+        ],
+        "marker": "suba kernel K0: handoff accepted\n",
+        "observed": true,
+        "stable_observation_ms": 500,
+        "observer_stopped_after_marker": true,
+        "returncode": 0,
+        "log": "\r\nOpenSBI v1.8.1\r\n   ____                    _____ ____ _____\r\n  / __ \\                  / ____|  _ \\_   _|\r\n | |  | |_ __   ___ _ __ | (___ | |_) || |\r\n | |  | | '_ \\ / _ \\ '_ \\ \\___ \\|  _ < | |\r\n | |__| | |_) |  __/ | | |____) | |_) || |_\r\n  \\____/| .__/ \\___|_| |_|_____/|____/_____|\r\n        | |\r\n        |_|\r\n\r\nPlatform Name               : riscv-virtio,qemu\r\nPlatform Features           : medeleg\r\nPlatform HART Count         : 1\r\nPlatform HART Protection    : pmp\r\nPlatform IPI Device         : aclint-mswi\r\nPlatform Timer Device       : aclint-mtimer @ 10000000Hz\r\nPlatform Console Device     : uart8250\r\nPlatform HSM Device         : ---\r\nPlatform PMU Device         : ---\r\nPlatform Reboot Device      : syscon-reboot\r\nPlatform Shutdown Device    : syscon-poweroff\r\nPlatform Suspend Device     : ---\r\nPlatform CPPC Device        : ---\r\nFirmware Base               : 0x80000000\r\nFirmware Size               : 321 KB\r\nFirmware RW Offset          : 0x40000\r\nFirmware RW Size            : 65 KB\r\nFirmware Heap Offset        : 0x47000\r\nFirmware Heap Size          : 37 KB (total), 0 KB (reserved), 12 KB (used), 23 KB (free)\r\nFirmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)\r\nRuntime SBI Version         : 3.0\r\nStandard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse\r\nExperimental SBI Extensions : none\r\n\r\nDomain0 Name                : root\r\nDomain0 Boot HART           : 0\r\nDomain0 HARTs               : 0*\r\nDomain0 Region00            : 0x0000000080040000-0x000000008005ffff M: (F,R,W) S/U: ()\r\nDomain0 Region01            : 0x0000000080000000-0x000000008003ffff M: (F,R,X) S/U: ()\r\nDomain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()\r\nDomain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)\r\nDomain0 Next Address        : 0x0000000080200000\r\nDomain0 Next Arg1           : 0x000000009fe00000\r\nDomain0 Next Mode           : S-mode\r\nDomain0 SysReset            : yes\r\nDomain0 SysSuspend          : yes\r\n\r\nBoot HART ID                : 0\r\nBoot HART Domain            : root\r\nBoot HART Priv Version      : v1.12\r\nBoot HART Base ISA          : rv64imafdch\r\nBoot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu\r\nBoot HART PMP Count         : 16\r\nBoot HART PMP Granularity   : 2 bits\r\nBoot HART PMP Address Bits  : 54\r\nBoot HART MHPM Info         : 16 (0x0007fff8)\r\nBoot HART Debug Triggers    : 2 triggers\r\nBoot HART MIDELEG           : 0x0000000000001666\r\nBoot HART MEDELEG           : 0x0000000000f4b509\r\nsuba K0 boot: entering kernel\nsuba K2a memory: verified\nsuba kernel K0: handoff accepted\nqemu-system-riscv64: terminating on signal 15 from pid 36099 (python3)\n",
+        "passed": true
+      },
+      "events": [
+        "suba K0 boot: entering kernel",
+        "suba K2a memory: verified",
+        "suba kernel K0: handoff accepted"
+      ],
+      "passed": true
+    },
+    {
+      "name": "without-clear",
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "kernel/kernel.build"
+          ],
+          "cwd": "/home/mii/code/konOSuba/suba/build/k2-integration-r1/without-clear",
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=6 imports=8 assembly_files=1 source=29027 assembly=2348 names=764 name_bytes=15072 decls=241 types=58 fields=21 params=35 max_ast=409 max_ir=294 max_frame=3872 max_bindings=7 max_defers=0 max_loops=2 max_slots=178 max_args=39 max_params=3 text=38068 data=89 objects=14 symbols=665 fixups=1150 relocations=0 elf=49156\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "boot.build"
+          ],
+          "cwd": "/home/mii/code/konOSuba/suba/build/k2-integration-r1/without-clear",
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=5 imports=5 assembly_files=1 source=15324 assembly=2348 names=572 name_bytes=10603 decls=208 types=22 fields=2 params=20 max_ast=324 max_ir=274 max_frame=1424 max_bindings=5 max_defers=0 max_loops=1 max_slots=187 max_args=44 max_params=3 text=12248 data=49 objects=5 symbols=235 fixups=385 relocations=0 elf=20481\n"
+        }
+      ],
+      "expected_outcome": "panic reason=24",
+      "case_inputs": {
+        "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "kernel/entry.vt": "c2932bf55fb5078751ca5299468285cdbf9e6c0c4cbf1937ef6f09384e3ef0d7",
+        "kernel/machine.vt": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca",
+        "kernel/machine.s0": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde",
+        "kernel/kernel.build": "00c3fae1c862c74d5bc8001c9529ea6ecc7ce0a76f7f991767b4562962d86463",
+        "kernel/memory.vt": "128520052f2fa096b060a232cddc4d71b2fe06a12c048f08b851358f2fc71260",
+        "kernel/bootstrap_memory.vt": "7724eb2be912c6a15f0fba561ad7ad60af8493174d4f4b68bd407ee67427675a",
+        "tests/k0/boot.vt": "3c100e990f995446be631c92289d07fa5c3da00818c24a66967fbcc4a3dbe8bb",
+        "tests/k0/fw_cfg.vt": "607ad68e260adf0b0c638ecdf4389de51c2f8a615088349399d64f7f24c7ddc6",
+        "tests/k2/memory_probe.vt": "2d5c399ed3004d31cf271cca66b29ac1d449ddd1911354faea1d24b5d8c1be41"
+      },
+      "kernel": {
+        "entry": 2151677952,
+        "end": 2153693248,
+        "bytes": 49156,
+        "sha256": "1f147a096ed28a54199cbe08f0db398aa14afc93fa83c3bd5564a2fa4e53cb26"
+      },
+      "boot": {
+        "entry": 2149580800,
+        "end": 2149794320,
+        "bytes": 20481,
+        "sha256": "9a8ae4974439e28e66379295c9ee2be8222b94cd46508838b71f55dc81e83be9"
+      },
+      "execution": {
+        "command": [
+          "qemu-system-riscv64",
+          "-machine",
+          "virt",
+          "-accel",
+          "tcg",
+          "-m",
+          "512M",
+          "-smp",
+          "1",
+          "-nographic",
+          "-bios",
+          "/usr/share/qemu/opensbi-riscv64-generic-fw_dynamic.bin",
+          "-kernel",
+          "/home/mii/code/konOSuba/suba/build/k2-integration-r1/without-clear/build/boot.elf",
+          "-device",
+          "loader,file=/home/mii/code/konOSuba/suba/build/k2-integration-r1/without-clear/build/kernel.elf",
+          "-device",
+          "ramfb",
+          "-no-reboot"
+        ],
+        "marker": "suba kernel panic reason=24\n",
+        "observed": true,
+        "stable_observation_ms": 500,
+        "observer_stopped_after_marker": true,
+        "returncode": 0,
+        "log": "\r\nOpenSBI v1.8.1\r\n   ____                    _____ ____ _____\r\n  / __ \\                  / ____|  _ \\_   _|\r\n | |  | |_ __   ___ _ __ | (___ | |_) || |\r\n | |  | | '_ \\ / _ \\ '_ \\ \\___ \\|  _ < | |\r\n | |__| | |_) |  __/ | | |____) | |_) || |_\r\n  \\____/| .__/ \\___|_| |_|_____/|____/_____|\r\n        | |\r\n        |_|\r\n\r\nPlatform Name               : riscv-virtio,qemu\r\nPlatform Features           : medeleg\r\nPlatform HART Count         : 1\r\nPlatform HART Protection    : pmp\r\nPlatform IPI Device         : aclint-mswi\r\nPlatform Timer Device       : aclint-mtimer @ 10000000Hz\r\nPlatform Console Device     : uart8250\r\nPlatform HSM Device         : ---\r\nPlatform PMU Device         : ---\r\nPlatform Reboot Device      : syscon-reboot\r\nPlatform Shutdown Device    : syscon-poweroff\r\nPlatform Suspend Device     : ---\r\nPlatform CPPC Device        : ---\r\nFirmware Base               : 0x80000000\r\nFirmware Size               : 321 KB\r\nFirmware RW Offset          : 0x40000\r\nFirmware RW Size            : 65 KB\r\nFirmware Heap Offset        : 0x47000\r\nFirmware Heap Size          : 37 KB (total), 0 KB (reserved), 12 KB (used), 23 KB (free)\r\nFirmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)\r\nRuntime SBI Version         : 3.0\r\nStandard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse\r\nExperimental SBI Extensions : none\r\n\r\nDomain0 Name                : root\r\nDomain0 Boot HART           : 0\r\nDomain0 HARTs               : 0*\r\nDomain0 Region00            : 0x0000000080040000-0x000000008005ffff M: (F,R,W) S/U: ()\r\nDomain0 Region01            : 0x0000000080000000-0x000000008003ffff M: (F,R,X) S/U: ()\r\nDomain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()\r\nDomain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)\r\nDomain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)\r\nDomain0 Next Address        : 0x0000000080200000\r\nDomain0 Next Arg1           : 0x000000009fe00000\r\nDomain0 Next Mode           : S-mode\r\nDomain0 SysReset            : yes\r\nDomain0 SysSuspend          : yes\r\n\r\nBoot HART ID                : 0\r\nBoot HART Domain            : root\r\nBoot HART Priv Version      : v1.12\r\nBoot HART Base ISA          : rv64imafdch\r\nBoot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu\r\nBoot HART PMP Count         : 16\r\nBoot HART PMP Granularity   : 2 bits\r\nBoot HART PMP Address Bits  : 54\r\nBoot HART MHPM Info         : 16 (0x0007fff8)\r\nBoot HART Debug Triggers    : 2 triggers\r\nBoot HART MIDELEG           : 0x0000000000001666\r\nBoot HART MEDELEG           : 0x0000000000f4b509\r\nsuba K0 boot: entering kernel\nsuba kernel panic reason=24\nqemu-system-riscv64: terminating on signal 15 from pid 36099 (python3)\n",
+        "passed": true
+      },
+      "events": [
+        "suba K0 boot: entering kernel",
+        "suba kernel panic reason=24"
+      ],
+      "passed": true
+    }
+  ]
+}

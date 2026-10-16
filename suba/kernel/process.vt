@@ -1,0 +1,389 @@
+// Owns process identity, user frames and lifecycle. One serialized supervisor context.
+// Public unsafe operations require serialized S-mode with interrupts disabled; none wait.
+// Checked slot/generation gates access to private permanent records and borrowed frames.
+// No handles/devices here; external owners gate final publication through publish_exit.
+module kernel::process;
+import suba::abi;
+import kernel::space;
+import suba::image as elf;
+import kernel::loader;
+import suba::argument_wire;
+pub const CAPACITY: usize = 16;
+pub struct Id { slot: usize, generation: usize }
+pub enum State { Vacant, Loading, Prepared, Ready, Running, Blocked, Dying, Exited }
+enum AddressSpace { Empty, Owned(space::Id) }
+enum Loading { Empty, Work(loader::Job) }
+struct Record {
+    generation: usize, state: State, space: AddressSpace, loading: Loading,
+    frame: [36]usize, status: usize, cause: usize, value: usize, pc: usize
+}
+static mut RECORDS: [CAPACITY]Record = zero;
+static mut CURRENT: usize = CAPACITY;
+static mut CURSOR: usize = 0;
+pub enum Create { Ready(Id), Full, Invalid, NoMemory }
+pub enum LoadRequest { Bytes(loader::Need), Done, Invalid }
+pub struct Signal { pub id: Id, pub value: usize }
+pub enum Event { External(Id), Timer(Id), Call(Signal), Fault(Signal), Invalid }
+pub struct Selected { pub id: Id, pub frame: usize, pub token: usize }
+pub enum Selection { User(Selected), Idle }
+pub enum Register { Value(usize), Invalid }
+pub struct ExitRecord { pub status: usize, pub cause: usize, pub value: usize, pub pc: usize }
+pub enum Collected { Ready(ExitRecord), Pending, Invalid }
+
+// S-next has no enum equality; the private code is only a local comparison key,
+// never an external ABI or persisted state representation.
+fn state_code(state: State) -> u32 {
+    match state {
+        State::Vacant => { return 0; },
+        State::Loading => { return 1; },
+        State::Prepared => { return 7; },
+        State::Ready => { return 2; },
+        State::Running => { return 3; },
+        State::Blocked => { return 4; },
+        State::Dying => { return 5; },
+        State::Exited => { return 6; }
+    }
+}
+
+pub unsafe fn valid(id: Id) -> bool {
+    unsafe {
+        return id.slot < CAPACITY && state_code(RECORDS[id.slot].state) != state_code(State::Vacant) &&
+            RECORDS[id.slot].generation == id.generation;
+    }
+}
+
+// CAPACITY denotes an invalid identity; callers must reject it before table indexing.
+pub unsafe fn slot(id: Id) -> usize {
+    unsafe { if !valid(id) { return CAPACITY; } return id.slot; }
+}
+
+// Caller supplies an unchanged successful elf::inspect Plan; serialized supervisor only.
+pub unsafe fn begin(plan: elf::Plan) -> Create {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            if state_code(RECORDS[i].state) == state_code(State::Vacant) && RECORDS[i].generation != 0xffffffffffffffff_usize {
+                match space::create() {
+                    space::Create::Full => { return Create::Full; },
+                    space::Create::NoMemory => { return Create::NoMemory; },
+                    space::Create::Ready(address_space) => {
+                        RECORDS[i].generation = RECORDS[i].generation + 1_usize;
+                        RECORDS[i].space = AddressSpace::Owned(address_space);
+                        RECORDS[i].loading = Loading::Work(loader::begin(plan));
+                        RECORDS[i].frame = zero;
+                        RECORDS[i].frame[1_usize] = abi::USER_STACK_END;
+                        RECORDS[i].frame[9_usize] = abi::ARGUMENT_BASE;
+                        RECORDS[i].frame[26_usize] = abi::ARGUMENT_BASE;
+                        RECORDS[i].frame[31_usize] = plan.entry;
+                        RECORDS[i].state = State::Loading;
+                        RECORDS[i].status = 0;
+                        RECORDS[i].cause = 0;
+                        RECORDS[i].value = 0;
+                        RECORDS[i].pc = 0;
+                        return Create::Ready(make Id { slot: i, generation: RECORDS[i].generation });
+                    }
+                }
+            }
+            i = i + 1_usize;
+        }
+        return Create::Full;
+    }
+}
+
+pub unsafe fn load_request(id: Id) -> LoadRequest {
+    unsafe {
+        if !valid(id) { return LoadRequest::Invalid; }
+        if state_code(RECORDS[id.slot].state) == state_code(State::Prepared) { return LoadRequest::Done; }
+        if state_code(RECORDS[id.slot].state) != state_code(State::Loading) { return LoadRequest::Invalid; }
+        match RECORDS[id.slot].loading {
+            Loading::Empty => { return LoadRequest::Invalid; },
+            Loading::Work(job) => {
+                match loader::next(core::addr_of(job)) {
+                    loader::Request::Done => { return LoadRequest::Done; },
+                    loader::Request::Bytes(need) => { return LoadRequest::Bytes(need); }
+                }
+            }
+        }
+    }
+}
+
+pub unsafe fn load_step(id: Id, data: []const u8) -> loader::Step {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Loading) { return loader::Step::Invalid; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return loader::Step::Invalid; },
+            AddressSpace::Owned(address_space) => {
+                match RECORDS[id.slot].loading {
+                    Loading::Empty => { return loader::Step::Invalid; },
+                    Loading::Work(saved) => {
+                        var job: loader::Job = saved;
+                        let result: loader::Step = loader::step(core::addr_of_mut(job), address_space, data);
+                        RECORDS[id.slot].loading = Loading::Work(job);
+                        match result {
+                            loader::Step::Invalid => { RECORDS[id.slot].state = State::Dying; RECORDS[id.slot].status = abi::INVALID; return result; },
+                            loader::Step::NoMemory => { RECORDS[id.slot].state = State::Dying; RECORDS[id.slot].status = abi::NO_MEMORY; return result; },
+                            loader::Step::More => {},
+                            loader::Step::Done => {}
+                        }
+                        match loader::next(core::addr_of(job)) {
+                            loader::Request::Done => {
+                                RECORDS[id.slot].state = State::Prepared;
+                                RECORDS[id.slot].loading = Loading::Empty;
+                                return loader::Step::Done;
+                            },
+                            loader::Request::Bytes(need) => { return loader::Step::More; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub unsafe fn terminate(id: Id, status: usize) -> bool {
+    unsafe {
+        if trusted_desktop(id) { return false; }
+        if !valid(id) { return false; }
+        if state_code(RECORDS[id.slot].state) == state_code(State::Exited) || state_code(RECORDS[id.slot].state) == state_code(State::Dying) { return false; }
+        RECORDS[id.slot].state = State::Dying;
+        RECORDS[id.slot].status = status;
+        RECORDS[id.slot].loading = Loading::Empty;
+        return true;
+    }
+}
+
+pub unsafe fn read_register(id: Id, number: usize) -> Register {
+    unsafe {
+        if !valid(id) || number > 31_usize { return Register::Invalid; }
+        if number == 0_usize { return Register::Value(0); }
+        return Register::Value(RECORDS[id.slot].frame[number - 1_usize]);
+    }
+}
+
+pub unsafe fn complete(id: Id, status: usize, value: usize) -> bool {
+    unsafe {
+        if !valid(id) || (state_code(RECORDS[id.slot].state) != state_code(State::Ready) &&
+            state_code(RECORDS[id.slot].state) != state_code(State::Blocked)) { return false; }
+        RECORDS[id.slot].frame[9_usize] = status;
+        RECORDS[id.slot].frame[10_usize] = value;
+        RECORDS[id.slot].state = State::Ready;
+        return true;
+    }
+}
+
+pub unsafe fn block(id: Id) -> bool {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Ready) { return false; }
+        RECORDS[id.slot].state = State::Blocked;
+        return true;
+    }
+}
+
+pub unsafe fn lookup(id: Id, address: usize, write: bool) -> space::Lookup {
+    unsafe {
+        if !valid(id) { return space::Lookup::Invalid; }
+        if state_code(RECORDS[id.slot].state) == state_code(State::Dying) || state_code(RECORDS[id.slot].state) == state_code(State::Exited) {
+            return space::Lookup::Invalid;
+        }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return space::Lookup::Invalid; },
+            AddressSpace::Owned(address_space) => { return space::lookup(address_space, address, write); }
+        }
+    }
+}
+
+// Full frame was saved by assembly. Reject a mismatched owner or supervisor trap.
+pub unsafe fn capture(frame: usize) -> Event {
+    // SAFETY: assembly saved into permanent owner storage; pointer identity and SPP are
+    // checked before state publication. No untrusted frame pointer is dereferenced.
+    unsafe {
+        if CURRENT == CAPACITY { return Event::Invalid; }
+        let index: usize = CURRENT;
+        if state_code(RECORDS[index].state) != state_code(State::Running) ||
+            core::addr(core::slice_of(RECORDS[index].frame).data) != frame ||
+            (RECORDS[index].frame[32_usize] & 256_usize) != 0_usize { return Event::Invalid; }
+        let id: Id = make Id { slot: index, generation: RECORDS[index].generation };
+        let cause: usize = RECORDS[index].frame[33_usize];
+        // An unexpected interrupt is a trusted platform fault, never an application exit.
+        if (cause & 0x8000000000000000_usize) != 0_usize &&
+            cause != 0x8000000000000005_usize && cause != 0x8000000000000009_usize {
+            return Event::Invalid;
+        }
+        CURRENT = CAPACITY;
+        RECORDS[index].state = State::Ready;
+        if cause == 0x8000000000000009_usize { return Event::External(id); }
+        if cause == 0x8000000000000005_usize { return Event::Timer(id); }
+        if cause == 8_usize {
+            RECORDS[index].frame[31_usize] = RECORDS[index].frame[31_usize] + 4_usize;
+            return Event::Call(make Signal { id: id, value: RECORDS[index].frame[16_usize] });
+        }
+        if trusted_desktop(id) { return Event::Invalid; }
+        RECORDS[index].cause = cause;
+        RECORDS[index].value = RECORDS[index].frame[34_usize];
+        RECORDS[index].pc = RECORDS[index].frame[31_usize];
+        let terminated: bool = terminate(id, 128_usize + cause);
+        return Event::Fault(make Signal { id: id, value: cause });
+    }
+}
+
+pub unsafe fn select() -> Selection {
+    unsafe {
+        var scan: usize = 0;
+        while scan < CAPACITY {
+            let index: usize = CURSOR;
+            CURSOR = (CURSOR + 1_usize) % CAPACITY;
+            if state_code(RECORDS[index].state) == state_code(State::Ready) {
+                match RECORDS[index].space {
+                    AddressSpace::Empty => { return Selection::Idle; },
+                    AddressSpace::Owned(address_space) => {
+                        RECORDS[index].state = State::Running;
+                        CURRENT = index;
+                        return Selection::User(make Selected {
+                            id: make Id { slot: index, generation: RECORDS[index].generation },
+                            frame: core::addr(core::slice_of(RECORDS[index].frame).data),
+                            token: space::token(address_space)
+                        });
+                    }
+                }
+            }
+            scan = scan + 1_usize;
+        }
+        return Selection::Idle;
+    }
+}
+
+// Reap only this Dying identity after its caller has revoked requests/handles/windows.
+// User pages may disappear before DMA refs drain; publish_exit is the separate final gate.
+pub unsafe fn reap_id(id: Id) -> space::Progress {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Dying) { return space::Progress::Invalid; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return space::Progress::Done; },
+            AddressSpace::Owned(address_space) => {
+                let result: space::Progress = space::reap_step(address_space);
+                match result {
+                    space::Progress::Done => { RECORDS[id.slot].space = AddressSpace::Empty; },
+                    space::Progress::More => {},
+                    space::Progress::Invalid => {}
+                }
+                return result;
+            }
+        }
+    }
+}
+
+// Caller proves all external request/device references have drained before this gate.
+pub unsafe fn publish_exit(id: Id) -> bool {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Dying) { return false; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Owned(value) => { return false; },
+            AddressSpace::Empty => { RECORDS[id.slot].state = State::Exited; return true; }
+        }
+    }
+}
+
+pub unsafe fn collect(id: Id) -> Collected {
+    unsafe {
+        if !valid(id) { return Collected::Invalid; }
+        if state_code(RECORDS[id.slot].state) != state_code(State::Exited) { return Collected::Pending; }
+        let result: ExitRecord = make ExitRecord { status: RECORDS[id.slot].status,
+            cause: RECORDS[id.slot].cause, value: RECORDS[id.slot].value, pc: RECORDS[id.slot].pc };
+        RECORDS[id.slot].state = State::Vacant;
+        return Collected::Ready(result);
+    }
+}
+
+pub struct TrapStatus { pub pc: usize, pub status: usize, pub cause: usize, pub value: usize }
+pub enum TrapSnapshot { Value(TrapStatus), Invalid }
+
+// Read-only saved-machine snapshot for diagnostics; never supplies restore status.
+pub unsafe fn trap_status(id: Id) -> TrapSnapshot {
+    unsafe {
+        if !valid(id) { return TrapSnapshot::Invalid; }
+        return TrapSnapshot::Value(make TrapStatus { pc: RECORDS[id.slot].frame[31_usize],
+            status: RECORDS[id.slot].frame[32_usize], cause: RECORDS[id.slot].frame[33_usize],
+            value: RECORDS[id.slot].frame[34_usize] });
+    }
+}
+
+pub enum Found { Ready(Id), Empty }
+pub unsafe fn at(slot: usize) -> Found {
+    unsafe {
+        if slot >= CAPACITY || state_code(RECORDS[slot].state) == state_code(State::Vacant) { return Found::Empty; }
+        return Found::Ready(make Id { slot: slot, generation: RECORDS[slot].generation });
+    }
+}
+pub unsafe fn generation(id: Id) -> usize {
+    unsafe { if !valid(id) { return 0; } return id.generation; }
+}
+pub unsafe fn state(id: Id) -> State {
+    unsafe { if !valid(id) { return State::Vacant; } return RECORDS[id.slot].state; }
+}
+// Request ownership may survive Dying, but delivery may not.
+pub unsafe fn deliverable(id: Id) -> bool {
+    unsafe {
+        if !valid(id) { return false; }
+        return state_code(RECORDS[id.slot].state) == state_code(State::Ready) ||
+            state_code(RECORDS[id.slot].state) == state_code(State::Blocked);
+    }
+}
+// Called only after all launch metadata/handles have been installed.
+pub unsafe fn publish(id: Id) -> bool {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Prepared) { return false; }
+        RECORDS[id.slot].state = State::Ready;
+        return true;
+    }
+}
+pub unsafe fn arguments(id: Id, bytes: []const u8) -> bool {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Prepared) ||
+            !argument_wire::valid(bytes) { return false; }
+        match lookup(id, abi::ARGUMENT_BASE, false) {
+            space::Lookup::Invalid => { return false; },
+            space::Lookup::Page(physical) => {
+                let destination: *u8 = core::ptr::<u8>(physical);
+                var i: usize = 0;
+                while i < abi::ARGUMENT_BYTES { *core::ptr_add(destination, i) = bytes[i]; i = i + 1_usize; }
+                return true;
+            }
+        }
+    }
+}
+pub unsafe fn map_page(id: Id, address: usize) -> space::MappingResult {
+    unsafe {
+        if !deliverable(id) { return space::MappingResult::Invalid; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return space::MappingResult::Invalid; },
+            AddressSpace::Owned(value) => { return space::map_user(value, address, space::READ | space::WRITE); }
+        }
+    }
+}
+pub unsafe fn unmap_page(id: Id, address: usize) -> bool {
+    unsafe {
+        if !deliverable(id) { return false; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return false; },
+            AddressSpace::Owned(value) => { return space::unmap_user(value, address); }
+        }
+    }
+}
+pub unsafe fn charge(id: Id, pages: usize) -> bool {
+    unsafe {
+        if !deliverable(id) { return false; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return false; },
+            AddressSpace::Owned(value) => { return space::charge(value, pages); }
+        }
+    }
+}
+pub unsafe fn uncharge(id: Id, pages: usize) -> bool {
+    unsafe {
+        if !valid(id) { return false; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return false; },
+            AddressSpace::Owned(value) => { return space::uncharge(value, pages); }
+        }
+    }
+}

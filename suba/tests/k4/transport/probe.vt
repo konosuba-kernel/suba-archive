@@ -1,0 +1,59 @@
+module draft::probe;
+import kernel::machine;
+import draft::block;
+extern abi(C) fn draft_shutdown() -> ();
+fn number(value: usize) -> () {
+    var digits: [16]u8 = zero;
+    var i: usize = 0;
+    while i < 16_usize {
+        let n: usize = (value >> ((15_usize - i) * 4_usize)) & 15_usize;
+        var byte: usize = 48_usize + n;
+        if n > 9_usize { byte = 87_usize + n; }
+        digits[i] = byte as u8; i = i + 1_usize;
+    }
+    unsafe { machine::text(core::slice_of(digits)); machine::text("\n"); }
+    return ();
+}
+pub fn start(info: usize) -> u32 {
+    machine::initialize();
+    let irq: usize = block::initialize();
+    if irq == 0_usize { return panic(1); }
+    unsafe { machine::text("K4 draft block IRQ="); } number(irq);
+    var result: usize = block::transfer(0, 133120, 4096);
+    if result != 0_usize { return panic((100_usize + result) as u32); }
+    unsafe {
+        let value: usize = *core::ptr::<usize>(block::DATA);
+        if value == 0x123456789abcdef_usize { machine::text("K4 draft persisted\n"); }
+        else { if value != 0_usize { return panic(2); } machine::text("K4 draft initially zero\n"); }
+        var i: usize = 0;
+        while i < 512_usize {
+            *core::ptr_add(core::ptr::<usize>(block::DATA), i) = 0x123456789abcdef_usize + i;
+            i = i + 1_usize;
+        }
+    }
+    result = block::transfer(1, 133120, 4096);
+    if result != 0_usize { return panic((200_usize + result) as u32); }
+    result = block::transfer(4, 0, 0);
+    if result != 0_usize { return panic((300_usize + result) as u32); }
+    result = block::transfer(0, 133120, 4096);
+    if result != 0_usize { return panic((400_usize + result) as u32); }
+    unsafe {
+        var i: usize = 0;
+        while i < 512_usize {
+            if *core::ptr_add(core::ptr::<usize>(block::DATA), i) != 0x123456789abcdef_usize + i { return panic(3); }
+            i = i + 1_usize;
+        }
+        machine::text("K4 draft IRQ read write FLUSH verified\n");
+        var round: usize = 0;
+        while round < 65540_usize {
+            let code: usize = block::transfer(0, 133120, 512);
+            if code != 0_usize { return panic((500_usize + code) as u32); }
+            round = round + 1_usize;
+        }
+        machine::text("K4 transport 16bit index wrap verified\n"); draft_shutdown();
+    }
+    return panic(4);
+}
+pub fn panic(reason: u32) -> u32 {
+    unsafe { machine::text("K4 draft panic="); } number(reason as usize); machine::halt(); return reason;
+}

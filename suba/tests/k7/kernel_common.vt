@@ -1,0 +1,180 @@
+module test::k7_kernel;
+import suba::abi;
+import suba::files as wire;
+import suba::syscalls;
+import suba::argument_wire;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::arguments;
+import libsuba::argument_builder;
+static mut COLLECT_DIAG: [4]usize = zero;
+static mut ARGS: [4096]u8 = zero;
+static mut BUFFER: [4096]u8 = zero;
+static mut INFO: [64]u8 = zero;
+static mut ROOT: [31]u8 = zero;
+static mut ROOT_BYTES: usize = 0;
+static mut PATH: [255]u8 = zero;
+unsafe fn path(suffix: []const u8) -> []const u8 {
+    unsafe {
+        var i: usize = 0;
+        while i < ROOT_BYTES { PATH[i] = ROOT[i]; i = i + 1_usize; }
+        i = 0;
+        while i < suffix.len { PATH[ROOT_BYTES + i] = suffix[i]; i = i + 1_usize; }
+        return core::slice_from_raw_parts(core::slice_of(PATH).data, ROOT_BYTES + suffix.len);
+    }
+}
+unsafe fn spawn(name: []const u8, role: []const u8, cwd: []const u8, job: usize) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), cwd) ||
+            !argument_builder::append(core::slice_of_mut(ARGS), role) { return make syscall::Reply { status: abi::INVALID, value: 0 }; }
+        return services::spawn(name, core::slice_of(ARGS), 0, 0, job);
+    }
+}
+fn collected(child: usize, expected: usize) -> bool {
+    let watches: [1]services::Watch = [make services::Watch { handle: child, events: syscalls::EXITED }];
+    let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+    unsafe {
+        let waited: syscall::Reply = services::wait(core::slice_of(watches), until, false);
+        COLLECT_DIAG[0_usize] = waited.status; COLLECT_DIAG[1_usize] = waited.value;
+        if waited.status != abi::OK || waited.value != 1_usize { return false; }
+    }
+    match services::collect(child) {
+        services::Collected::Failed(status) => { unsafe { COLLECT_DIAG[2_usize] = status; } return false; },
+        services::Collected::Ready(exit) => {
+            unsafe { COLLECT_DIAG[2_usize] = exit.status; COLLECT_DIAG[3_usize] = exit.cause; }
+            return exit.status == expected && exit.cause == 0_usize;
+        }
+    }
+}
+unsafe fn create(name: []const u8, content: []const u8, transient: bool) -> syscall::Reply {
+    unsafe {
+        var flags: usize = wire::WRITE | wire::CREATE_NEW;
+        if transient { flags = flags | wire::TRANSIENT; }
+        let file: syscall::Reply = files::open(name, flags);
+        if file.status != abi::OK { return file; }
+        let written: syscall::Reply = files::write_at(file.value, 0, content);
+        if written.status != abi::OK || written.value != content.len { return make syscall::Reply { status: abi::INVALID, value: file.value }; }
+        return file;
+    }
+}
+pub fn worker() -> u32 {
+    unsafe {
+        var grand: bool = false;
+        match arguments::argument(0) {
+            arguments::BytesResult::Invalid => { return 50; },
+            arguments::BytesResult::Value(role) => {
+                if role.len == 6_usize && role[0_usize] == 110_u8 { return 42; }
+                if role.len == 6_usize && role[0_usize] == 98_u8 { return publisher(false); }
+                if role.len == 5_usize && role[0_usize] == 97_u8 { return publisher(true); }
+                if role.len == 6_usize && role[0_usize] == 108_u8 { return cancellation_worker(false, false); }
+                if role.len == 6_usize && role[0_usize] == 119_u8 && role[1_usize] == 114_u8 { return cancellation_worker(true, false); }
+                if role.len == 6_usize && role[0_usize] == 119_u8 && role[1_usize] == 97_u8 { return pause(); }
+                if role.len == 7_usize && role[0_usize] == 102_u8 {
+                    match arguments::argument(1) {
+                        arguments::BytesResult::Invalid => { return 110; },
+                        arguments::BytesResult::Value(name) => {
+                            if files::open(name, wire::READ).status != abi::DENIED { return 111; }
+                            return 0;
+                        }
+                    }
+                }
+                if role.len == 6_usize && role[0_usize] == 102_u8 { return cancellation_worker(true, true); }
+                if role.len == 5_usize && role[0_usize] == 111_u8 { return job_owner_worker(); }
+                grand = role.len == 5_usize;
+            }
+        }
+        if services::job_create().status != abi::DENIED { return 51; }
+        if files::open("/work/escape", wire::WRITE | wire::CREATE_NEW).status != abi::DENIED { return 52; }
+        if files::open("src/input", wire::WRITE).status != abi::DENIED { return 53; }
+        if files::unlink("out").status != abi::DENIED { return 54; }
+        let input: syscall::Reply = files::open("src/input", wire::READ);
+        if input.status != abi::OK { return 55; }
+        if files::read_at(input.value, 0, core::slice_of_mut(BUFFER)).value != 6_usize || BUFFER[0_usize] != 102_u8 { return 56; }
+        if syscall::close(input.value).status != abi::OK { return 57; }
+        if grand { return 0; }
+        let child: syscall::Reply = spawn("/sys/worker", "grand", "", 0);
+        if child.status != abi::OK || !collected(child.value, 0) { return 58; }
+        let output: syscall::Reply = create("out/result", "built", true);
+        if output.status != abi::OK || files::sync(output.value, true).status != abi::OK ||
+            syscall::close(output.value).status != abi::OK { return 59; }
+    }
+    return 0;
+}
+
+unsafe fn announce(marker: []const u8) -> bool {
+    unsafe {
+        let output: usize = arguments::output(false);
+        return output != 0_usize && services::write(output, marker, false).status == abi::OK;
+    }
+}
+unsafe fn pause() -> u32 {
+    unsafe {
+        let empty: [1]services::Watch = zero;
+        loop { let waited: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(empty).data, 0), 0, false); }
+    }
+    return 0;
+}
+unsafe fn publisher(after: bool) -> u32 {
+    unsafe {
+        let temporary: syscall::Reply = create("temporary", "new", true);
+        if temporary.status != abi::OK || files::sync(temporary.value, false).status != abi::OK ||
+            syscall::close(temporary.value).status != abi::OK { return 60; }
+        if after && files::replace("temporary", "published").status != abi::OK { return 61; }
+        if !announce("P") { return 62; }
+        return pause();
+    }
+}
+unsafe fn stream_child(role: []const u8, pair: services::StreamPair) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), role) { return make syscall::Reply { status: abi::INVALID, value: 0 }; }
+        return services::spawn("/sys/worker", core::slice_of(ARGS), pair.write, 0, 0);
+    }
+}
+unsafe fn signal(pair: services::StreamPair) -> bool {
+    unsafe {
+        let watches: [1]services::Watch = [make services::Watch { handle: pair.read, events: syscalls::READABLE }];
+        let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+        if services::wait(core::slice_of(watches), until, false).value != 1_usize { return false; }
+        let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(BUFFER), true);
+        return read.status == abi::OK && read.value == 1_usize && BUFFER[0_usize] == 80_u8;
+    }
+}
+unsafe fn settle_nodes(nodes: usize, blocks: usize) -> bool {
+    unsafe {
+        let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+        while services::stats(syscalls::STATS_TIME_TICKS).value < until {
+            if services::stats(wire::STATS_FS_FREE_NODES).value == nodes &&
+                services::stats(wire::STATS_FS_FREE_BLOCKS).value == blocks &&
+                services::stats(wire::STATS_FS_DETACHED).value == 0_usize { return true; }
+        }
+        return false;
+    }
+}
+unsafe fn job_info() -> syscall::Reply {
+    unsafe {
+        let created: syscall::Reply = syscall::invoke(abi::SYS_JOB_CREATE, core::addr(core::slice_of_mut(INFO).data), 64, 0, 0, 0, 0);
+        if created.status != abi::OK { return created; }
+        ROOT_BYTES = argument_wire::word(core::slice_of(INFO), wire::JOB_PATH_BYTES, 4);
+        if ROOT_BYTES == 0_usize || ROOT_BYTES > 31_usize { return make syscall::Reply { status: abi::INVALID, value: created.value }; }
+        var i: usize = 0;
+        while i < ROOT_BYTES { ROOT[i] = INFO[wire::JOB_PATH + i]; i = i + 1_usize; }
+        return created;
+    }
+}
+fn wait_job(token: usize) -> bool {
+    let watches: [1]services::Watch = [make services::Watch { handle: token, events: syscalls::EXITED }];
+    let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+    unsafe { return services::wait(core::slice_of(watches), until, false).value == 1_usize; }
+}
+
+unsafe fn foreign(name: []const u8) -> bool {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), "foreign") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), name) { return false; }
+        let child: syscall::Reply = services::spawn("/sys/worker", core::slice_of(ARGS), 0, 0, 0);
+        return child.status == abi::OK && collected(child.value, 0);
+    }
+}

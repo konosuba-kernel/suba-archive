@@ -1,0 +1,68 @@
+// Dynamic VA reservation and mapping requests; space remains the sole Frame owner.
+module kernel::dispatch;
+// Module imports are declared once in dispatch.vt (S-next module-wide imports).
+
+unsafe fn allocate_pages(id: process::Id, count: usize) -> bool {
+    unsafe {
+        if count == 0_usize || count > syscalls::PAGE_COUNT_MAX { return answer(id, abi::INVALID, 0); }
+        match ranges::reserve(id, process::generation(id), count) {
+            ranges::Reserve::Invalid => { return answer(id, abi::INVALID, 0); },
+            ranges::Reserve::Limit => { return answer(id, abi::LIMIT, 0); },
+            ranges::Reserve::Ready(range) => {
+                return pending(id, request::Operation::Pages(make request::Memory {
+                    range: range, done: 0, phase: request::MemoryPhase::Allocating }));
+            }
+        }
+    }
+}
+unsafe fn free_pages(id: process::Id, address: usize, count: usize) -> bool {
+    unsafe {
+        match ranges::begin_free(id, process::generation(id), address, count) {
+            ranges::Release::Invalid => { return answer(id, abi::INVALID, 0); },
+            ranges::Release::Ready(range) => {
+                return pending(id, request::Operation::Pages(make request::Memory {
+                    range: range, done: 0, phase: request::MemoryPhase::Freeing }));
+            }
+        }
+    }
+}
+unsafe fn pages_step(work: request::Pending, saved: request::Memory) -> bool {
+    unsafe {
+        var data: request::Memory = saved;
+        let generation: usize = process::generation(work.owner);
+        match data.phase {
+            request::MemoryPhase::Allocating => {
+                match process::map_page(work.owner, data.range.address + data.done * abi::PAGE_BYTES) {
+                    space::MappingResult::Invalid => { return false; },
+                    space::MappingResult::NoMemory => { data.phase = request::MemoryPhase::Rollback(abi::NO_MEMORY); },
+                    space::MappingResult::Ready(physical) => {
+                        data.done = data.done + 1_usize;
+                        if data.done == data.range.pages {
+                            if !ranges::publish(work.owner, generation, data.range) { return false; }
+                            return finish(work, abi::OK, data.range.address);
+                        }
+                    }
+                }
+            },
+            request::MemoryPhase::Freeing => {
+                if !process::unmap_page(work.owner, data.range.address + data.done * abi::PAGE_BYTES) { return false; }
+                data.done = data.done + 1_usize;
+                if data.done == data.range.pages {
+                    if !ranges::finish(work.owner, generation, data.range) { return false; }
+                    return finish(work, abi::OK, 0);
+                }
+            },
+            request::MemoryPhase::Rollback(status) => {
+                if data.done != 0_usize {
+                    data.done = data.done - 1_usize;
+                    if !process::unmap_page(work.owner, data.range.address + data.done * abi::PAGE_BYTES) { return false; }
+                }
+                if data.done == 0_usize {
+                    if !ranges::finish(work.owner, generation, data.range) { return false; }
+                    return finish(work, status, 0);
+                }
+            }
+        }
+        return request::advance(work.owner, work.token, request::Operation::Pages(data));
+    }
+}

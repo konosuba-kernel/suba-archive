@@ -1,0 +1,25 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut ARGS: [4096]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        if files::mkdir("temporary").status != abi::OK { return 200; }
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work/temporary/..") { return 201; }
+        let child: syscall::Reply = services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0);
+        if child.status != abi::OK { return 202; }
+        var watch: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED };1];
+        let now: syscall::Reply = services::stats(1);
+        if services::wait(core::slice_of(watch), now.value + 50000000_usize, false).value != 1_usize { return 203; }
+        match services::collect(child.value) {
+            services::Collected::Failed(status) => { return 204; },
+            services::Collected::Ready(exit) => { if exit.status != 0_usize { return 205; } }
+        }
+        if files::open("temporary", 1).status != abi::NOT_FOUND { return 206; }
+        return 0;
+    }
+}

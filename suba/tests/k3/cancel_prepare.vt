@@ -1,0 +1,26 @@
+// Test-only kill is injected after the child's unbound spawn reservation is owned.
+module test::program;
+import suba::abi;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+unsafe fn run_pair(pair: services::StreamPair) -> u32 {
+    unsafe {
+        let child: syscall::Reply = common::spawn("tree", pair.write, 0, 0);
+        if child.status != abi::OK { return 141; }
+        let close: syscall::Reply = syscall::close(pair.write);
+        if close.status != abi::OK || !common::collect(child.value, abi::CANCELLED) { return 142; }
+        var one: [1]u8 = zero;
+        let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(one), false);
+        if read.status != abi::OK || read.value != 0_usize { return 143; }
+        let end: syscall::Reply = syscall::close(pair.read);
+        if end.status != abi::OK { return 144; }
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    match services::streams() {
+        services::Streams::Failed(status) => { return 140; },
+        services::Streams::Ready(pair) => { unsafe { return run_pair(pair); } }
+    }
+}

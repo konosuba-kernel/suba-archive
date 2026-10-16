@@ -1,0 +1,82 @@
+// US keyboard layout over fixed virtio/Linux key codes. Text is Unicode UTF-8;
+// input methods and compose sequences are outside the initial interface.
+module user::edit::keys;
+pub struct State { shift: usize, control: usize }
+pub enum Input { None, Text(u8), Save, Build, Cancel, Run, Open, Manifest, Copy, Cut, Paste, SelectAll, Diagnostic,
+    Left, Right, Up, Down, Home, End, Backspace, Delete }
+pub fn reset() -> State { return zero; }
+
+pub unsafe fn event(state: *State, code: usize, value: usize) -> Input {
+    // SAFETY: caller exclusively owns keyboard state. Separate modifier bits
+    // preserve one still-held side when the other side is released.
+    unsafe {
+        var bit: usize = 0;
+        if code == 42_usize { bit = 1; }
+        if code == 54_usize { bit = 2; }
+        if bit != 0_usize {
+            if value == 0_usize { (*state).shift = (*state).shift & (3_usize ^ bit); }
+            else { (*state).shift = (*state).shift | bit; }
+            return Input::None;
+        }
+        if code == 29_usize { bit = 1; }
+        if code == 97_usize { bit = 2; }
+        if bit != 0_usize {
+            if value == 0_usize { (*state).control = (*state).control & (3_usize ^ bit); }
+            else { (*state).control = (*state).control | bit; }
+            return Input::None;
+        }
+        if value == 0_usize || value > 2_usize { return Input::None; }
+        if (*state).control != 0_usize {
+            // Linux KEY_S/B/R/O and process-local clipboard shortcuts.
+            match code {
+                31 => { return Input::Save; },
+                48 => { return Input::Build; },
+                46 => { return Input::Copy; },
+                45 => { return Input::Cut; },
+                47 => { return Input::Paste; },
+                30 => { return Input::SelectAll; },
+                19 => { return Input::Run; },
+                24 => { return Input::Open; },
+                50 => { return Input::Manifest; },
+                36 => { return Input::Diagnostic; },
+                _ => { return Input::None; }
+            }
+        }
+        match code {
+            1 => { return Input::Cancel; },
+            105 => { return Input::Left; },
+            106 => { return Input::Right; },
+            103 => { return Input::Up; },
+            108 => { return Input::Down; },
+            102 => { return Input::Home; },
+            107 => { return Input::End; },
+            14 => { return Input::Backspace; },
+            111 => { return Input::Delete; },
+            28 => { return Input::Text(10); },
+            15 => { return Input::Text(9); },
+            57 => { return Input::Text(32); },
+            _ => {}
+        }
+        var plain: []const u8 = "";
+        var shifted: []const u8 = "";
+        var first: usize = 0;
+        if code >= 2_usize && code <= 13_usize {
+            plain = "1234567890-="; shifted = "!@#$%^&*()_+"; first = 2;
+        }
+        if code >= 16_usize && code <= 27_usize {
+            plain = "qwertyuiop[]"; shifted = "QWERTYUIOP{}"; first = 16;
+        }
+        if code >= 30_usize && code <= 41_usize {
+            plain = "asdfghjkl;'`"; shifted = "ASDFGHJKL:\"~"; first = 30;
+        }
+        if code == 43_usize { plain = "\\"; shifted = "|"; first = 43; }
+        if code >= 44_usize && code <= 53_usize {
+            plain = "zxcvbnm,./"; shifted = "ZXCVBNM<>?"; first = 44;
+        }
+        if first == 0_usize { return Input::None; }
+        if (*state).shift != 0_usize { return Input::Text(shifted[code - first]); }
+        return Input::Text(plain[code - first]);
+    }
+}
+
+pub fn extending(state: State) -> bool { return state.shift != 0_usize; }

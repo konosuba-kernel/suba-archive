@@ -1,0 +1,9 @@
+# Linux RV64 scalar C ABI test bridge. a0 number, a1..a3 arguments, a0 result.
+# Clobbers argument registers and a7; preserves sp, ra, x27 and all callee-saved registers.
+__fdt_syscall:
+addi x17, x10, 0
+addi x10, x11, 0
+addi x11, x12, 0
+addi x12, x13, 0
+ecall
+jalr x0, 0(x1)

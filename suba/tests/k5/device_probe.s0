@@ -1,0 +1,14 @@
+# Probe only: global SIE is enabled solely inside this finite polling interval.
+# C ABI leaf, caller-saved x5 clobbered, stack/x27 untouched. Trap vector preserves all.
+k5_poll_irq:
+addi x5, x0, 1
+slli x5, x5, 15
+csrrsi x0, 256, 2
+k5_poll_loop:
+addi x5, x5, -1
+bne x5, x0, k5_poll_loop
+csrrci x0, 256, 2
+jalr x0, 0(x1)
+k5_disable_irq:
+csrrci x0, 256, 2
+jalr x0, 0(x1)

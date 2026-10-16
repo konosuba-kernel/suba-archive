@@ -1,0 +1,187 @@
+{
+  "method": "physical UTF-8 lines including blanks/comments; ELF64 PT_LOAD headers; compiler-reported max function frame",
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "files": {
+    "kernel/memory.vt": {
+      "physical_lines": 215,
+      "bytes": 8722,
+      "sha256": "3d032d74f870ea20e099db7e5862189a4a440d8abfdf671684ef8be7e4cb80eb"
+    },
+    "tests/memory/initialize.vt": {
+      "physical_lines": 66,
+      "bytes": 3085,
+      "sha256": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497"
+    },
+    "tests/memory/lifecycle.vt": {
+      "physical_lines": 119,
+      "bytes": 5457,
+      "sha256": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638"
+    },
+    "tests/memory/regions_capacity.vt": {
+      "physical_lines": 84,
+      "bytes": 3806,
+      "sha256": "913c24de72d5ec5a12abe8b3e9aa54f53675d225a05680cc2f5316cabc806365"
+    },
+    "tests/memory/regions_high.vt": {
+      "physical_lines": 143,
+      "bytes": 6554,
+      "sha256": "42e393b29073302746c4b7d1e06d9a1edda3bb8b0bad384f7c9732c47d4cb5c6"
+    },
+    "tests/memory/regions_invalid.vt": {
+      "physical_lines": 89,
+      "bytes": 4818,
+      "sha256": "613927d1214cec529646d9ce65e728f43d9905c7ae34fbb56c51e5e930283ff4"
+    },
+    "tests/memory/retirement.vt": {
+      "physical_lines": 62,
+      "bytes": 2657,
+      "sha256": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c"
+    },
+    "tests/memory/support.vt": {
+      "physical_lines": 74,
+      "bytes": 2698,
+      "sha256": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd"
+    },
+    "tools/check_memory.py": {
+      "physical_lines": 135,
+      "bytes": 6539,
+      "sha256": "cb6eb3d573207ba7d71e217546c3c603448c8cb63497bd4f7640ec9030928ded"
+    }
+  },
+  "baseline": {
+    "suba": "e8fe282",
+    "physical_lines": 164,
+    "source_bytes": 6491,
+    "metadata_array_bytes": 1572864,
+    "rw_memory_bytes": 1572913,
+    "max_function_frame": 1376,
+    "text_bytes": 12100
+  },
+  "page_bytes": 4096,
+  "slot_capacity": 131072,
+  "slot_bytes": 12,
+  "metadata_array_bytes": 1572864,
+  "new_permanent_state_bytes": 8,
+  "allocator_probe": {
+    "elf_sha256": "cd23275fa370fe983d19ed53f0ea027c40cd662fc8e58020997d22b69756f4b6",
+    "segments": [
+      {
+        "flags": 5,
+        "address": 65536,
+        "file_bytes": 16176,
+        "memory_bytes": 16176,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "address": 81920,
+        "file_bytes": 1,
+        "memory_bytes": 1,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "address": 86016,
+        "file_bytes": 4,
+        "memory_bytes": 1572921,
+        "bss_bytes": 1572917,
+        "alignment": 4096
+      }
+    ],
+    "compiler_metrics": {
+      "sources": "3",
+      "imports": "2",
+      "assembly_files": "0",
+      "source": "16566",
+      "assembly": "0",
+      "names": "523",
+      "name_bytes": "9496",
+      "decls": "213",
+      "types": "36",
+      "fields": "21",
+      "params": "11",
+      "max_ast": "331",
+      "max_ir": "265",
+      "max_frame": "1456",
+      "max_bindings": "9",
+      "max_defers": "0",
+      "max_loops": "2",
+      "max_slots": "185",
+      "max_args": "3",
+      "max_params": "3",
+      "text": "16176",
+      "data": "4",
+      "objects": "9",
+      "symbols": "303",
+      "fixups": "564",
+      "relocations": "0",
+      "elf": "24580"
+    }
+  },
+  "empty_probe": {
+    "elf_sha256": "a03b2c010a7a716e3acaca41b79ec96cf19d4df2169336b7a8f48abb4e904bdc",
+    "segments": [
+      {
+        "flags": 5,
+        "address": 65536,
+        "file_bytes": 208,
+        "memory_bytes": 208,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "address": 69632,
+        "file_bytes": 1,
+        "memory_bytes": 1,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "address": 73728,
+        "file_bytes": 1,
+        "memory_bytes": 1,
+        "bss_bytes": 0,
+        "alignment": 4096
+      }
+    ],
+    "compiler_metrics": {
+      "sources": "2",
+      "imports": "0",
+      "assembly_files": "0",
+      "source": "7821",
+      "assembly": "0",
+      "names": "370",
+      "name_bytes": "7026",
+      "decls": "181",
+      "types": "5",
+      "fields": "0",
+      "params": "0",
+      "max_ast": "183",
+      "max_ir": "3",
+      "max_frame": "32",
+      "max_bindings": "0",
+      "max_defers": "0",
+      "max_loops": "0",
+      "max_slots": "1",
+      "max_args": "0",
+      "max_params": "0",
+      "text": "208",
+      "data": "0",
+      "objects": "0",
+      "symbols": "9",
+      "fixups": "6",
+      "relocations": "0",
+      "elf": "12289"
+    }
+  },
+  "max_test_function_frame": 59312,
+  "limits": [
+    "No fixed metadata capacity optimization; retains full ABI RAM table.",
+    "max_frame is per function, not complete kernel call-chain peak.",
+    "High-offset test uses stack backing and intentionally has a larger test-only frame."
+  ]
+}

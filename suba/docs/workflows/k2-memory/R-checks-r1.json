@@ -1,0 +1,276 @@
+{
+  "node": "R",
+  "revision": "r1",
+  "checks": {
+    "local_links": [
+      {
+        "file": "REQUIREMENTS.md",
+        "target": "design/SCOPE_REVISION.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "docs/K0.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "docs/workflows/k0/DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "REQUIREMENTS.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "design/DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "design/SCOPE_REVISION.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "design/ARCHITECTURE.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "design/CONTRACTS.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "design/IMPLEMENTATION.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "CODE_STYLE.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "design/STYLE_DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "../biomiya/docs/layout-migration.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "../biomiya/docs/reference/s-next-0.1.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "target": "docs/workflows/k0/DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "CODE_STYLE.md",
+        "target": "design/ARCHITECTURE.md",
+        "exists": true
+      },
+      {
+        "file": "CODE_STYLE.md",
+        "target": "design/CONTRACTS.md",
+        "exists": true
+      },
+      {
+        "file": "CODE_STYLE.md",
+        "target": "../biomiya/docs/reference/s-next-0.1.md",
+        "exists": true
+      },
+      {
+        "file": "CODE_STYLE.md",
+        "target": "docs/examples/style/ranges.vt",
+        "exists": true
+      },
+      {
+        "file": "CODE_STYLE.md",
+        "target": "docs/examples/style/bytes.vt",
+        "exists": true
+      },
+      {
+        "file": "CODE_STYLE.md",
+        "target": "docs/examples/style/README.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "../REQUIREMENTS.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "SCOPE_REVISION.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "research/platform.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "research/toolchain.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "CONTRACTS.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "IMPLEMENTATION.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "../docs/K0.md",
+        "exists": true
+      },
+      {
+        "file": "design/ARCHITECTURE.md",
+        "target": "research/toolchain-evidence.json",
+        "exists": true
+      },
+      {
+        "file": "design/CONTRACTS.md",
+        "target": "ARCHITECTURE.md",
+        "exists": true
+      },
+      {
+        "file": "design/CONTRACTS.md",
+        "target": "SCOPE_REVISION.md",
+        "exists": true
+      },
+      {
+        "file": "design/CONTRACTS.md",
+        "target": "../abi/contract.vt",
+        "exists": true
+      },
+      {
+        "file": "design/IMPLEMENTATION.md",
+        "target": "SCOPE_REVISION.md",
+        "exists": true
+      },
+      {
+        "file": "design/IMPLEMENTATION.md",
+        "target": "../docs/workflows/k2-memory/DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "design/IMPLEMENTATION.md",
+        "target": "ARCHITECTURE.md",
+        "exists": true
+      },
+      {
+        "file": "design/IMPLEMENTATION.md",
+        "target": "CONTRACTS.md",
+        "exists": true
+      },
+      {
+        "file": "design/IMPLEMENTATION.md",
+        "target": "DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "design/IMPLEMENTATION.md",
+        "target": "../../biomiya/docs/layout-migration.md",
+        "exists": true
+      },
+      {
+        "file": "design/SCOPE_REVISION.md",
+        "target": "../docs/workflows/k2-memory/DELIVERY.md",
+        "exists": true
+      },
+      {
+        "file": "design/SCOPE_REVISION.md",
+        "target": "../../biomiya/docs/layout-migration.md",
+        "exists": true
+      }
+    ],
+    "scope": "Documentation only; no production or ABI edits by R"
+  },
+  "historical_identities_superseded_for_current_text": [
+    {
+      "historical_record": "design/candidate-r3.json",
+      "field": "files",
+      "path": "README.md",
+      "old_sha256": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17",
+      "current_sha256": "6dcb7a18701406230ce2c093b1e076a9504f8c1d941debcf506f674dca144324"
+    },
+    {
+      "historical_record": "design/candidate-r3.json",
+      "field": "files",
+      "path": "REQUIREMENTS.md",
+      "old_sha256": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a",
+      "current_sha256": "9732f95a2596c36c00c933582ef68dec2862f7fea013e2b2d28b4db340ab3996"
+    },
+    {
+      "historical_record": "design/candidate-r3.json",
+      "field": "files",
+      "path": "design/ARCHITECTURE.md",
+      "old_sha256": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b",
+      "current_sha256": "91cfca773695971fe29dd48e67740b7db7ef00e96c0a18657d4604f7e9f9e5f9"
+    },
+    {
+      "historical_record": "design/candidate-r3.json",
+      "field": "files",
+      "path": "design/CONTRACTS.md",
+      "old_sha256": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f",
+      "current_sha256": "b3a9434165c237e8d7eff773bfab727eea42f9d9b8a9751347b7ce655bcb0506"
+    },
+    {
+      "historical_record": "design/candidate-r3.json",
+      "field": "files",
+      "path": "design/IMPLEMENTATION.md",
+      "old_sha256": "502c9afc65287399f2e18ccbf63d39cabee770c14b0a01851accbe998e527770",
+      "current_sha256": "a42c1b76b855a6d3e07a7e3bb62180fee3e1fd9f5a37e3cec1c97f4e87db222f"
+    },
+    {
+      "historical_record": "docs/workflows/k0/I-candidate-r2.json",
+      "field": "files",
+      "path": "README.md",
+      "old_sha256": "a3497b02504bdd98af51b033ea84b410b608c5c0feed963684aa58e528bfa4bc",
+      "current_sha256": "6dcb7a18701406230ce2c093b1e076a9504f8c1d941debcf506f674dca144324"
+    },
+    {
+      "historical_record": "docs/workflows/k0/I-candidate-r2.json",
+      "field": "inputs",
+      "path": "CODE_STYLE.md",
+      "old_sha256": "980c0a8e13a63e990dd7800bca9315aeac30d892622c8ea28e227e12c949c968",
+      "current_sha256": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99"
+    },
+    {
+      "historical_record": "docs/workflows/k0/I-candidate-r2.json",
+      "field": "inputs",
+      "path": "design/ARCHITECTURE.md",
+      "old_sha256": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b",
+      "current_sha256": "91cfca773695971fe29dd48e67740b7db7ef00e96c0a18657d4604f7e9f9e5f9"
+    },
+    {
+      "historical_record": "docs/workflows/k0/I-candidate-r2.json",
+      "field": "inputs",
+      "path": "design/CONTRACTS.md",
+      "old_sha256": "e29a3700763df7eae7c4d0036aa33a747365d4b39117cacc88404dd03d38f51f",
+      "current_sha256": "b3a9434165c237e8d7eff773bfab727eea42f9d9b8a9751347b7ce655bcb0506"
+    },
+    {
+      "historical_record": "docs/workflows/k0/I-candidate-r2.json",
+      "field": "inputs",
+      "path": "design/IMPLEMENTATION.md",
+      "old_sha256": "502c9afc65287399f2e18ccbf63d39cabee770c14b0a01851accbe998e527770",
+      "current_sha256": "a42c1b76b855a6d3e07a7e3bb62180fee3e1fd9f5a37e3cec1c97f4e87db222f"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut ARGS: [4096]u8 = zero;
+static mut GUARD: [64]usize = zero;
+pub fn run() -> u32 {
+    unsafe {
+        var selector: usize = 6;
+        while selector <= 11_usize {
+            if services::stats(selector).status != abi::OK { return 79; }
+            selector = selector + 1_usize;
+        }
+        let hole: syscall::Reply = files::unlink("aaa_hole");
+        if hole.status != abi::OK && hole.status != abi::NOT_FOUND { return 78; }
+        // unlink detaches immediately; wait for its independent bounded reclaim before
+        // taking the baseline for cancellation of a different process.
+        var settling: usize = 0;
+        while services::stats(11).value != 0_usize && settling < 10000_usize {
+            settling = settling + 1_usize;
+        }
+        if services::stats(11).value != 0_usize { return 77; }
+        var round: usize = 0;
+        while round < 100_usize {
+            let baseline: syscall::Reply = services::stats(0);
+            let blocks: usize = services::stats(6).value;
+            let nodes: usize = services::stats(7).value;
+            if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+                !argument_builder::append(core::slice_of_mut(ARGS), "cancel") { return 80; }
+            let child: syscall::Reply = services::spawn("/boot/1", core::slice_of(ARGS), 0, 0, 0);
+            if child.status != abi::OK { return 81; }
+            var i: usize = 0;
+            while i < 64_usize { GUARD[i] = i * 131_usize + 57_usize; i = i + 1_usize; }
+            var ready: bool = false;
+            var attempts: usize = 0;
+            while attempts < 10000_usize {
+                let stage: syscall::Reply = services::stats(100);
+                if stage.status != abi::OK { return 82; }
+                if stage.value == 1_usize { ready = true; break; }
+                i = 0;
+                while i < 64_usize { if GUARD[i] != i * 131_usize + 57_usize { return 83; } i = i + 1_usize; }
+                attempts = attempts + 1_usize;
+            }
+            if !ready || syscall::kill_child(child.value).status != abi::OK { return 84; }
+            // Remain runnable until the observed transaction leaves its target phase.
+            // DMA tests require a real U external trap before consuming completion;
+            // blocking the only remaining U process would instead test S idle polling.
+            attempts = 0;
+            while services::stats(100).value == 1_usize && attempts < 100000_usize {
+                i = 0;
+                while i < 64_usize {
+                    if GUARD[i] != i * 131_usize + 57_usize { return 194; }
+                    i = i + 1_usize;
+                }
+                attempts = attempts + 1_usize;
+            }
+            var watches: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED };1];
+            let now: syscall::Reply = services::stats(1);
+            let waited: syscall::Reply = services::wait(core::slice_of(watches), now.value + 50000000_usize, false);
+            if waited.status != abi::OK || waited.value != 1_usize { return 85; }
+            match services::collect(child.value) {
+                services::Collected::Failed(status) => { return 86; },
+                services::Collected::Ready(exit) => { if exit.status != abi::CANCELLED { return 87; } }
+            }
+            if services::stats(6).value != blocks { return 188; }
+            if services::stats(7).value != nodes { return 189; }
+            if services::stats(8).value != 0_usize { return 190; }
+            if services::stats(9).value != 0_usize { return 191; }
+            if services::stats(10).value != 0_usize { return 192; }
+            if services::stats(11).value != 0_usize { return 193; }
+            if services::stats(0).value != baseline.value { return 89; }
+            if files::open("partial", 1).status != abi::NOT_FOUND { return 90; }
+            round = round + 1_usize;
+        }
+        return 0;
+    }
+}

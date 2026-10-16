@@ -1,0 +1,46 @@
+{
+  "compiler": "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "inputs": {
+    "kernel/memory.vt": "4eea1313069c3ea6fff7893f4c44f7ec12302cb8ce8aac70bb21fe0cef5294ef",
+    "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "tests/memory/initialize.vt": "a310763e48c01247da2e2ddb84be3424a19c8548022eb664532e6658fa19f1ed",
+    "tests/memory/lifecycle.vt": "466ad35d89d1246a6b44ee4f14af7e20d20b862e9dfa1fcbb00ec94697f9e4c9",
+    "tests/memory/retirement.vt": "2eed1e605c49c7a79477d50c47b052d3bd460870849dfb3fb7040b741dc42e8c",
+    "tests/memory/support.vt": "048e2dbf5e4d6faa82392687664216cbefddde80898fe7b015e9f6d76dd45209",
+    "tools/check_memory.py": "95c59bd0aff4268788f60905713f5125bd23a64df1f504436ece91c39e319fab"
+  },
+  "scope": "same production allocator, Linux identity-addressed ordinary RAM; not full RAM discovery, user isolation or a kernel execution proof",
+  "cases": [
+    {
+      "name": "initialize",
+      "test_copy_mutation": null,
+      "abi_test_copy_mutation": null,
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 1,
+          "stdout": "",
+          "stderr": "E_TYPE file=4 byte=2051\n"
+        }
+      ],
+      "passed": false,
+      "inputs": {
+        "probe.vt": "a310763e48c01247da2e2ddb84be3424a19c8548022eb664532e6658fa19f1ed",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "048e2dbf5e4d6faa82392687664216cbefddde80898fe7b015e9f6d76dd45209",
+        "memory.vt": "4eea1313069c3ea6fff7893f4c44f7ec12302cb8ce8aac70bb21fe0cef5294ef"
+      }
+    }
+  ],
+  "passed": false
+}

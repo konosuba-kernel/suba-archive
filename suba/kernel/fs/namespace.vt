@@ -1,0 +1,82 @@
+// Same filesystem owner: path syntax is pure; each intermediate directory is real.
+module kernel::fs;
+
+pub fn resolve_begin(directory: usize) -> Resolver {
+    return make Resolver { node: directory, cursor: 0, scan: 0, phase: ResolvePhase::Next };
+}
+unsafe fn matches(node: *const codec::Node, name: []const u8) -> bool {
+    unsafe {
+        if (*node).length != name.len { return false; }
+        var i: usize = 0;
+        while i < name.len {
+            if (*node).name[i] != name[i] { return false; }
+            i = i + 1_usize;
+        }
+        return true;
+    }
+}
+// Caller checked path::valid, retains bytes, and owns an existing directory identity.
+// Explicit permissions are checked by the operation owner at traversal/commit boundaries.
+// One step visits at most64 node records, or one '.'/'..' component. It never waits.
+pub unsafe fn resolve_step(resolver: *Resolver, bytes: []const u8) -> Resolved {
+    unsafe {
+        if (*resolver).node >= abi::FS_NODE_COUNT { return Resolved::Failed(Error::Invalid); }
+        match (*resolver).phase {
+            ResolvePhase::Done => { return Resolved::Failed(Error::Invalid); },
+            ResolvePhase::Next => {
+                if (*resolver).cursor == 0_usize && bytes[0_usize] == 47_u8 { (*resolver).node = codec::ROOT; }
+                match path::next(bytes, (*resolver).cursor) {
+                    path::Component::Invalid => { return Resolved::Failed(Error::Invalid); },
+                    path::Component::End => {
+                        if bytes[bytes.len - 1_usize] == 47_u8 && NODES[(*resolver).node].kind != abi::NODE_DIRECTORY {
+                            return Resolved::Failed(Error::Invalid);
+                        }
+                        (*resolver).phase = ResolvePhase::Done;
+                        return Resolved::Found((*resolver).node);
+                    },
+                    path::Component::Current(next) => {
+                        if NODES[(*resolver).node].kind != abi::NODE_DIRECTORY { return Resolved::Failed(Error::Invalid); }
+                        (*resolver).cursor = next;
+                        return Resolved::More;
+                    },
+                    path::Component::Parent(next) => {
+                        if NODES[(*resolver).node].kind != abi::NODE_DIRECTORY { return Resolved::Failed(Error::Invalid); }
+                        (*resolver).node = NODES[(*resolver).node].parent as usize;
+                        (*resolver).cursor = next;
+                        return Resolved::More;
+                    },
+                    path::Component::Name(part) => {
+                        if NODES[(*resolver).node].kind != abi::NODE_DIRECTORY { return Resolved::Failed(Error::Invalid); }
+                        (*resolver).phase = ResolvePhase::Scan(part);
+                        (*resolver).scan = 0;
+                        return Resolved::More;
+                    }
+                }
+            },
+            ResolvePhase::Scan(part) => {
+                let name: []const u8 = core::slice_from_raw_parts(core::ptr_add(bytes.data, part.start), part.bytes);
+                let end: usize = (*resolver).scan + 64_usize;
+                while (*resolver).scan < end {
+                    let at: usize = (*resolver).scan;
+                    (*resolver).scan = at + 1_usize;
+                    if NODES[at].kind != abi::NODE_FREE && (NODES[at].flags & codec::DETACHED) == 0_u32 &&
+                        NODES[at].parent == (*resolver).node as u32 && matches(core::addr_of(NODES[at]), name) {
+                        (*resolver).node = at;
+                        (*resolver).cursor = part.next;
+                        (*resolver).phase = ResolvePhase::Next;
+                        return Resolved::More;
+                    }
+                }
+                if end < abi::FS_NODE_COUNT { return Resolved::More; }
+                (*resolver).phase = ResolvePhase::Done;
+                match path::next(bytes, part.next) {
+                    path::Component::End => { return Resolved::Missing(make Missing { parent: (*resolver).node, name: part }); },
+                    path::Component::Invalid => { return Resolved::Failed(Error::Invalid); },
+                    path::Component::Current(next) => {}, path::Component::Parent(next) => {},
+                    path::Component::Name(next) => {}
+                }
+                return Resolved::Failed(Error::NotFound);
+            }
+        }
+    }
+}

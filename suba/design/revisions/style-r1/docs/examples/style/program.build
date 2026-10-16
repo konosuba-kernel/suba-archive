@@ -1,0 +1,7 @@
+format 1
+profile linux-user
+entry style::main::run
+source ranges.vt
+source bytes.vt
+source main.vt
+output program.elf

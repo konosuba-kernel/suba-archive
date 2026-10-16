@@ -1,0 +1,185 @@
+// Native fixed-point controller. It uses only normal file/process/stream calls;
+// the test desktop framebuffer grant publishes progress to the host observer.
+module test::native;
+import suba::abi;
+import suba::syscalls;
+import suba::files;
+import libsuba::syscall;
+import libsuba::services;
+import libsuba::argument_builder;
+import libsuba::files as fs;
+import user::build::io;
+import runtime::bytes;
+static mut ARGS: [4096]u8 = zero;
+static mut BUFFER: [65536]u8 = zero;
+static mut OTHER: [65536]u8 = zero;
+static mut SOURCE: [65537]u8 = zero;
+static mut BASE: usize = 0;
+
+pub unsafe fn stage(value: usize) -> () {
+    unsafe { *core::ptr::<u32>(abi::DISPLAY_BASE + 4_usize) = value as u32; }
+    return ();
+}
+pub unsafe fn result(code: usize) -> u32 {
+    unsafe {
+        *core::ptr::<u32>(abi::DISPLAY_BASE) = 0xff0000_u32 | code as u32;
+        if code == 0_usize { *core::ptr::<u32>(abi::DISPLAY_BASE) = 0x00ff00; }
+        let empty: [1]services::Watch = zero;
+        loop { let slept: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(empty).data, 0), 0, false); }
+    }
+    return code as u32;
+}
+
+// One pipe for both descriptors cannot deadlock on an undrained second stream.
+// Every exit and complete diagnostic stream is persisted before returning.
+pub unsafe fn command(path: []const u8, mode: []const u8, manifest: []const u8, log: []const u8, expected: usize) -> bool {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), path) { return false; }
+        if manifest.len != 0_usize {
+            if mode.len != 0_usize && !argument_builder::append(core::slice_of_mut(ARGS), mode) { return false; }
+            if !argument_builder::append(core::slice_of_mut(ARGS), manifest) { return false; }
+        }
+        var pipe: services::StreamPair = zero;
+        match services::streams() {
+            services::Streams::Failed(error) => { return false; },
+            services::Streams::Ready(value) => { pipe = value; }
+        }
+        // Establish the log before a snapshot worker captures the workspace epoch.
+        let output: syscall::Reply = fs::open(log, files::WRITE | files::CREATE_NEW | files::TRANSIENT);
+        if output.status != abi::OK { return false; }
+        let child: syscall::Reply = services::spawn(path, core::slice_of(ARGS), pipe.write, pipe.write, 0);
+        let writer_closed: syscall::Reply = syscall::close(pipe.write);
+        if child.status != abi::OK || writer_closed.status != abi::OK { return false; }
+        var offset: usize = 0;
+        loop {
+            let got: syscall::Reply = services::read(pipe.read, core::slice_of_mut(BUFFER), false);
+            if got.status != abi::OK || got.value > 65536_usize { return false; }
+            if got.value == 0_usize { break; }
+            if io::write_all(output.value, offset, core::slice_from_raw_parts(core::slice_of(BUFFER).data, got.value)) != abi::OK { return false; }
+            offset = offset + got.value;
+        }
+        if syscall::close(pipe.read).status != abi::OK || fs::sync(output.value, true).status != abi::OK ||
+            syscall::close(output.value).status != abi::OK { return false; }
+        let watches: [1]services::Watch = [make services::Watch { handle: child.value, events: syscalls::EXITED }];
+        if services::wait(core::slice_of(watches), 0, false).status != abi::OK { return false; }
+        match services::collect(child.value) {
+            services::Collected::Failed(error) => { return false; },
+            services::Collected::Ready(exit) => {
+                *core::ptr::<u32>(abi::DISPLAY_BASE + 8_usize) = exit.status as u32;
+                *core::ptr::<u32>(abi::DISPLAY_BASE + 12_usize) = exit.cause as u32;
+                *core::ptr::<u32>(abi::DISPLAY_BASE + 16_usize) = exit.pc as u32;
+                return exit.status == expected && exit.cause == 0_usize;
+            }
+        }
+    }
+}
+
+pub unsafe fn run(path: []const u8, manifest: []const u8, log: []const u8, expected: usize) -> bool {
+    unsafe { return command(path, "build", manifest, log, expected); }
+}
+
+// Compare every byte, including headers/padding; no section-normalized equality.
+pub unsafe fn equal(left: []const u8, right: []const u8) -> bool {
+    unsafe {
+        let a: syscall::Reply = fs::open(left, files::READ);
+        let b: syscall::Reply = fs::open(right, files::READ);
+        if a.status != abi::OK || b.status != abi::OK { return false; }
+        var offset: usize = 0;
+        var same: bool = true;
+        loop {
+            let x: syscall::Reply = fs::read_at(a.value, offset, core::slice_of_mut(BUFFER));
+            let y: syscall::Reply = fs::read_at(b.value, offset, core::slice_of_mut(OTHER));
+            if x.status != abi::OK || y.status != abi::OK || x.value != y.value || x.value > 65536_usize { same = false; break; }
+            if x.value == 0_usize { break; }
+            if !bytes::equal(core::slice_from_raw_parts(core::slice_of(BUFFER).data, x.value),
+                core::slice_from_raw_parts(core::slice_of(OTHER).data, y.value)) { same = false; break; }
+            offset = offset + x.value;
+        }
+        let ca: syscall::Reply = syscall::close(a.value);
+        let cb: syscall::Reply = syscall::close(b.value);
+        return same && ca.status == abi::OK && cb.status == abi::OK && offset != 0_usize;
+    }
+}
+
+// Change a compiler behavior in the guest, not a prebuilt mutant or host edit.
+unsafe fn perturb() -> bool {
+    unsafe {
+        var count: usize = 0;
+        match io::read("biomiya/compiler/main.vt", core::slice_of_mut(SOURCE)) {
+            io::Read::Failed(error) => { return false; },
+            io::Read::Ready(value) => { count = value; }
+        }
+        let anchor: []const u8 = "return 2;";
+        var i: usize = 0;
+        var changed: bool = false;
+        while i + anchor.len <= count {
+            if bytes::equal(core::slice_from_raw_parts(core::ptr_add(core::slice_of(SOURCE).data, i), anchor.len), anchor) {
+                SOURCE[i + 7_usize] = 55; // first usage failure becomes exit 7
+                changed = true;
+                break;
+            }
+            i = i + 1_usize;
+        }
+        if !changed { return false; }
+        if io::save_new("biomiya/compiler/main.tmp", core::slice_from_raw_parts(core::slice_of(SOURCE).data, count), false) != abi::OK { return false; }
+        return fs::replace("biomiya/compiler/main.tmp", "biomiya/compiler/main.vt").status == abi::OK;
+    }
+}
+unsafe fn reclaimed() -> bool {
+    unsafe {
+        let pages: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+        let streams: syscall::Reply = services::stats(syscalls::STATS_STREAMS);
+        let opened: syscall::Reply = services::stats(files::STATS_FS_FILES);
+        let requests: syscall::Reply = services::stats(files::STATS_FS_REQUESTS);
+        return pages.status == abi::OK && pages.value == BASE &&
+            streams.status == abi::OK && streams.value == 0_usize &&
+            opened.status == abi::OK && opened.value == 0_usize &&
+            requests.status == abi::OK && requests.value == 0_usize;
+    }
+}
+pub fn main() -> u32 {
+    unsafe {
+        let baseline: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+        if baseline.status != abi::OK { return result(13); }
+        BASE = baseline.value;
+        stage(1);
+        if !run("/sys/compiler.elf", "c1.build", "c1.log", 0) { return result(1); }
+        if !reclaimed() { return result(2); }
+        stage(2);
+        if !run("c1.elf", "c2.build", "c2.log", 0) { return result(3); }
+        if !reclaimed() { return result(4); }
+        stage(3);
+        if !run("c2.elf", "c3.build", "c3.log", 0) { return result(5); }
+        if !reclaimed() { return result(6); }
+        stage(4);
+        if !equal("c1.elf", "c2.elf") || !equal("c2.elf", "c3.elf") { return result(7); }
+        if !run("c3.elf", "hello.build", "hello.log", 0) || !run("hello.elf", "", "run.log", 41) { return result(8); }
+        stage(5);
+        if !run("c3.elf", "", "before.log", 2) || !perturb() { return result(9); }
+        if !run("c3.elf", "mutant.build", "mutant.log", 0) { return result(10); }
+        stage(6);
+        if !run("mutant.elf", "", "after.log", 7) || equal("c3.elf", "mutant.elf") { return result(11); }
+        if !reclaimed() || fs::sync_all().status != abi::OK { return result(12); }
+        stage(7);
+        return result(0);
+    }
+}
+
+// Focused preflight using an already guest-built C3. This does not replace the
+// complete main() fixed-point run and is reported only as mutation exploration.
+pub fn mutation() -> u32 {
+    unsafe {
+        let baseline: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+        if baseline.status != abi::OK { return result(13); }
+        BASE = baseline.value;
+        stage(5);
+        if !run("c3.elf", "", "before.log", 2) || !perturb() { return result(9); }
+        if !run("c3.elf", "mutant.build", "mutant.log", 0) { return result(10); }
+        stage(6);
+        if !run("mutant.elf", "", "after.log", 7) || equal("c3.elf", "mutant.elf") { return result(11); }
+        if !reclaimed() || fs::sync_all().status != abi::OK { return result(12); }
+        stage(7);
+        return result(0);
+    }
+}

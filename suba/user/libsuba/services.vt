@@ -1,0 +1,119 @@
+// libsuba: explicit scalar syscall wrappers. No Linux compatibility layer.
+module libsuba::services;
+import suba::abi;
+import suba::syscalls;
+import suba::argument_wire;
+import libsuba::syscall;
+pub struct StreamPair { pub read: usize, pub write: usize }
+pub enum Streams { Ready(StreamPair), Failed(usize) }
+pub struct Watch { pub handle: usize, pub events: usize }
+pub struct Exit { pub status: usize, pub cause: usize, pub value: usize, pub pc: usize }
+pub enum Collected { Ready(Exit), Failed(usize) }
+
+pub fn allocate_pages(pages: usize) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_ALLOC_PAGES, pages, 0, 0, 0, 0, 0);
+}
+
+pub fn free_pages(address: usize, pages: usize) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_FREE_PAGES, address, pages, 0, 0, 0, 0);
+}
+
+pub fn streams() -> Streams {
+    var bytes: [16]u8 = zero;
+    let result: syscall::Reply = syscall::invoke(abi::SYS_STREAM_CREATE,
+        core::addr(core::slice_of_mut(bytes).data), 16, 0, 0, 0, 0);
+    if result.status != abi::OK { return Streams::Failed(result.status); }
+    // SAFETY: successful kernel copyout wrote the fixed pair record into this local array.
+    unsafe {
+        return Streams::Ready(make StreamPair {
+            read: argument_wire::word(core::slice_of(bytes), 0, 8),
+            write: argument_wire::word(core::slice_of(bytes), 8, 8) });
+    }
+}
+
+// Caller retains exclusive writable storage until the synchronous syscall returns.
+pub unsafe fn read(stream: usize, bytes: []u8, nonblock: bool) -> syscall::Reply {
+    var flags: usize = 0;
+    if nonblock { flags = syscalls::NONBLOCK; }
+    return syscall::invoke(abi::SYS_STREAM_READ, stream, core::addr(bytes.data), bytes.len, flags, 0, 0);
+}
+
+// Caller retains immutable readable input until return; success may transfer fewer bytes.
+pub unsafe fn write(stream: usize, bytes: []const u8, nonblock: bool) -> syscall::Reply {
+    var flags: usize = 0;
+    if nonblock { flags = syscalls::NONBLOCK; }
+    return syscall::invoke(abi::SYS_STREAM_WRITE, stream, core::addr(bytes.data), bytes.len, flags, 0, 0);
+}
+
+// Inputs are borrowed for the syscall. Only stdout/stderr are inherited.
+// job=0 inherits a restricted parent's Job domain; an ordinary parent stays ordinary.
+pub unsafe fn spawn(path: []const u8, arguments: []const u8,
+    stdout: usize, stderr: usize, job: usize) -> syscall::Reply {
+    var record: [syscalls::SPAWN_BYTES]u8 = zero;
+    // SAFETY: fixed stack record is exclusively writable; all fields are in its declared ABI extent.
+    unsafe {
+        let bytes: []u8 = core::slice_of_mut(record);
+        argument_wire::put(bytes, syscalls::SPAWN_VERSION, abi::VERSION as usize, 4);
+        argument_wire::put(bytes, syscalls::SPAWN_LENGTH, syscalls::SPAWN_BYTES, 4);
+        argument_wire::put(bytes, syscalls::SPAWN_PATH, core::addr(path.data), 8);
+        argument_wire::put(bytes, syscalls::SPAWN_PATH_BYTES, path.len, 8);
+        argument_wire::put(bytes, syscalls::SPAWN_ARGUMENTS, core::addr(arguments.data), 8);
+        argument_wire::put(bytes, syscalls::SPAWN_ARGUMENT_BYTES, arguments.len, 8);
+        argument_wire::put(bytes, syscalls::SPAWN_STDOUT, stdout, 8);
+        argument_wire::put(bytes, syscalls::SPAWN_STDERR, stderr, 8);
+        argument_wire::put(bytes, syscalls::SPAWN_JOB, job, 8);
+        return syscall::invoke(abi::SYS_SPAWN, core::addr(bytes.data), bytes.len, 0, 0, 0, 0);
+    }
+}
+
+// Watch array remains live and immutable until copied; kernel wait does not borrow this stack.
+// Result value is a ready-bitset; OK/0 means deadline expired. deadline=0 has no timeout.
+pub unsafe fn wait(watches: []const Watch, deadline: usize, nonblock: bool) -> syscall::Reply {
+    if watches.len > syscalls::WAIT_LIMIT {
+        return make syscall::Reply { status: abi::LIMIT, value: 0 };
+    }
+    var record: [syscalls::WAIT_LIMIT * syscalls::WATCH_BYTES]u8 = zero;
+    var operation: usize = abi::SYS_EVENT_WAIT;
+    if nonblock { operation = abi::SYS_EVENT_TRY_READ; }
+    // SAFETY: bounded input and private record; each watch serialized, never a structure-layout cast.
+    unsafe {
+        let bytes: []u8 = core::slice_of_mut(record);
+        var i: usize = 0;
+        while i < watches.len {
+            argument_wire::put(bytes, i * syscalls::WATCH_BYTES, watches[i].handle, 8);
+            argument_wire::put(bytes, i * syscalls::WATCH_BYTES + 8_usize, watches[i].events, 8);
+            i = i + 1_usize;
+        }
+        return syscall::invoke(operation, core::addr(bytes.data), watches.len, deadline, 0, 0, 0);
+    }
+}
+
+pub fn collect(child: usize) -> Collected {
+    var record: [syscalls::EXIT_BYTES]u8 = zero;
+    let result: syscall::Reply = syscall::invoke(abi::SYS_COLLECT_EXIT, child,
+        core::addr(core::slice_of_mut(record).data), syscalls::EXIT_BYTES, 0, 0, 0);
+    if result.status != abi::OK { return Collected::Failed(result.status); }
+    // SAFETY: fixed-size successful copyout into the live local record.
+    unsafe {
+        let bytes: []const u8 = core::slice_of(record);
+        if argument_wire::word(bytes, syscalls::EXIT_VERSION, 4) != abi::VERSION as usize ||
+            argument_wire::word(bytes, syscalls::EXIT_LENGTH, 4) != syscalls::EXIT_BYTES {
+            return Collected::Failed(abi::INVALID);
+        }
+        return Collected::Ready(make Exit {
+            status: argument_wire::word(bytes, syscalls::EXIT_STATUS, 8),
+            cause: argument_wire::word(bytes, syscalls::EXIT_CAUSE, 8),
+            value: argument_wire::word(bytes, syscalls::EXIT_VALUE, 8),
+            pc: argument_wire::word(bytes, syscalls::EXIT_PC, 8) });
+    }
+}
+
+// Process-only K3 Job. Filesystem snapshot Jobs use libsuba::job_api instead.
+pub fn job_create() -> syscall::Reply { return syscall::invoke(abi::SYS_JOB_CREATE, 0, 0, 0, 0, 0, 0); }
+pub fn job_end(job: usize) -> syscall::Reply { return syscall::invoke(abi::SYS_JOB_END, job, 0, 0, 0, 0, 0); }
+// A process-only Job cannot freeze files and returns Unsupported. Versioned FS
+// freeze must use job_api::freeze with the boot identity and captured epoch.
+pub fn freeze_inputs(job: usize, expected_epoch: usize) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_JOB_FREEZE, job, expected_epoch, 0, 0, 0, 0);
+}
+pub fn stats(selector: usize) -> syscall::Reply { return syscall::invoke(abi::SYS_STATS, selector, 0, 0, 0, 0, 0); }

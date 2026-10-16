@@ -1,0 +1,248 @@
+// Fixed RAM launch -> protected address spaces -> full user trap scheduling.
+module kernel::entry;
+import suba::abi;
+import kernel::machine;
+import platform::boot_info;
+import kernel::ram;
+import kernel::boot_images;
+import kernel::space;
+import suba::image as elf;
+import kernel::loader;
+import kernel::process;
+import kernel::memory;
+import kernel::dispatch;
+import kernel::device::hub;
+import kernel::device::block;
+import kernel::device::display;
+import kernel::fs;
+static mut INFO: boot_info::Description = zero;
+static mut IMAGES: boot_images::Description = zero;
+fn prepare_memory(address: usize) -> u32 {
+    // SAFETY: fixed-profile boot guarantees the BootInfo window; decoder validates contents.
+    unsafe {
+        match boot_info::read(address) {
+            boot_info::ReadResult::Invalid => { return 1; },
+            boot_info::ReadResult::Ready(info) => {
+                INFO = info;
+                match ram::initialize(info) {
+                    ram::InitResult::Ready => { return 0; },
+                    ram::InitResult::Invalid => { return 4; },
+                    ram::InitResult::Unsupported => { return 5; },
+                    ram::InitResult::Limit => { return 6; },
+                    ram::InitResult::NoMemory => { return 7; },
+                    ram::InitResult::AlreadyInitialized => { return 4; }
+                }
+            }
+        }
+    }
+}
+
+// SAFETY: serialized bare boot owns INFO/IMAGES; source views remain reserved forever.
+unsafe fn translation() -> bool {
+    var segments: [8]space::KernelSegment = zero;
+    var sources: [9]space::KernelSegment = zero;
+    unsafe {
+        match boot_images::read(core::addr_of(INFO)) {
+            boot_images::Read::Invalid => { return false; },
+            boot_images::Read::Ready(images) => { IMAGES = images; }
+        }
+        let kernel: []const u8 = boot_images::bytes(IMAGES.kernel);
+        match elf::inspect(kernel, kernel.len, true) {
+            elf::Inspect::Invalid => { return false; },
+            elf::Inspect::Ready(plan) => {
+                var i: usize = 0;
+                var end: usize = 0;
+                while i < plan.count {
+                    let segment: elf::Segment = plan.segments[i];
+                    segments[i] = make space::KernelSegment { base: segment.address,
+                        bytes: (segment.memory_bytes + 4095_usize) / 4096_usize * 4096_usize,
+                        permissions: segment.permissions };
+                    end = segment.address + segment.memory_bytes;
+                    i = i + 1_usize;
+                }
+                if end != INFO.kernel_end { return false; }
+                sources[0_usize] = make space::KernelSegment { base: IMAGES.kernel.address,
+                    bytes: (IMAGES.kernel.bytes + 4095_usize) / 4096_usize * 4096_usize,
+                    permissions: space::READ };
+                i = 0;
+                while i < IMAGES.count {
+                    sources[i + 1_usize] = make space::KernelSegment { base: IMAGES.images[i].address,
+                        bytes: (IMAGES.images[i].bytes + 4095_usize) / 4096_usize * 4096_usize,
+                        permissions: space::READ };
+                    i = i + 1_usize;
+                }
+                return space::initialize(core::slice_from_raw_parts(core::slice_of(segments).data, plan.count),
+                    core::slice_from_raw_parts(core::slice_of(sources).data, IMAGES.count + 1_usize));
+            }
+        }
+    }
+}
+
+pub fn start(info: usize) -> u32 {
+    machine::initialize();
+    if (machine::status() & 2_usize) != 0_usize { return panic(2); }
+    let result: u32 = prepare_memory(info);
+    if result != 0_u32 { return panic(result); }
+    unsafe {
+        machine::text("suba kernel K0: handoff accepted\n");
+        if !translation() { return panic(8); }
+        machine::activate(space::kernel_token());
+        machine::text("suba K2: Sv39 active\n");
+        if !hub::initialize() { storage_failure("initialize"); return panic(70); }
+        if !mount_storage() { return panic(70); }
+        machine::text("suba K4: mounted boot="); dispatch::number(fs::boot_id()); machine::text("\n");
+        dispatch::sources(IMAGES);
+        if !display::initialize() || !dispatch::boot(0) { return panic(21); }
+        let frame: usize = schedule();
+        machine::resume(frame);
+    }
+    return panic(9);
+}
+
+unsafe fn schedule() -> usize {
+    unsafe {
+        loop {
+            // Each slice services IRQs and advances both storage and requests.
+            // One busy user must not add a full quantum between every copy piece.
+            // The time check bounds continuation, not the duration of the last slice.
+            let started: usize = machine::time();
+            var slices: usize = 0;
+            var storage_work: bool = false;
+            while slices < 32_usize {
+                if !hub::service() { storage_failure("runtime.hub"); let stopped: u32 = panic(71); return 0; }
+                storage_work = false;
+                match fs::step() {
+                    fs::Progress::Invalid => { storage_failure("runtime.fs"); let stopped: u32 = panic(73); return 0; },
+                    fs::Progress::More => { storage_work = true; },
+                    fs::Progress::Wait => {}, fs::Progress::Ready => {}
+                }
+                if !dispatch::step() { let stopped: u32 = panic(22); return 0; }
+                slices = slices + 1_usize;
+                if machine::time() - started >= 10000_usize { break; }
+                if !dispatch::has_work() && !storage_work { break; }
+            }
+            match process::select() {
+                process::Selection::User(selected) => {
+                    var quantum_ticks: usize = 100000;
+                    if dispatch::has_work() || storage_work { quantum_ticks = 10000; }
+                    if !machine::timer(machine::time() + quantum_ticks) { let stopped: u32 = panic(13); return 0; }
+                    machine::activate(selected.token);
+                    return selected.frame;
+                },
+                process::Selection::Idle => {
+                    // A blocked system is not finished. Pending construction/reap work
+                    // advances in slices; otherwise wake every millisecond for deadlines.
+                    if !dispatch::has_work() && !storage_work {
+                        if !machine::timer(machine::time() + 10000_usize) { let stopped: u32 = panic(13); return 0; }
+                        machine::idle();
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn handle_trap(frame: usize) -> usize {
+    unsafe {
+        machine::activate(space::kernel_token());
+        match process::capture(frame) {
+            process::Event::Invalid => { let stopped: u32 = panic(10); return 0; },
+            process::Event::Timer(id) => {},
+            process::Event::External(id) => { hub::user_trap(); },
+            process::Event::Fault(signal) => { machine::text("suba K3: user fault isolated\n"); },
+            process::Event::Call(signal) => {
+                if !dispatch::call(signal) { let stopped: u32 = panic(23); return 0; }
+            }
+        }
+        return schedule();
+    }
+}
+
+fn reason_text(reason: u32) -> () {
+    var digits: [10]u8 = [0;10];
+    var value: u32 = reason;
+    var at: usize = 10;
+    loop {
+        at = at - 1_usize;
+        // SAFETY: u32 decimal needs at most ten digits; at remains in 0..10.
+        unsafe { digits[at] = ((value % 10_u32) as u8) + 48_u8; }
+        value = value / 10_u32;
+        if value == 0_u32 { break; }
+    }
+    // SAFETY: local digit storage remains readable until synchronous output ends.
+    unsafe {
+        machine::text(core::slice_from_raw_parts(core::ptr_add(core::slice_of(digits).data, at), 10_usize - at));
+    }
+    return ();
+}
+
+pub fn panic(reason: u32) -> u32 {
+    unsafe { machine::text("suba kernel panic reason="); }
+    reason_text(reason);
+    unsafe { machine::text("\n"); }
+    machine::halt();
+    return reason;
+}
+
+// Explicit boot phase, before user publication. Waiting never occurs inside a driver.
+unsafe fn mount_storage() -> bool {
+    unsafe {
+        loop {
+            if !hub::service() { storage_failure("mount.hub"); return false; }
+            match fs::mount_step() {
+                fs::Progress::Invalid => { storage_failure("mount.fs"); return false; },
+                fs::Progress::Ready => { return true; },
+                fs::Progress::More => {},
+                fs::Progress::Wait => {
+                    if !machine::timer(machine::time() + 10000_usize) { storage_failure("mount.timer"); return false; }
+                    machine::idle();
+                }
+            }
+        }
+    }
+}
+
+// Fatal-path observation only: no used-ring consumption, PLIC claim or device reset.
+unsafe fn storage_failure(path: []const u8) -> () {
+    unsafe {
+        let mount: fs::MountDiagnostic = fs::mount_diagnostic();
+        let irq: hub::Diagnostic = hub::diagnostic();
+        machine::text("storage failure path="); machine::text(path);
+        machine::text(" phase="); dispatch::number(mount.phase);
+        machine::text(" check="); dispatch::number(mount.kind);
+        machine::text(" index="); dispatch::number(mount.index);
+        machine::text(" source="); dispatch::number(irq.source as usize);
+        machine::text(" pending="); dispatch::number(irq.pending as usize);
+        machine::text(" enabled="); dispatch::number(irq.enabled as usize);
+        machine::text("\n");
+        block_failure(block::diagnostic());
+    }
+    return ();
+}
+unsafe fn block_failure(fault: block::Diagnostic) -> () {
+    unsafe {
+        machine::text("block failure reason="); dispatch::number(fault.code);
+        machine::text(" state=");
+        match fault.state {
+            block::State::Offline => { machine::text("offline"); },
+            block::State::Idle => { machine::text("idle"); },
+            block::State::Submitted => { machine::text("submitted"); },
+            block::State::Completed => { machine::text("completed"); },
+            block::State::Failed => { machine::text("failed"); }
+        }
+        machine::text(" command="); dispatch::number(fault.command);
+        machine::text(" block="); dispatch::number(fault.block);
+        machine::text(" began="); dispatch::number(fault.began);
+        machine::text(" observed="); dispatch::number(fault.observed);
+        machine::text(" irq="); dispatch::number(fault.irq as usize);
+        machine::text(" notified="); dispatch::number(fault.notified as usize);
+        machine::text(" produced="); dispatch::number(fault.queue.produced);
+        machine::text(" consumed="); dispatch::number(fault.queue.consumed);
+        machine::text(" used="); dispatch::number(fault.queue.used);
+        machine::text(" head="); dispatch::number(fault.queue.head);
+        machine::text(" bytes="); dispatch::number(fault.queue.bytes);
+        machine::text(" status="); dispatch::number(fault.status as usize);
+        machine::text("\n");
+    }
+    return ();
+}

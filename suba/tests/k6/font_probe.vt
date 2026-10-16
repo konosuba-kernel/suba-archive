@@ -1,0 +1,42 @@
+module test::font_probe;
+import user::text::font;
+import test::transport;
+static mut INPUT: [font::FILE_BYTES + 4097_usize]u8 = zero;
+pub fn run() -> u32 {
+    // SAFETY: transport owns INPUT and validates complete font before any glyph access.
+    unsafe {
+        let count: usize = transport::read(core::slice_of_mut(INPUT));
+        if count < font::FILE_BYTES || count > font::FILE_BYTES + 4096_usize ||
+            (count - font::FILE_BYTES) % 4_usize != 0_usize { return 80; }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, font::FILE_BYTES);
+        match font::open(data) {
+            font::Open::Invalid => { return 1; },
+            font::Open::Ready(loaded) => {
+                var offset: usize = font::FILE_BYTES;
+                while offset < count {
+                    let scalar: u32 = transport::get(core::slice_of(INPUT), offset) as u32;
+                    let glyph: font::Glyph = font::glyph(loaded, scalar);
+                    if !transport::word(glyph.width) { return 81; }
+                    var missing: usize = 0;
+                    if glyph.missing { missing = 1; }
+                    if !transport::word(missing) { return 81; }
+                    var row: usize = 0;
+                    while row < 16_usize {
+                        var bits: usize = 0;
+                        var x: usize = 0;
+                        while x < 16_usize {
+                            bits = bits << 1_usize;
+                            if font::pixel(glyph, x, row) { bits = bits | 1_usize; }
+                            x = x + 1_usize;
+                        }
+                        if !transport::word(bits) { return 81; }
+                        row = row + 1_usize;
+                    }
+                    if font::pixel(glyph, 16, 0) || font::pixel(glyph, 0, 16) { return 82; }
+                    offset = offset + 4_usize;
+                }
+                return 0;
+            },
+        }
+    }
+}

@@ -1,0 +1,74 @@
+{
+  "node": "K6",
+  "revision": "r1",
+  "author": "/root/ram_fdt",
+  "independent_reviewer": "/root",
+  "status": "frozen-for-independent-acceptance",
+  "compiler": {
+    "path": "../biomiya/build/layout-p4-r1/e3.elf",
+    "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+  },
+  "files": {
+    "assets/unifont/COPYING": "cd2785c2b8e0a01d203560265b2d2d47cdb1401d2707d25918ac5531bcdba947",
+    "assets/unifont/COPYRIGHT": "2cda4009364feab3375529c0e219f3059f04b55d2c5fe4559f3ec4a20a142398",
+    "assets/unifont/OFL-1.1.txt": "869692af094c57fb7258c57fe26820c759319603321d0ffeb278de3651763ded",
+    "assets/unifont/README.md": "067f1f9ff2414207cf92e8a3d91847404203cbbb17f485396c25e1017c735c68",
+    "assets/unifont/UPSTREAM-README": "0c35716b811d92631b60c92c1ab6a650e5da486f82896c1e87aaef931eb9336a",
+    "assets/unifont/coverage.json": "94872359f928e3ae0fba06ec45a14aa6c6847bd3de7948111049bb26f4547b98",
+    "assets/unifont/provenance.json": "7cbab88e535f39cef4e0899ecb88dea1bef820c341d2ec1e726e1449cfb2365b",
+    "assets/unifont/suba-bmp.fnt": "137bb0651c22e30f6eb29aad6f74c6173ee5079a4c739bb78517cb16b9ccc8fd",
+    "assets/unifont/unifont-17.0.04.hex": "6d3a14fc497f290cc0d43daa87181b5b932d3db23747cf1335a7759e76ef9882",
+    "assets/unifont/unifont-17.0.04.hex.gz": "e808096f98ff04294f0d49452cad51964e2930b7be046ac8e1efadc46b2bab0f",
+    "docs/workflows/through-k7/K6-cost-r1.json": "7da802a3d675412feb6ad635760b528a629c5c38d50fa75c4b3a871cb3be37ab",
+    "docs/workflows/through-k7/K6-report-r1.md": "282fe69a31a958620b3dc34bafcad109182880a85a1d986d7a104c09520b2781",
+    "docs/workflows/through-k7/K6-results-r1.json": "d73c525ee91f81bd5941f48303003ffbe444dfb57552a8d207af60f19d9386ed",
+    "tests/k6/README.md": "ed00ea3f3499d43f04364b9c713a08cf67207cf337c324c339b28ddfed7a7697",
+    "tests/k6/cost.py": "67418599c8844e16bb2e11e9d1b94917cf445ac775441ee57a48dfcd36bf23d0",
+    "tests/k6/editor_probe.vt": "de239b114d9cc2959c32fd572aa5dc90c28583cadd0ecf2c2d4f23d791469100",
+    "tests/k6/font_probe.vt": "88f67732af44ea624ed415922b53c98a6dea68220dddf442fbbf9b4ea9b87869",
+    "tests/k6/model.py": "372a5313f8d1a0d3c8af1de7bee365891648c12a8be4c3f85ecaa761fd5f5590",
+    "tests/k6/resources.vt": "fd735180dde82ba156a11dfc3506444d760684f929ff30bc882ad6021f1293b1",
+    "tests/k6/transport.vt": "8721aeb7a76a158f10ff541e3e205b664d117a2ae81682444adda2369e834bf9",
+    "tests/k6/utf8_probe.vt": "bb44479b3cc4bbbd41543a0809edf57320ebf8352649f65b94661cf02441963b",
+    "tools/check_k6.py": "0a837e7f160e4d5c4b51d0a5f884718eeb49bbf04d16373bce6c3af396f52100",
+    "tools/fontpack/linux.build": "e16ba747fabd23931d2a493d8234baf38e7a001fb338482845c7aa0e831ee737",
+    "tools/fontpack/linux.s0": "1732ac6480b0ea31ae4c46a4d6b9cbf079b4dbe26dfa07a3439c484ec981507f",
+    "tools/fontpack/linux.vt": "a09fee4ed70655e472f8b3982090006132f12a401d6b6793c35f61df190ccbaa",
+    "tools/fontpack/pack.vt": "b6ab189fd7ecf72a84c8c78851b393b330e10096c3f1f47f71ff3cb3190db285",
+    "user/edit/README.md": "a528e4d55f2a2ea5c8bfd2328c6f766ce767eb83f9fae52b9a9554bc1b475bc4",
+    "user/edit/buffer.vt": "762dfe2f60f6e9e9ca751f6e85d0e036deaac643d71944d0f5a4e5304d38359f",
+    "user/edit/motion.vt": "2594b9e8db05293bae0c8ecb17fd765eb6635ae8fd1cd30ca372a81fa00d4079",
+    "user/text/README.md": "655d9588ed097b913ccb39d7fce1643c58c80206cac0abe4f9f8e46d9bbaf245",
+    "user/text/font.vt": "ec26a42384408cff4ab17e7bbcc88969bbd6b73606d503348b828138d3f08796",
+    "user/text/utf8.vt": "1300d030cf93527fabd19d190530600bb899f8288f0a45b09ef555ccf40990fd"
+  },
+  "test_record": {
+    "path": "build/k6-r4/verification.json",
+    "sha256": "76ab8605a882473b7e0719527600f8ec11200c5715d505f28f6480c232708114"
+  },
+  "manifest_sources": {
+    "editor": [
+      "user/text/utf8.vt",
+      "user/edit/buffer.vt",
+      "user/edit/motion.vt"
+    ],
+    "font": [
+      "user/text/font.vt"
+    ],
+    "fontpack": [
+      "user/text/font.vt",
+      "tools/fontpack/pack.vt",
+      "tools/fontpack/linux.vt"
+    ],
+    "fontpack_assembly": [
+      "tools/fontpack/linux.s0"
+    ]
+  },
+  "acceptance_required": [
+    "Strict 1-4 byte UTF-8 and lossless snapshot including supplementary scalars",
+    "4MiB bound, failure atomicity, gap navigation/selection and ownership/rehome lifetime",
+    "Real licensed full BMP font source, fixed coverage/missing behavior, deterministic native converter",
+    "Independent actual target execution and semantic negative controls; UI/FS acceptance remains at K7"
+  ],
+  "baseline_suba_commit": "7712dd3"
+}

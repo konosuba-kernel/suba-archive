@@ -1,0 +1,78 @@
+// Independent byte oracle for draw's word-copy paths, padding and clipping.
+module test::draw_boundaries;
+import user::draw;
+static mut SOURCE: [4096]u8 = zero;
+static mut TARGET: [4096]u8 = zero;
+
+unsafe fn initialize() -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < 4096_usize {
+            SOURCE[i] = ((i * 31_usize + 7_usize) % 251_usize) as u8;
+            TARGET[i] = 0xa5;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub fn main() -> u32 {
+    unsafe {
+        var from: usize = 0;
+        while from < 8_usize {
+            var into: usize = 0;
+            while into < 8_usize {
+                initialize();
+                let canvas: draw::Canvas = make draw::Canvas {
+                    address: core::addr(core::slice_of_mut(TARGET).data) + 16_usize + into,
+                    width: 23, height: 9, stride: 100 };
+                let rect: draw::Rect = make draw::Rect { x: 1, y: 2, width: 17, height: 5 };
+                let source: []const u8 = core::slice_from_raw_parts(
+                    core::ptr_add(core::slice_of(SOURCE).data, from), 340);
+                if !draw::blit(canvas, rect, source) { return 1; }
+                var i: usize = 0;
+                while i < 4096_usize {
+                    var expected: u8 = 0xa5;
+                    if i >= 16_usize + into {
+                        let relative: usize = i - 16_usize - into;
+                        let row: usize = relative / 100_usize;
+                        let col: usize = relative % 100_usize;
+                        if row >= 2_usize && row < 7_usize && col >= 4_usize && col < 72_usize {
+                            expected = SOURCE[from + (row - 2_usize) * 68_usize + col - 4_usize];
+                        }
+                    }
+                    if TARGET[i] != expected { return 2; }
+                    if SOURCE[i] != ((i * 31_usize + 7_usize) % 251_usize) as u8 { return 3; }
+                    i = i + 1_usize;
+                }
+                into = into + 1_usize;
+            }
+            from = from + 1_usize;
+        }
+        var width: usize = 0;
+        while width < 20_usize {
+            initialize();
+            let canvas: draw::Canvas = make draw::Canvas {
+                address: core::addr(core::slice_of_mut(TARGET).data) + 20_usize,
+                width: 20, height: 8, stride: 84 };
+            draw::fill(canvas, make draw::Rect { x: 3, y: 2, width: width, height: 100 }, 0x12345678);
+            var i: usize = 0;
+            while i < 4096_usize {
+                var expected: u8 = 0xa5;
+                if i >= 20_usize {
+                    let relative: usize = i - 20_usize;
+                    let row: usize = relative / 84_usize;
+                    let col: usize = relative % 84_usize;
+                    if row >= 2_usize && row < 8_usize && col >= 12_usize &&
+                        col < 80_usize && col - 12_usize < width * 4_usize {
+                        expected = (0x12345678_u32 >> ((col % 4_usize) * 8_usize) as u32) as u8;
+                    }
+                }
+                if TARGET[i] != expected { return 4; }
+                i = i + 1_usize;
+            }
+            width = width + 1_usize;
+        }
+    }
+    return 0;
+}

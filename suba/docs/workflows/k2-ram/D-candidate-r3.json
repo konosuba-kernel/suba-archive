@@ -1,0 +1,13 @@
+{
+  "node": "D",
+  "revision": "r3",
+  "author": "/root",
+  "files": {
+    "docs/workflows/k2-ram/CONTRACT.md": "64af9154441e1a66c8c70e17566b53ebee651f01c336a0381ae38b69f5f1d409"
+  },
+  "baseline": {
+    "suba": "e8fe282",
+    "biomiya": "d2c6e98"
+  },
+  "changes": "Rename F Result to InspectResult because current S-next reserves Result. No compiler/language changes; M and I semantic contracts unchanged."
+}

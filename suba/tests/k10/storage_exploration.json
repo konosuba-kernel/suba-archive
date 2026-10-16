@@ -1,0 +1,255 @@
+{
+  "scope": "K10 storage preparatory exploration on accepted K7 r2, not stage acceptance",
+  "production_kernel_modified": false,
+  "runs": [
+    {
+      "case": "node_full",
+      "report": "build/k10-storage-node_full-r1/verification.json",
+      "report_sha256": "eed13c5d17e12b77f5cb26a799973264f1bc9023041a8d192a8baa38fc929996",
+      "passed": true,
+      "stage_acceptance": false,
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "wrapper_sha256": "2fcb094c77660ab596a244dfe3a929408ec5d4035d6fefe82342c298bc9dbf8f",
+      "boots": [
+        {
+          "passed": true,
+          "elapsed": 8.364367727001081,
+          "guest_counters": {
+            "before_blocks": 48689,
+            "before_nodes": 0,
+            "after_blocks": 48688,
+            "after_nodes": 0
+          },
+          "boot_serial": 1,
+          "disk_sha256": "0e97bb4974aa91febee3a9205fad99437d2a27ac2a40999f520e8ebfef915473",
+          "nodes": 4096,
+          "allocated_blocks": 15
+        },
+        {
+          "passed": true,
+          "elapsed": 6.182008661999134,
+          "guest_counters": {
+            "before_blocks": 48688,
+            "before_nodes": 0,
+            "after_blocks": 48688,
+            "after_nodes": 0
+          },
+          "boot_serial": 2,
+          "disk_sha256": "5d0fdfdff183212ef0556a3bb38512cc86f38f30a3ba09b26ee966f979299f73",
+          "nodes": 4096,
+          "allocated_blocks": 15
+        }
+      ]
+    },
+    {
+      "case": "disk_partial",
+      "report": "build/k10-storage-disk_partial-r1/verification.json",
+      "report_sha256": "26c36e916595c1b03d6187507c4fe00e453e2da52c52023c7201d26f1ce3f6f6",
+      "passed": true,
+      "stage_acceptance": false,
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "wrapper_sha256": "2fcb094c77660ab596a244dfe3a929408ec5d4035d6fefe82342c298bc9dbf8f",
+      "boots": [
+        {
+          "passed": true,
+          "elapsed": 11.800020244001644,
+          "guest_counters": {
+            "before_blocks": 0,
+            "before_nodes": 4077,
+            "after_blocks": 8,
+            "after_nodes": 4078
+          },
+          "boot_serial": 1,
+          "disk_sha256": "361a5fdcecd46e664223a7935e5cb5f2de0cadefc46f4ee05e64daf30482c10b",
+          "nodes": 18,
+          "allocated_blocks": 48695
+        },
+        {
+          "passed": true,
+          "elapsed": 8.945331637998606,
+          "guest_counters": {
+            "before_blocks": 8,
+            "before_nodes": 4078,
+            "after_blocks": 8,
+            "after_nodes": 4078
+          },
+          "boot_serial": 2,
+          "disk_sha256": "ea5eaf5cdd863b8c22fdc596085f8986c78651d04140338b552f48d7f10f8841",
+          "nodes": 18,
+          "allocated_blocks": 48695
+        }
+      ]
+    },
+    {
+      "case": "boundaries",
+      "report": "build/k10-storage-boundaries-r1/verification.json",
+      "report_sha256": "020d5cda08b606a767251fa2d907c221447bf018b7db7fd7db0148f145f59881",
+      "passed": true,
+      "stage_acceptance": false,
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "wrapper_sha256": "2fcb094c77660ab596a244dfe3a929408ec5d4035d6fefe82342c298bc9dbf8f",
+      "boots": [
+        {
+          "passed": true,
+          "elapsed": 6.696780397000111,
+          "guest_counters": {
+            "before_blocks": 48687,
+            "before_nodes": 4090,
+            "after_blocks": 48670,
+            "after_nodes": 4089
+          },
+          "boot_serial": 1,
+          "disk_sha256": "699e9667fcdcc29eba8e36df9ba320b9cbcf544313a26cd1c7f9e632a1351736",
+          "nodes": 7,
+          "allocated_blocks": 33
+        },
+        {
+          "passed": true,
+          "elapsed": 5.670847877001506,
+          "guest_counters": {
+            "before_blocks": 48670,
+            "before_nodes": 4089,
+            "after_blocks": 48670,
+            "after_nodes": 4089
+          },
+          "boot_serial": 2,
+          "disk_sha256": "332e6130ad38c213f7e9783dec45dfebfe3d05464b1a000c321d6bfc3a4f5d7f",
+          "nodes": 7,
+          "allocated_blocks": 33
+        }
+      ]
+    },
+    {
+      "case": "unlink_reader",
+      "report": "build/k10-storage-unlink_reader-r1/verification.json",
+      "report_sha256": "108d677dc7d62cb42c827b9c58aaf8d7c9415c942676c724b757603785a5b6a0",
+      "passed": true,
+      "stage_acceptance": false,
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "wrapper_sha256": "2fcb094c77660ab596a244dfe3a929408ec5d4035d6fefe82342c298bc9dbf8f",
+      "boots": [
+        {
+          "passed": true,
+          "elapsed": 6.739390295999328,
+          "guest_counters": {
+            "before_blocks": 48686,
+            "before_nodes": 4090,
+            "after_blocks": 48686,
+            "after_nodes": 4088
+          },
+          "boot_serial": 1,
+          "disk_sha256": "547eec7bd2c880b2186dc09f654d7cf5d68f45236220760a44cd5785b31e5008",
+          "nodes": 8,
+          "allocated_blocks": 17
+        },
+        {
+          "passed": true,
+          "elapsed": 5.225266081997688,
+          "guest_counters": {
+            "before_blocks": 48686,
+            "before_nodes": 4088,
+            "after_blocks": 48686,
+            "after_nodes": 4088
+          },
+          "boot_serial": 2,
+          "disk_sha256": "d512e59bb73d2b8c4330a9ca400d173a039371b6e2bd69ac396d331c71e64366",
+          "nodes": 8,
+          "allocated_blocks": 17
+        }
+      ]
+    },
+    {
+      "case": "unsealed_output",
+      "report": "build/k10-storage-unsealed-r1/verification.json",
+      "report_sha256": "adb0435f152ebc8412981b5b4a1360a0cff59c23ee6799c600b82d4cc9a7aab3",
+      "passed": true,
+      "stage_acceptance": false,
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "wrapper_sha256": "2fcb094c77660ab596a244dfe3a929408ec5d4035d6fefe82342c298bc9dbf8f",
+      "boots": [
+        {
+          "passed": true,
+          "elapsed": 8.23084097500032,
+          "guest_counters": {
+            "before_blocks": 48683,
+            "before_nodes": 4090,
+            "after_blocks": 48683,
+            "after_nodes": 4090
+          },
+          "boot_serial": 1,
+          "disk_sha256": "75546c793b757d621407613d16d60086de55cb7132bae763d7fe8360a0f8fe0d",
+          "nodes": 6,
+          "allocated_blocks": 20
+        },
+        {
+          "passed": true,
+          "elapsed": 8.787021047999588,
+          "guest_counters": {
+            "before_blocks": 48683,
+            "before_nodes": 4090,
+            "after_blocks": 48683,
+            "after_nodes": 4090
+          },
+          "boot_serial": 2,
+          "disk_sha256": "adddf9573183b8825abae926219cafd36d7dec3eec27ca31233b9eb2a4646117",
+          "nodes": 6,
+          "allocated_blocks": 20
+        }
+      ]
+    },
+    {
+      "case": "disk_full",
+      "report": "build/k10-storage-disk_full-r3/verification.json",
+      "report_sha256": "da7023da40c7df38d8f56da57d58f7ed3891d443055fe4ede8db887f20538f45",
+      "passed": true,
+      "stage_acceptance": false,
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "wrapper_sha256": "def2e6f8455da5806cad4a99476c6988b9896459a78033e9f4acdd265492cef9",
+      "boots": [
+        {
+          "passed": true,
+          "elapsed": 10.857242144000338,
+          "guest_counters": {
+            "before_blocks": 0,
+            "before_nodes": 4078,
+            "after_blocks": 0,
+            "after_nodes": 4078
+          },
+          "boot_serial": 1,
+          "disk_sha256": "a4cd6e6c702d2cf97db8ad24de3a03cdce2a07222715da354159939286037381",
+          "nodes": 18,
+          "allocated_blocks": 48703
+        },
+        {
+          "passed": true,
+          "elapsed": 10.280623104998085,
+          "guest_counters": {
+            "before_blocks": 0,
+            "before_nodes": 4078,
+            "after_blocks": 0,
+            "after_nodes": 4078
+          },
+          "boot_serial": 2,
+          "disk_sha256": "43e50384364bc845ee65200b1022d5cd1497474469ea5701fc21be1f76b4c18e",
+          "nodes": 18,
+          "allocated_blocks": 48703
+        }
+      ]
+    }
+  ],
+  "failed_explorations": [
+    {
+      "report": "build/k10-storage-disk_full-r2/verification.json",
+      "report_sha256": "3b25fa3d9b169b871704a9b28c1bb65d94ee491c84cae6dcc4c7467292586eec",
+      "passed": false,
+      "error": "detached node not in directory paths",
+      "cause": "test sampled immediately after unlink+SyncAll before bounded asynchronous detached cleanup; fixed only controller to wait for DETACHED=0 before SyncAll"
+    }
+  ]
+}

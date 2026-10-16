@@ -1,0 +1,7 @@
+{
+  "path": "biomiya/tools/check_next.py",
+  "before": "cda9db957266291b5b9f973039b5a0f891c259b34de549520da41b2a71c473df",
+  "after": "d50a14043245242cb595764fd2bcdbcf8c016f238e454deeef93e27cd7935405",
+  "change": "Single trailing space removed at line 64 outside root K0 edits, detected when freezing r2. Preserved user workspace change. Parsed Python AST is identical; original execution evidence still binds its original tool hash. Independent reviewer must assess carry-forward.",
+  "ast_equal": true
+}

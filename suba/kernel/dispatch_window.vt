@@ -1,0 +1,344 @@
+// Window dispatch shares K3 request tokens, handles, scratch and wait polling.
+// Shared module imports and exhaustive owner/request cases are installed by root.
+module kernel::dispatch;
+
+unsafe fn window_identity(id: process::Id, token: usize, rights: u32) -> window::Create {
+    unsafe {
+        match handle(id, token, rights) {
+            objects::LookupResult::BadHandle => { return window::Create::Invalid; },
+            objects::LookupResult::Denied => { return window::Create::Invalid; },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Window(value) => {
+                        if window::live(value) { return window::Create::Ready(value); }
+                    },
+                    objects::Object::Empty => {}, objects::Object::Desktop(value) => {},
+                    objects::Object::File(value) => {}, objects::Object::StreamRead(value) => {},
+                    objects::Object::StreamWrite(value) => {}, objects::Object::Child(value) => {},
+                    objects::Object::Job(value) => {}
+                }
+            }
+        }
+    }
+    return window::Create::Invalid;
+}
+
+unsafe fn desktop_authorized(id: process::Id, token: usize) -> bool {
+    unsafe {
+        if !process::trusted_desktop(id) { return false; }
+        match handle(id, token, objects::READ | objects::KILL) {
+            objects::LookupResult::BadHandle => {}, objects::LookupResult::Denied => {},
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Desktop(value) => {
+                        return value.slot == process::slot(id) && value.generation == process::generation(id);
+                    },
+                    objects::Object::Empty => {}, objects::Object::Window(value) => {},
+                    objects::Object::File(value) => {}, objects::Object::StreamRead(value) => {},
+                    objects::Object::StreamWrite(value) => {}, objects::Object::Child(value) => {},
+                    objects::Object::Job(value) => {}
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Boot grants trusted process identity first, attaches handle owner, then serializes
+// this returned token as an ordinary argv decimal string before process publish.
+pub unsafe fn install_desktop(id: process::Id) -> objects::InsertResult {
+    unsafe {
+        if !process::desktop_prepared(id) { return objects::InsertResult::Invalid; }
+        let identity: objects::Identity = make objects::Identity {
+            slot: process::slot(id), generation: process::generation(id) };
+        return insert(id, objects::Object::Desktop(identity), objects::READ | objects::KILL);
+    }
+}
+
+unsafe fn create_window(id: process::Id, width: usize, height: usize) -> bool {
+    unsafe {
+        match window::reserve(id, width, height) {
+            window::Create::Invalid => { return answer(id, abi::INVALID, 0); },
+            window::Create::Limit => { return answer(id, abi::LIMIT, 0); },
+            window::Create::NoMemory => { return answer(id, abi::NO_MEMORY, 0); },
+            window::Create::Ready(identity) => {
+                return pending(id, request::Operation::WindowCreate(identity));
+            }
+        }
+    }
+}
+
+unsafe fn create_window_step(work: request::Pending, identity: objects::Identity) -> bool {
+    unsafe {
+        if !request::active(work.owner, work.token) { return true; }
+        match window::prepare(identity) {
+            window::Progress::Invalid => { return false; },
+            window::Progress::More => { return true; },
+            window::Progress::Failed => { return finish(work, abi::NO_MEMORY, 0); },
+            window::Progress::Done => {}
+        }
+        match insert(work.owner, objects::Object::Window(identity), objects::READ | objects::WRITE) {
+            objects::InsertResult::Invalid => { return false; },
+            objects::InsertResult::Limit => {
+                if !window::abort(identity) { return false; }
+                return finish(work, abi::LIMIT, 0);
+            },
+            objects::InsertResult::Ready(token) => {
+                if !window::publish(identity) { return false; }
+                return finish(work, abi::OK, token);
+            }
+        }
+    }
+}
+
+unsafe fn surface_call(id: process::Id, identity: objects::Identity,
+    address: usize, bytes: usize, writing: bool) -> bool {
+    unsafe {
+        if bytes != windows::RECT_BYTES { return answer(id, abi::INVALID, 0); }
+        let data: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+        if !usercopy::read(id, address, data) { return answer(id, abi::INVALID, 0); }
+        match window::rectangle(identity, core::slice_from_raw_parts(data.data, bytes)) {
+            window::CopyRead::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            window::CopyRead::Invalid => { return answer(id, abi::INVALID, 0); },
+            window::CopyRead::Ready(copy) => {
+                if !usercopy::range(id, copy.address, copy.extent, !writing) { return answer(id, abi::INVALID, 0); }
+                let transfer: request::Surface = make request::Surface {
+                    copy: copy, done: 0, writing: writing };
+                return pending(id, request::Operation::WindowCopy(transfer));
+            }
+        }
+    }
+}
+
+unsafe fn surface_step(work: request::Pending, transfer: request::Surface) -> bool {
+    unsafe {
+        if !request::active(work.owner, work.token) { return true; }
+        if !window::live(transfer.copy.window) { return finish(work, abi::BAD_HANDLE, 0); }
+        var part: window::Span = zero;
+        match window::span(transfer.copy, transfer.done) {
+            window::SpanRead::Invalid => { return false; },
+            window::SpanRead::Done => { return finish(work, abi::OK, transfer.done); },
+            window::SpanRead::Ready(value) => { part = value; }
+        }
+        let data: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, part.bytes);
+        if transfer.writing {
+            if !usercopy::read(work.owner, part.user, data) { return finish(work, abi::INVALID, 0); }
+            if !window::update(transfer.copy.window, part.surface,
+                core::slice_from_raw_parts(data.data, data.len)) { return finish(work, abi::BAD_HANDLE, 0); }
+        } else {
+            if !window::copy_out(transfer.copy.window, part.surface, data) { return finish(work, abi::BAD_HANDLE, 0); }
+            if !usercopy::write(work.owner, part.user,
+                core::slice_from_raw_parts(data.data, data.len)) { return finish(work, abi::INVALID, 0); }
+        }
+        var next: request::Surface = transfer;
+        next.done = next.done + part.bytes;
+        if next.done == next.copy.row_bytes * next.copy.rows { return finish(work, abi::OK, next.done); }
+        return request::advance(work.owner, work.token, request::Operation::WindowCopy(next));
+    }
+}
+
+unsafe fn window_event(id: process::Id, identity: objects::Identity,
+    token: usize, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if bytes != abi::EVENT_BYTES || !usercopy::range(id, address, bytes, true) { return answer(id, abi::INVALID, 0); }
+        match window::next(identity) {
+            input::Poll::Empty => { return answer(id, abi::WOULD_BLOCK, 0); },
+            input::Poll::Ready(event) => {
+                let output: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+                if !window::encode_event(event, token, output) ||
+                    !usercopy::write(id, address, core::slice_from_raw_parts(output.data, bytes)) { return false; }
+                return answer(id, abi::OK, 0);
+            }
+        }
+    }
+}
+
+unsafe fn desktop_event(id: process::Id, token: usize, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if bytes != abi::EVENT_BYTES || !usercopy::range(id, address, bytes, true) { return answer(id, abi::INVALID, 0); }
+        var event: input::Event = zero;
+        match input::next() {
+            input::Poll::Ready(value) => {
+                event = value;
+                if event.kind == windows::EVENT_RESET { window::reset_input(event.flags); }
+            },
+            input::Poll::Empty => {
+                if !window::take_change() { return answer(id, abi::WOULD_BLOCK, 0); }
+                event.kind = windows::EVENT_CHANGED;
+            }
+        }
+        let output: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+        if !window::encode_event(event, token, output) ||
+            !usercopy::write(id, address, core::slice_from_raw_parts(output.data, bytes)) { return false; }
+        return answer(id, abi::OK, 0);
+    }
+}
+
+unsafe fn desktop_list(id: process::Id, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if bytes != windows::LIST_BYTES || !usercopy::range(id, address, bytes, true) { return answer(id, abi::INVALID, 0); }
+        let output: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+        if !window::list(output) || !usercopy::write(id, address,
+            core::slice_from_raw_parts(output.data, bytes)) { return false; }
+        return answer(id, abi::OK, 0);
+    }
+}
+
+unsafe fn desktop_record(id: process::Id, operation: usize, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if bytes != windows::LAYOUT_BYTES { return answer(id, abi::INVALID, 0); }
+        let data: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+        if !usercopy::read(id, address, data) { return answer(id, abi::INVALID, 0); }
+        let view: []const u8 = core::slice_from_raw_parts(data.data, bytes);
+        if argument_wire::word(view, 0, 4) != 1_usize ||
+            argument_wire::word(view, 4, 4) != bytes { return answer(id, abi::INVALID, 0); }
+        let identity: objects::Identity = make objects::Identity {
+            slot: argument_wire::word(view, 8, 8), generation: argument_wire::word(view, 16, 8) };
+        let layout: usize = argument_wire::word(view, 24, 8);
+        if operation == abi::SYS_DESKTOP_ROUTE {
+            let focus: usize = argument_wire::word(view, windows::ROUTE_FOCUS, 8);
+            let sequence: usize = argument_wire::word(view, windows::ROUTE_SEQUENCE, 8);
+            return answer(id, window::route(identity, layout, focus, sequence), 0);
+        }
+        let x: usize = argument_wire::word(view, windows::LAYOUT_X, 4);
+        let y: usize = argument_wire::word(view, windows::LAYOUT_Y, 4);
+        let focus: usize = argument_wire::word(view, windows::LAYOUT_FOCUS, 4);
+        if focus > 1_usize || argument_wire::word(view, windows::LAYOUT_RESERVED, 4) != 0_usize {
+            return answer(id, abi::INVALID, 0);
+        }
+        return answer(id, window::layout(identity, layout, x, y, focus == 1_usize), 0);
+    }
+}
+
+unsafe fn desktop_kill(id: process::Id, identity: objects::Identity) -> bool {
+    unsafe {
+        match window::owner(identity) {
+            window::Owner::Invalid => { return answer(id, abi::BAD_HANDLE, 0); },
+            window::Owner::Ready(target) => {
+                if process::trusted_desktop(target) { return answer(id, abi::DENIED, 0); }
+                // Exit/fault can mark Dying before Cleanup::Cancel revokes its windows.
+                // Revoke now without overwriting the already recorded exit reason.
+                match process::state(target) {
+                    process::State::Dying => {
+                        window::revoke_owner(target);
+                        return answer(id, abi::OK, 0);
+                    },
+                    process::State::Exited => {
+                        window::revoke_owner(target);
+                        return answer(id, abi::OK, 0);
+                    },
+                    process::State::Vacant => { return answer(id, abi::BAD_HANDLE, 0); },
+                    process::State::Loading => {}, process::State::Prepared => {},
+                    process::State::Ready => {}, process::State::Running => {}, process::State::Blocked => {}
+                }
+                if !process::terminate(target, abi::CANCELLED) { return false; }
+                window::revoke_owner(target);
+                return answer(id, abi::OK, 0);
+            }
+        }
+    }
+}
+
+// Root routes only the enumerated family here. All unused scalars must be zero.
+unsafe fn window_call(id: process::Id, operation: usize, args: []const usize) -> bool {
+    unsafe {
+        var count: usize = 3;
+        if operation == abi::SYS_WINDOW_CREATE { count = 2; }
+        if operation == abi::SYS_WINDOW_DESTROY { count = 1; }
+        if operation == abi::SYS_DESKTOP_COPY { count = 5; }
+        var i: usize = count;
+        while i < 6_usize {
+            if args[i] != 0_usize { return answer(id, abi::INVALID, 0); }
+            i = i + 1_usize;
+        }
+        if operation == abi::SYS_WINDOW_CREATE { return create_window(id, args[0_usize], args[1_usize]); }
+        if operation >= abi::SYS_DESKTOP_LIST {
+            if !desktop_authorized(id, args[0_usize]) { return answer(id, abi::DENIED, 0); }
+            if operation == abi::SYS_DESKTOP_LIST { return desktop_list(id, args[1_usize], args[2_usize]); }
+            if operation == windows::SYS_DESKTOP_TRY_EVENT { return desktop_event(id, args[0_usize], args[1_usize], args[2_usize]); }
+            if operation == abi::SYS_DESKTOP_LAYOUT || operation == abi::SYS_DESKTOP_ROUTE {
+                return desktop_record(id, operation, args[1_usize], args[2_usize]);
+            }
+            let identity: objects::Identity = make objects::Identity { slot: args[1_usize], generation: args[2_usize] };
+            if operation == abi::SYS_DESKTOP_COPY { return surface_call(id, identity, args[3_usize], args[4_usize], false); }
+            if operation == abi::SYS_DESKTOP_CLOSE { return answer(id, window::close_requested(identity), 0); }
+            if operation == abi::SYS_DESKTOP_KILL { return desktop_kill(id, identity); }
+            return answer(id, abi::UNSUPPORTED, 0);
+        }
+        match window_identity(id, args[0_usize], objects::READ | objects::WRITE) {
+            window::Create::Ready(identity) => {
+                if operation == abi::SYS_WINDOW_DESTROY { return answer(id, close(id, args[0_usize]), 0); }
+                if operation == abi::SYS_WINDOW_UPDATE { return surface_call(id, identity, args[1_usize], args[2_usize], true); }
+                if operation == abi::SYS_WINDOW_TRY_EVENT {
+                    return window_event(id, identity, args[0_usize], args[1_usize], args[2_usize]);
+                }
+            },
+            window::Create::Invalid => {}, window::Create::Limit => {}, window::Create::NoMemory => {}
+        }
+        return answer(id, abi::BAD_HANDLE, 0);
+    }
+}
+
+// Sole boot caller supplies the designated Prepared image; no path-based authority.
+// Map before publishing, then install argv capability and finally grant trust.
+pub unsafe fn boot_desktop_ready(id: process::Id) -> bool {
+    unsafe {
+        if !process::prepare_display(id) { return false; }
+        loop {
+            match process::prepare_display_step(id) {
+                space::Progress::Done => { break; },
+                space::Progress::More => {},
+                space::Progress::Invalid => { return abort_desktop_boot(id); }
+            }
+        }
+        var token: usize = 0;
+        match install_desktop(id) {
+            objects::InsertResult::Invalid => { return abort_desktop_boot(id); },
+            objects::InsertResult::Limit => { return abort_desktop_boot(id); },
+            objects::InsertResult::Ready(value) => { token = value; }
+        }
+        let bytes: []u8 = argument_page(process::slot(id));
+        // Preserve the existing cwd and append two ordinary argv strings.
+        let view: []const u8 = core::slice_from_raw_parts(bytes.data, bytes.len);
+        let used: usize = argument_wire::word(view, abi::ARGUMENT_DATA_BYTES, 4);
+        let name: []const u8 = "desktop";
+        let offset: usize = abi::ARGUMENT_DATA + used;
+        var i: usize = 0;
+        while i < name.len { bytes[offset + i] = name[i]; i = i + 1_usize; }
+        var digits: [20]u8 = zero;
+        var cursor: usize = 20;
+        var rest: usize = token;
+        loop {
+            cursor = cursor - 1_usize;
+            digits[cursor] = ((rest % 10_usize) as u8) + 48_u8;
+            rest = rest / 10_usize;
+            if rest == 0_usize { break; }
+        }
+        let count: usize = 20_usize - cursor;
+        i = 0;
+        while i < count { bytes[offset + name.len + i] = digits[cursor + i]; i = i + 1_usize; }
+        argument_wire::put(bytes, abi::ARGUMENT_COUNT, 2, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_ENTRIES, offset, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_ENTRIES + 4_usize, name.len, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_ENTRIES + 8_usize, offset + name.len, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_ENTRIES + 12_usize, count, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_DATA_BYTES, used + name.len + count, 4);
+        if !process::arguments(id, core::slice_from_raw_parts(bytes.data, bytes.len)) {
+            if close(id, token) != abi::OK { return false; }
+            return abort_desktop_boot(id);
+        }
+        return process::grant_desktop(id);
+    }
+}
+
+unsafe fn abort_desktop_boot(id: process::Id) -> bool {
+    unsafe {
+        loop {
+            match process::abort_display_step(id) {
+                space::Progress::More => {},
+                space::Progress::Done => { return false; },
+                space::Progress::Invalid => { return false; }
+            }
+        }
+    }
+}

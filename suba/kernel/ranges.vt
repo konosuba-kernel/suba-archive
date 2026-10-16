@@ -1,0 +1,130 @@
+// Owns dynamic user VA reservations, not physical pages. One serialized kernel context.
+// Physical pages remain exclusively in space; dispatcher maps/unmaps incrementally.
+module kernel::ranges;
+import suba::abi;
+import kernel::process;
+const LIMIT: usize = 64;
+enum Phase { Empty, Reserved, Live, Releasing }
+struct Entry { address: usize, pages: usize, phase: Phase }
+struct Table { generation: usize, count: usize, entries: [LIMIT]Entry }
+static mut TABLES: [process::CAPACITY]Table = zero;
+pub struct Range { pub address: usize, pub pages: usize }
+pub enum Reserve { Ready(Range), Invalid, Limit }
+pub enum Release { Ready(Range), Invalid }
+
+// Process attach after the old owner has discarded every reservation.
+pub unsafe fn attach(id: process::Id, generation: usize) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY || generation == 0_usize || TABLES[slot].generation != 0_usize { return false; }
+        TABLES[slot].generation = generation;
+    }
+    return true;
+}
+
+pub unsafe fn reserve(id: process::Id, generation: usize, pages: usize) -> Reserve {
+    if pages == 0_usize || pages > 24576_usize { return Reserve::Invalid; }
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY || TABLES[slot].generation != generation || generation == 0_usize {
+            return Reserve::Invalid;
+        }
+        let count: usize = TABLES[slot].count;
+        if count == LIMIT { return Reserve::Limit; }
+        let bytes: usize = pages * abi::PAGE_BYTES;
+        var address: usize = abi::USER_PAGES_BASE;
+        var insert: usize = 0;
+        while insert < count {
+            let entry: Entry = TABLES[slot].entries[insert];
+            if bytes <= entry.address - address { break; }
+            address = entry.address + entry.pages * abi::PAGE_BYTES;
+            insert = insert + 1_usize;
+        }
+        if bytes > abi::USER_PAGES_END - address { return Reserve::Limit; }
+        var move: usize = count;
+        while move > insert {
+            TABLES[slot].entries[move] = TABLES[slot].entries[move - 1_usize];
+            move = move - 1_usize;
+        }
+        TABLES[slot].entries[insert] = make Entry { address: address, pages: pages, phase: Phase::Reserved };
+        TABLES[slot].count = count + 1_usize;
+        return Reserve::Ready(make Range { address: address, pages: pages });
+    }
+}
+
+unsafe fn find(id: process::Id, generation: usize, address: usize, pages: usize) -> usize {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY || generation == 0_usize || TABLES[slot].generation != generation { return LIMIT; }
+        var i: usize = 0;
+        while i < TABLES[slot].count {
+            if TABLES[slot].entries[i].address == address && TABLES[slot].entries[i].pages == pages { return i; }
+            i = i + 1_usize;
+        }
+    }
+    return LIMIT;
+}
+
+pub unsafe fn publish(id: process::Id, generation: usize, range: Range) -> bool {
+    unsafe {
+        let at: usize = find(id, generation, range.address, range.pages);
+        if at == LIMIT { return false; }
+        let slot: usize = process::slot(id);
+        match TABLES[slot].entries[at].phase {
+            Phase::Reserved => { TABLES[slot].entries[at].phase = Phase::Live; return true; },
+            Phase::Empty => {}, Phase::Live => {}, Phase::Releasing => {},
+        }
+    }
+    return false;
+}
+
+// Only an exact published extent may be freed. Failed validation never removes mappings.
+pub unsafe fn begin_free(id: process::Id, generation: usize, address: usize, pages: usize) -> Release {
+    unsafe {
+        let at: usize = find(id, generation, address, pages);
+        if at == LIMIT { return Release::Invalid; }
+        let slot: usize = process::slot(id);
+        match TABLES[slot].entries[at].phase {
+            Phase::Live => {
+                TABLES[slot].entries[at].phase = Phase::Releasing;
+                return Release::Ready(make Range { address: address, pages: pages });
+            },
+            Phase::Empty => {}, Phase::Reserved => {}, Phase::Releasing => {},
+        }
+    }
+    return Release::Invalid;
+}
+
+// Called after incremental rollback/free has removed all mapped data and empty tables.
+pub unsafe fn finish(id: process::Id, generation: usize, range: Range) -> bool {
+    unsafe {
+        let at: usize = find(id, generation, range.address, range.pages);
+        if at == LIMIT { return false; }
+        let slot: usize = process::slot(id);
+        match TABLES[slot].entries[at].phase {
+            Phase::Live => { return false; }, Phase::Empty => { return false; },
+            Phase::Reserved => {}, Phase::Releasing => {},
+        }
+        TABLES[slot].count = TABLES[slot].count - 1_usize;
+        var i: usize = at;
+        while i < TABLES[slot].count {
+            TABLES[slot].entries[i] = TABLES[slot].entries[i + 1_usize];
+            i = i + 1_usize;
+        }
+        TABLES[slot].entries[TABLES[slot].count] = zero;
+    }
+    return true;
+}
+
+// Process teardown owns every remaining physical page via space. No per-range unmap needed.
+pub unsafe fn detach(id: process::Id, generation: usize) -> bool {
+    unsafe {
+        let slot: usize = process::slot(id);
+        if slot == process::CAPACITY || generation == 0_usize || TABLES[slot].generation != generation { return false; }
+        var i: usize = 0;
+        while i < TABLES[slot].count { TABLES[slot].entries[i] = zero; i = i + 1_usize; }
+        TABLES[slot].count = 0;
+        TABLES[slot].generation = 0;
+    }
+    return true;
+}

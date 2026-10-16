@@ -1,0 +1,33 @@
+// Thin user ABI boundary. All pointers remain user addresses for kernel validation.
+module libsuba::syscall;
+import suba::abi;
+extern abi(C) fn __suba_call(operation: usize, a: usize, b: usize, c: usize,
+    d: usize, e: usize, f: usize, value: *usize) -> usize;
+extern abi(C) fn __suba_exit(status: usize) -> ();
+pub struct Reply { pub status: usize, pub value: usize }
+
+pub fn invoke(operation: usize, a: usize, b: usize, c: usize,
+    d: usize, e: usize, f: usize) -> Reply {
+    var value: usize = 0;
+    // SAFETY: S0 writes exactly one aligned local word before returning. Arguments
+    // are scalars; the kernel owns validation and cannot retain this local pointer.
+    unsafe {
+        let status: usize = __suba_call(operation, a, b, c, d, e, f, core::addr_of_mut(value));
+        return make Reply { status: status, value: value };
+    }
+}
+
+pub fn exit(status: u32) -> () {
+    // SAFETY: terminal process operation, no pointer arguments.
+    unsafe { __suba_exit(status as usize); }
+    loop {}
+    return ();
+}
+
+pub fn close(handle: usize) -> Reply {
+    return invoke(abi::SYS_CLOSE, handle, 0, 0, 0, 0, 0);
+}
+
+pub fn kill_child(handle: usize) -> Reply {
+    return invoke(abi::SYS_KILL_CHILD, handle, 0, 0, 0, 0, 0);
+}

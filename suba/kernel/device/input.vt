@@ -1,0 +1,338 @@
+// Owns two permanent virtio-input queue pairs, DMA event buffers and raw input.
+// Serialized S-mode; hub calls interrupt only for a claimed IRQ. Device buffers
+// are replenished before any user consumes events. No callback or scheduler wait.
+module kernel::device::input;
+import kernel::device::virtio;
+import kernel::device::io;
+import suba::abi;
+import suba::windows;
+const DEVICE_CAPACITY: usize = 2;
+const DMA_PAGES: usize = 7;
+struct DeviceState {
+    device: virtio::Device, event: virtio::Queue, status: virtio::Queue,
+    buffers: usize, absolute: bool, maximum_x: usize, maximum_y: usize,
+    dropping: bool, pointer_changed: bool,
+}
+enum DeviceSlot { Empty, Live(DeviceState) }
+static mut DEVICES: [DEVICE_CAPACITY]DeviceSlot = zero;
+static mut DMA: [DEVICE_CAPACITY * DMA_PAGES * 4096 + 4096]u8 = zero;
+static mut SUPPORTED: [DEVICE_CAPACITY * 128]u8 = zero;
+static mut COUNT: usize = 0;
+pub struct Event {
+    pub kind: u32, pub flags: u32, pub sequence: usize,
+    pub a: usize, pub b: usize, pub c: usize, pub d: usize,
+}
+pub enum Poll { Empty, Ready(Event) }
+static mut EVENTS: [windows::EVENT_CAPACITY]Event = zero;
+static mut HEAD: usize = 0;
+static mut USED: usize = 0;
+static mut RESET: u32 = 0;
+static mut SEQUENCE: usize = 0;
+static mut LAST: Event = zero;
+static mut LAST_VALID: bool = false;
+static mut HELD: [768]bool = zero;
+static mut X: usize = 0;
+static mut Y: usize = 0;
+static mut BUTTONS: usize = 0;
+static mut SOFTWARE_RESETS: usize = 0;
+static mut DEVICE_RESETS: usize = 0;
+static mut DRAIN_MAX: usize = 0;
+
+unsafe fn query(device: virtio::Device, selector: u8, subselector: u8) -> usize {
+    // SAFETY: sole owner of the device selector; fixed input config fields.
+    unsafe {
+        let before: u32 = virtio::config_generation(device);
+        virtio::select8(device, 0, selector);
+        virtio::select8(device, 1, subselector);
+        let size: usize = virtio::config8(device, 2) as usize;
+        if size > 128_usize || virtio::config_generation(device) != before { return 129; }
+        return size;
+    }
+}
+
+unsafe fn axis(device: virtio::Device, code: u8) -> usize {
+    unsafe {
+        if query(device, 0x12, code) != 20_usize { return 0; }
+        let before: u32 = virtio::config_generation(device);
+        let minimum: usize = virtio::config32(device, 8) as usize;
+        let maximum: usize = virtio::config32(device, 12) as usize;
+        if minimum != 0_usize || maximum == 0_usize || maximum > 65535_usize ||
+            virtio::config_generation(device) != before { return 0; }
+        return maximum;
+    }
+}
+
+unsafe fn features(device: virtio::Device, index: usize) -> bool {
+    unsafe {
+        let size: usize = query(device, 0x11, 1);
+        if size == 0_usize || size > 128_usize { return false; }
+        let before: u32 = virtio::config_generation(device);
+        var i: usize = 0;
+        while i < size {
+            SUPPORTED[index * 128_usize + i] = virtio::config8(device, 8_usize + i);
+            i = i + 1_usize;
+        }
+        return virtio::config_generation(device) == before;
+    }
+}
+
+// Boot config only; independent singleton descriptors, no shared chain bodies.
+pub unsafe fn initialize(device: virtio::Device) -> bool {
+    unsafe {
+        if COUNT == DEVICE_CAPACITY || virtio::id(device) != 18_u32 { return false; }
+        if !virtio::begin(device, 0, 0) || !features(device, COUNT) { return false; }
+        let absolute_bytes: usize = query(device, 0x11, 3);
+        if absolute_bytes > 128_usize { return false; }
+        var maximum_x: usize = 0;
+        var maximum_y: usize = 0;
+        if absolute_bytes != 0_usize {
+            if (virtio::config8(device, 8) & 3_u8) != 3_u8 { return false; }
+            maximum_x = axis(device, 0);
+            maximum_y = axis(device, 1);
+            if maximum_x == 0_usize || maximum_y == 0_usize { return false; }
+        }
+        // The fixed platform requires one keyboard and one absolute tablet.
+        // Count alone would silently accept two identical devices.
+        var prior: usize = 0;
+        while prior < COUNT {
+            match DEVICES[prior] {
+                DeviceSlot::Empty => { return false; },
+                DeviceSlot::Live(existing) => {
+                    if existing.absolute == (maximum_x != 0_usize) { return false; }
+                }
+            }
+            prior = prior + 1_usize;
+        }
+        let backing: usize = core::addr(core::slice_of_mut(DMA).data);
+        let base: usize = ((backing + 4095_usize) & 0xfffffffffffff000_usize)
+            + COUNT * DMA_PAGES * 4096_usize;
+        match virtio::queue(device, 0, base, base + 4096_usize, base + 8192_usize) {
+            virtio::QueueRead::Invalid => { return false; },
+            virtio::QueueRead::Ready(event) => {
+                return initialize_status(device, base, event, maximum_x, maximum_y);
+            }
+        }
+    }
+}
+
+unsafe fn initialize_status(device: virtio::Device, base: usize, event: virtio::Queue,
+    maximum_x: usize, maximum_y: usize) -> bool {
+    unsafe {
+        match virtio::queue(device, 1, base + 16384_usize, base + 20480_usize, base + 24576_usize) {
+            virtio::QueueRead::Invalid => { return false; },
+            virtio::QueueRead::Ready(status) => {
+                return publish_queues(device, base, event, status, maximum_x, maximum_y);
+            }
+        }
+    }
+}
+
+unsafe fn publish_queues(device: virtio::Device, base: usize, event: virtio::Queue,
+    status: virtio::Queue, maximum_x: usize, maximum_y: usize) -> bool {
+    var queue: virtio::Queue = event;
+    unsafe {
+        var i: usize = 0;
+        while i < 64_usize {
+            if !virtio::descriptor(core::addr_of(queue), i, base + 12288_usize + i * 8_usize, 8, 2, 0) ||
+                !virtio::publish(core::addr_of_mut(queue), i) { return false; }
+            i = i + 1_usize;
+        }
+        if !virtio::ready(device) { return false; }
+        virtio::kick(core::addr_of(queue));
+        DEVICES[COUNT] = DeviceSlot::Live(make DeviceState { device: device,
+            event: queue, status: status, buffers: base + 12288_usize,
+            absolute: maximum_x != 0_usize, maximum_x: maximum_x, maximum_y: maximum_y,
+            dropping: false, pointer_changed: false });
+        COUNT = COUNT + 1_usize;
+    }
+    return true;
+}
+
+pub unsafe fn configured() -> bool { unsafe { return COUNT == DEVICE_CAPACITY; } }
+
+unsafe fn reset(cause: u32) -> () {
+    // Sticky priority survives a full raw queue; reset discards all stale edge events.
+    unsafe {
+        HEAD = 0;
+        USED = 0;
+        LAST_VALID = false;
+        RESET = cause;
+        BUTTONS = 0;
+        var i: usize = 0;
+        while i < 768_usize { HELD[i] = false; i = i + 1_usize; }
+        if cause == windows::RESET_SOFTWARE { SOFTWARE_RESETS = SOFTWARE_RESETS + 1_usize; }
+        if cause == windows::RESET_DEVICE { DEVICE_RESETS = DEVICE_RESETS + 1_usize; }
+    }
+    return ();
+}
+
+unsafe fn enqueue(kind: u32, a: usize, b: usize, c: usize) -> () {
+    unsafe {
+        if USED == windows::EVENT_CAPACITY { reset(windows::RESET_SOFTWARE); return (); }
+        SEQUENCE = SEQUENCE +% 1_usize;
+        EVENTS[(HEAD + USED) % windows::EVENT_CAPACITY] = make Event {
+            kind: kind, flags: 0, sequence: SEQUENCE, a: a, b: b, c: c, d: 0 };
+        USED = USED + 1_usize;
+    }
+    return ();
+}
+
+unsafe fn key(index: usize, code: usize, value: usize) -> bool {
+    unsafe {
+        if code >= 768_usize || value > 2_usize { return false; }
+        if (SUPPORTED[index * 128_usize + code / 8_usize] & (1_u8 << (code % 8_usize) as u8)) == 0_u8 {
+            return false;
+        }
+        HELD[code] = value != 0_usize;
+        if code >= 272_usize && code <= 276_usize {
+            let bit: usize = 1_usize << (code - 272_usize);
+            if value == 0_usize { BUTTONS = BUTTONS & (0xffffffffffffffff_usize ^ bit); }
+            if value != 0_usize { BUTTONS = BUTTONS | bit; }
+            enqueue(abi::EVENT_POINTER, X, Y, BUTTONS);
+            return true;
+        }
+        enqueue(abi::EVENT_KEY, code, value, 0);
+    }
+    return true;
+}
+
+unsafe fn decode(index: usize, state: *DeviceState, address: usize) -> bool {
+    // SAFETY: completion has exactly eight bytes in this device's permanent buffer.
+    unsafe {
+        let header: u32 = io::read32(address);
+        let kind: usize = (header & 65535_u32) as usize;
+        let code: usize = (header >> 16_u32) as usize;
+        let value: usize = io::read32(address + 4_usize) as usize;
+        if kind == 0_usize && code == 3_usize {
+            reset(windows::RESET_DEVICE);
+            (*state).dropping = true;
+            return true;
+        }
+        if kind == 0_usize && code == 0_usize {
+            (*state).dropping = false;
+            if (*state).pointer_changed { enqueue(abi::EVENT_POINTER, X, Y, BUTTONS); }
+            (*state).pointer_changed = false;
+            return true;
+        }
+        if (*state).dropping { return true; }
+        if kind == 1_usize { return key(index, code, value); }
+        if kind == 3_usize {
+            if !(*state).absolute { return false; }
+            if code == 0_usize {
+                if value > (*state).maximum_x { return false; }
+                X = value * (windows::SCREEN_WIDTH - 1_usize) / (*state).maximum_x;
+                (*state).pointer_changed = true;
+                return true;
+            }
+            if code == 1_usize {
+                if value > (*state).maximum_y { return false; }
+                Y = value * (windows::SCREEN_HEIGHT - 1_usize) / (*state).maximum_y;
+                (*state).pointer_changed = true;
+                return true;
+            }
+            return false;
+        }
+        // EV_MSC scan-code hints add no application state. The fixed keyboard may
+        // report them alongside EV_KEY; only MSC_SCAN (4) is admitted.
+        if kind == 4_usize && code == 4_usize { return true; }
+        // Signed wheel value remains a direction + magnitude in the event payload.
+        if kind == 2_usize && code == 8_usize {
+            var direction: usize = 0;
+            var magnitude: usize = value;
+            if value >= 0x80000000_usize { direction = 1; magnitude = 0x100000000_usize - value; }
+            enqueue(abi::EVENT_POINTER, X, Y, BUTTONS);
+            if USED != 0_usize {
+                let at: usize = (HEAD + USED - 1_usize) % windows::EVENT_CAPACITY;
+                EVENTS[at].flags = 1;
+                EVENTS[at].d = (direction << 32_usize) | magnitude;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+unsafe fn drain(index: usize, state: *DeviceState) -> bool {
+    unsafe {
+        let bits: u32 = virtio::interrupt((*state).device);
+        if bits != 1_u32 || !virtio::acknowledge((*state).device, bits) { return false; }
+        // Ack before consuming: a new used entry arriving after the final take
+        // must retain its asserted level for the next PLIC claim, not be cleared.
+        let began: usize = io::time();
+        var count: usize = 0;
+        while count < 64_usize {
+            match virtio::take(core::addr_of_mut((*state).event)) {
+                virtio::Poll::Invalid => { return false; },
+                virtio::Poll::Empty => { break; },
+                virtio::Poll::Done(done) => {
+                    if done.bytes != 8_usize || !decode(index, state, (*state).buffers + done.head * 8_usize) {
+                        return false;
+                    }
+                    if !virtio::publish(core::addr_of_mut((*state).event), done.head) { return false; }
+                    count = count + 1_usize;
+                }
+            }
+        }
+        virtio::kick(core::addr_of((*state).event));
+        let elapsed: usize = io::time() - began;
+        if elapsed > DRAIN_MAX { DRAIN_MAX = elapsed; }
+    }
+    return true;
+}
+
+// Hub owns claim/complete. This searches exactly two configured IRQ identities.
+pub unsafe fn interrupt(irq: u32) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < COUNT {
+            match DEVICES[i] {
+                DeviceSlot::Empty => { return false; },
+                DeviceSlot::Live(saved) => {
+                    if virtio::irq(saved.device) == irq {
+                        var state: DeviceState = saved;
+                        if !drain(i, core::addr_of_mut(state)) { return false; }
+                        DEVICES[i] = DeviceSlot::Live(state);
+                        return true;
+                    }
+                }
+            }
+            i = i + 1_usize;
+        }
+    }
+    return false;
+}
+
+pub unsafe fn readable() -> bool { unsafe { return RESET != 0_u32 || USED != 0_usize; } }
+
+pub unsafe fn next() -> Poll {
+    unsafe {
+        LAST_VALID = false;
+        if RESET != 0_u32 {
+            let cause: u32 = RESET;
+            RESET = 0;
+            SEQUENCE = SEQUENCE +% 1_usize;
+            return Poll::Ready(make Event { kind: windows::EVENT_RESET, flags: cause,
+                sequence: SEQUENCE, a: 0, b: 0, c: 0, d: 0 });
+        }
+        if USED == 0_usize { return Poll::Empty; }
+        LAST = EVENTS[HEAD];
+        HEAD = (HEAD + 1_usize) % windows::EVENT_CAPACITY;
+        USED = USED - 1_usize;
+        LAST_VALID = true;
+        return Poll::Ready(LAST);
+    }
+}
+
+// Capability + layout checks belong to dispatch/window. This consumes saved input
+// once; desktop can route its sequence but cannot invent a keyboard edge payload.
+pub unsafe fn take_route(sequence: usize) -> Poll {
+    unsafe {
+        if !LAST_VALID || sequence != LAST.sequence { return Poll::Empty; }
+        LAST_VALID = false;
+        return Poll::Ready(LAST);
+    }
+}
+
+pub unsafe fn software_resets() -> usize { unsafe { return SOFTWARE_RESETS; } }
+pub unsafe fn device_resets() -> usize { unsafe { return DEVICE_RESETS; } }
+pub unsafe fn drain_max_ticks() -> usize { unsafe { return DRAIN_MAX; } }

@@ -1,0 +1,110 @@
+// Ordinary build worker. Editor owns this child; killing it ends its compiler
+// Job through the same kernel cleanup path as a crash. No host file service.
+module user::build;
+import suba::abi;
+import libsuba::arguments;
+import libsuba::job_api;
+import libsuba::services;
+import libsuba::syscall;
+import user::build::snapshot;
+import user::build::publish;
+import user::build::records;
+import user::build::compiler_streams;
+static mut PIPE_BUFFER: [4096]u8 = zero;
+
+unsafe fn report(phase: []const u8, error: usize) -> () {
+    var storage: [256]u8 = zero;
+    unsafe {
+        var writer: records::Writer = records::begin(core::slice_of_mut(storage));
+        if records::text(core::addr_of_mut(writer), "build failed: ") &&
+            records::text(core::addr_of_mut(writer), phase) &&
+            records::text(core::addr_of_mut(writer), " status=") &&
+            records::number(core::addr_of_mut(writer), error) && records::text(core::addr_of_mut(writer), "\n") {
+            // A closed editor pipe cannot change the primary build failure.
+            let ignored: usize = compiler_streams::emit(records::bytes(core::addr_of(writer)));
+        }
+    }
+    return ();
+}
+fn close_handle(handle: usize) -> () {
+    // Own handles only. Explicit close is best effort during primary-error unwind;
+    // any remaining object is still owned by the process-exit ledger.
+    let ignored: syscall::Reply = syscall::close(handle);
+    return ();
+}
+unsafe fn compile(job: *const job_api::Job) -> usize {
+    unsafe {
+        var output: services::StreamPair = zero;
+        match services::streams() {
+            services::Streams::Failed(error) => { return error; },
+            services::Streams::Ready(pair) => { output = pair; }
+        }
+        defer close_handle(output.read);
+        var errors: services::StreamPair = zero;
+        match services::streams() {
+            services::Streams::Failed(error) => { close_handle(output.write); return error; },
+            services::Streams::Ready(pair) => { errors = pair; }
+        }
+        defer close_handle(errors.read);
+        let child: syscall::Reply = services::spawn("/sys/compiler.elf", snapshot::arguments(),
+            output.write, errors.write, (*job).handle);
+        let closed_out: syscall::Reply = syscall::close(output.write);
+        let closed_err: syscall::Reply = syscall::close(errors.write);
+        if child.status != abi::OK { return child.status; }
+        if closed_out.status != abi::OK { return closed_out.status; }
+        if closed_err.status != abi::OK { return closed_err.status; }
+        let done: compiler_streams::Completion = compiler_streams::collect(child.value, output.read,
+            errors.read, core::slice_of_mut(PIPE_BUFFER));
+        if done.error != abi::OK { return done.error; }
+        if done.exit.status != 0_usize || done.exit.cause != 0_usize { return abi::INVALID; }
+    }
+    return abi::OK;
+}
+unsafe fn run_job(job: *const job_api::Job, name: []const u8, policy: []const u8) -> usize {
+    unsafe {
+        var result: usize = snapshot::prepare(job, name, policy);
+        if result != abi::OK { report(snapshot::phase(), result); return result; }
+        let started: usize = compiler_streams::emit("compile started\n");
+        if started != abi::OK { return started; }
+        result = compile(job);
+        if result != abi::OK { report("compiler", result); return result; }
+        result = publish::result(job, snapshot::output(), snapshot::kernel(), snapshot::notes());
+        if result != abi::OK { report("publish", result); return result; }
+        // Output is already published. Failure to display this informational line
+        // cannot turn a committed file back into an unpublished temporary.
+        let first: usize = compiler_streams::emit("published ");
+        let second: usize = compiler_streams::emit(snapshot::output());
+        let third: usize = compiler_streams::emit("\n");
+    }
+    return abi::OK;
+}
+
+pub fn main() -> u32 {
+    if arguments::count() < 2_usize || arguments::count() > 3_usize { return abi::INVALID as u32; }
+    var name: []const u8 = "";
+    var policy: []const u8 = "";
+    match arguments::argument(1) {
+        arguments::BytesResult::Invalid => { return abi::INVALID as u32; },
+        arguments::BytesResult::Value(value) => { name = value; }
+    }
+    if arguments::count() == 3_usize {
+        match arguments::argument(2) {
+            arguments::BytesResult::Invalid => { return abi::INVALID as u32; },
+            arguments::BytesResult::Value(value) => { policy = value; }
+        }
+    }
+    match job_api::create() {
+        job_api::Created::Failed(error) => { unsafe { report("create job", error); } return error as u32; },
+        job_api::Created::Ready(job) => {
+            // Job stays owned here: no defer observes a later ownership transfer.
+            unsafe {
+                var status: usize = run_job(core::addr_of(job), name, policy);
+                let ended: syscall::Reply = job_api::end(job);
+                let closed: syscall::Reply = syscall::close(job.handle);
+                if status == abi::OK { status = ended.status; }
+                if status == abi::OK { status = closed.status; }
+                return status as u32;
+            }
+        }
+    }
+}

@@ -1,0 +1,62 @@
+// TEST COPY ONLY: harness changes GENERATION_MAX from u32::MAX to 2.
+// Production remains u32::MAX; all state transitions use the same allocator.
+module test::memory;
+import kernel::memory;
+import test::memory_support;
+
+unsafe fn cycle() -> bool {
+    // SAFETY: serialized context. No page references survive release.
+    unsafe {
+        match memory::allocate() {
+            memory::Allocation::NotReady => { return false; },
+            memory::Allocation::Exhausted => { return false; },
+            memory::Allocation::Ready(frame) => {
+                let page: []u8 = memory_support::page(frame);
+                if !memory_support::all(core::slice_const(page), 0) { return false; }
+                memory_support::fill(page, 99);
+                match memory::release(frame) {
+                    memory::ReleaseResult::Invalid => { return false; },
+                    memory::ReleaseResult::Released => {}
+                }
+                match memory::release(frame) {
+                    memory::ReleaseResult::Released => { return false; },
+                    memory::ReleaseResult::Invalid => {}
+                }
+                match memory::address(frame) {
+                    memory::AddressResult::Value(address) => { return false; },
+                    memory::AddressResult::Invalid => { return true; }
+                }
+            }
+        }
+    }
+}
+
+pub fn run() -> u32 {
+    // SAFETY: exclusive permanent BSS donation, all allocator work serialized.
+    unsafe {
+        match memory::initialize(memory_support::prepare()) {
+            memory::InitResult::Ready => {},
+            memory::InitResult::Invalid => { return 1; },
+            memory::InitResult::AlreadyInitialized => { return 2; }
+        }
+        var retired: usize = 0;
+        while retired < 3_usize {
+            if !cycle() { return 3; }
+            let first: memory::Stats = memory::stats();
+            if first.capacity != 3_usize || first.free != 3_usize - retired ||
+                first.allocated != 0_usize || first.retired != retired { return 4; }
+            if !cycle() { return 5; }
+            retired = retired + 1_usize;
+            let last: memory::Stats = memory::stats();
+            if last.capacity != 3_usize || last.free != 3_usize - retired ||
+                last.allocated != 0_usize || last.retired != retired { return 6; }
+        }
+        match memory::allocate() {
+            memory::Allocation::Exhausted => {},
+            memory::Allocation::NotReady => { return 7; },
+            memory::Allocation::Ready(frame) => { return 8; }
+        }
+        if !memory_support::guards() { return 9; }
+    }
+    return 0;
+}

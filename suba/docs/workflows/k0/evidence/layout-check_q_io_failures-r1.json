@@ -1,0 +1,273 @@
+{
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "input_sha256": {
+    "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+    "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+    "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+    "tests/compiler/behavior-io-save.vt": "816257c42e16a13500a4279f8967edfd7c516e343c0501075cf16aa0d80963b4",
+    "tests/compiler/behavior-io-shim.s0": "53c084d4f9a15fecd989192bb97c9eae6613e2b81ea459dd62e4efc6d713c155",
+    "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+    "tools/check_q_io_failures.py": "e741a15e6f4a6f04212b67832a04647af2b35806859bdec6c3304024bd045c38"
+  },
+  "builds": [
+    {
+      "entry": "save",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/compiler.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=7 imports=10 assembly_files=1 source=52506 assembly=3193 names=1017 name_bytes=18209 decls=271 types=127 fields=118 params=137 max_ast=814 max_ir=1257 max_frame=7920 max_bindings=15 max_defers=0 max_loops=2 max_slots=873 max_args=103 max_params=5 text=135404 data=411 objects=92 symbols=2046 fixups=3930 relocations=4 elf=147552\n",
+      "elf_sha256": "1398fc8a7c3ba3e21ac66b6938a628e587eb2d4c41648758c0ce0eebf3912c5f"
+    },
+    {
+      "entry": "nul",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/compiler.elf",
+        "build",
+        "probe.build"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=7 imports=10 assembly_files=1 source=52506 assembly=3193 names=1017 name_bytes=18209 decls=271 types=127 fields=118 params=137 max_ast=814 max_ir=1257 max_frame=7920 max_bindings=15 max_defers=0 max_loops=2 max_slots=873 max_args=103 max_params=5 text=135404 data=411 objects=92 symbols=2046 fixups=3930 relocations=4 elf=147552\n",
+      "elf_sha256": "92b9e6385ce1d92659e3fd4524d21b116dcc22825338162929e95fd9c08eebd4"
+    }
+  ],
+  "tests": [
+    {
+      "name": "normal",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "n"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "[O][W][M][C]",
+      "events": "OWMC",
+      "diagnostic": "",
+      "output_exists": true,
+      "output_hex": "3031323334353637383961626364656630313233343536373839616263646566",
+      "output_mode": "0o755",
+      "passed": true
+    },
+    {
+      "name": "existing",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "n"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O]save path=result.elf phase=create errno=17 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "events": "O",
+      "diagnostic": "save path=result.elf phase=create errno=17 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "output_exists": true,
+      "output_hex": "70726f746563746564206f7574707574",
+      "output_mode": "0o640",
+      "passed": true
+    },
+    {
+      "name": "short",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "s"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "[O][W][W][W][W][W][M][C]",
+      "events": "OWWWWWMC",
+      "diagnostic": "",
+      "output_exists": true,
+      "output_hex": "3031323334353637383961626364656630313233343536373839616263646566",
+      "output_mode": "0o755",
+      "passed": true
+    },
+    {
+      "name": "write",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "w"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][W][C][U]save path=result.elf phase=write errno=5 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "events": "OWWCU",
+      "diagnostic": "save path=result.elf phase=write errno=5 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "output_exists": false,
+      "output_hex": null,
+      "output_mode": null,
+      "passed": true
+    },
+    {
+      "name": "zero-progress",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "z"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][C][U]save path=result.elf phase=write errno=5 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "events": "OWCU",
+      "diagnostic": "save path=result.elf phase=write errno=5 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "output_exists": false,
+      "output_hex": null,
+      "output_mode": null,
+      "passed": true
+    },
+    {
+      "name": "chmod",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "m"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][M][C][U]save path=result.elf phase=chmod errno=13 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "events": "OWMCU",
+      "diagnostic": "save path=result.elf phase=chmod errno=13 close_errno=0 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "output_exists": false,
+      "output_hex": null,
+      "output_mode": null,
+      "passed": true
+    },
+    {
+      "name": "close",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "c"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][M][C][U]save path=result.elf phase=close errno=5 close_errno=5 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "events": "OWMCU",
+      "diagnostic": "save path=result.elf phase=close errno=5 close_errno=5 cleanup_errno=0 E_IO file=0 byte=0\n",
+      "output_exists": false,
+      "output_hex": null,
+      "output_mode": null,
+      "passed": true
+    },
+    {
+      "name": "write-unlink",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "u"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][W][C][U]save path=result.elf phase=write errno=5 close_errno=0 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "events": "OWWCU",
+      "diagnostic": "save path=result.elf phase=write errno=5 close_errno=0 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "output_exists": true,
+      "output_hex": "30313233343536",
+      "output_mode": "0o600",
+      "passed": true
+    },
+    {
+      "name": "write-close-unlink",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "v"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][W][C][U]save path=result.elf phase=write errno=5 close_errno=5 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "events": "OWWCU",
+      "diagnostic": "save path=result.elf phase=write errno=5 close_errno=5 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "output_exists": true,
+      "output_hex": "30313233343536",
+      "output_mode": "0o600",
+      "passed": true
+    },
+    {
+      "name": "chmod-unlink",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "h"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][M][C][U]save path=result.elf phase=chmod errno=13 close_errno=0 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "events": "OWMCU",
+      "diagnostic": "save path=result.elf phase=chmod errno=13 close_errno=0 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "output_exists": true,
+      "output_hex": "3031323334353637383961626364656630313233343536373839616263646566",
+      "output_mode": "0o600",
+      "passed": true
+    },
+    {
+      "name": "close-unlink",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-save/probe.elf",
+        "l"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "[O][W][M][C][U]save path=result.elf phase=close errno=5 close_errno=5 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "events": "OWMCU",
+      "diagnostic": "save path=result.elf phase=close errno=5 close_errno=5 cleanup_errno=13 residual=result.elf E_IO file=0 byte=0\n",
+      "output_exists": true,
+      "output_hex": "3031323334353637383961626364656630313233343536373839616263646566",
+      "output_mode": "0o755",
+      "passed": true
+    },
+    {
+      "name": "nul-open-remove",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_io_failures-r1/build-nul/probe.elf",
+        "n"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,21 @@
+// Linux parser harness; same production decoder, no page allocation or host ELF parser in verdict.
+module test::elf_probe;
+import runtime::linux;
+import suba::image as elf;
+static mut INPUT: [1048576]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        match linux::read_file("input.elf", core::slice_of_mut(INPUT)) {
+            linux::CountResult::Failed(error) => { return 90; },
+            linux::CountResult::Value(count) => {
+                let bytes: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+                var total: usize = count;
+                if linux::argc() > 1_usize { total = 0xffffffffffffffff; }
+                match elf::inspect(bytes, total, false) {
+                    elf::Inspect::Ready(plan) => { return 0; },
+                    elf::Inspect::Invalid => { return 1; }
+                }
+            }
+        }
+    }
+}

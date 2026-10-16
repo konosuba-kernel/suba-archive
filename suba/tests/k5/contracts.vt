@@ -1,0 +1,89 @@
+// Ordinary U adversary: bad sizes/ranges, per-owner quota, stale handles and
+// repeated create/release. Parent test observes process exit and kernel ledger.
+module test::k5_contracts;
+import suba::abi;
+import suba::windows;
+import suba::syscalls;
+import libsuba::window_api;
+import libsuba::services;
+import libsuba::syscall;
+static mut PIXELS: [4096]u8 = zero;
+
+fn tick() -> () {
+    let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+    let empty: [1]services::Watch = zero;
+    unsafe {
+        let ignored: syscall::Reply = services::wait(
+            core::slice_from_raw_parts(core::slice_of(empty).data, 0),
+            now.value + 10000_usize, false);
+    }
+    return ();
+}
+
+pub fn run() -> u32 {
+    if window_api::create(0, 1).status != abi::INVALID { return 1; }
+    if window_api::create(1, windows::SCREEN_HEIGHT + 1_usize).status != abi::INVALID { return 2; }
+    if window_api::create(0xffffffffffffffff_usize, 1).status != abi::INVALID { return 3; }
+    // A forged desktop handle never conveys management authority.
+    let denied: syscall::Reply = syscall::invoke(abi::SYS_DESKTOP_LIST, 1, 0, 0, 0, 0, 0);
+    if denied.status != abi::DENIED { return 4; }
+    var handles: [4]usize = zero;
+    var i: usize = 0;
+    unsafe {
+        while i < 4_usize {
+            let created: syscall::Reply = window_api::create(32, 32);
+            if created.status != abi::OK { return 5; }
+            handles[i] = created.value;
+            i = i + 1_usize;
+        }
+        if window_api::create(32, 32).status != abi::LIMIT { return 6; }
+        let page: syscall::Reply = services::allocate_pages(1);
+        if page.status != abi::OK { return 7; }
+        // The descriptor is valid but its last pixel crosses into an unmapped page.
+        let invalid: []const u8 = core::slice_from_raw_parts(
+            core::ptr::<u8>(page.value + 4092_usize), 8);
+        let rect: window_api::Rect = make window_api::Rect { x: 0, y: 0, width: 2, height: 1 };
+        if window_api::update(handles[0_usize], rect, 8, invalid).status != abi::INVALID { return 8; }
+        let beyond: window_api::Rect = make window_api::Rect { x: 31, y: 0, width: 2, height: 1 };
+        if window_api::update(handles[0_usize], beyond, 8,
+            core::slice_from_raw_parts(core::slice_of(PIXELS).data, 8)).status != abi::INVALID { return 9; }
+        if services::free_pages(page.value, 1).status != abi::OK { return 10; }
+        i = 0;
+        while i < 4_usize {
+            if window_api::destroy(handles[i]).status != abi::OK { return 11; }
+            if window_api::destroy(handles[i]).status != abi::BAD_HANDLE { return 12; }
+            i = i + 1_usize;
+        }
+        // Reuse must not revive any previous handle generation. The reaper is
+        // asynchronous, so only a bounded retry of transient owner quota is allowed.
+        var round: usize = 0;
+        while round < 24_usize {
+            var tries: usize = 0;
+            var created: syscall::Reply = zero;
+            loop {
+                created = window_api::create(32, 32);
+                if created.status == abi::OK { break; }
+                if created.status != abi::LIMIT || tries >= 100_usize { return 13; }
+                tick();
+                tries = tries + 1_usize;
+            }
+            match window_api::event(handles[0_usize], false) {
+                window_api::EventRead::Ready(event) => { return 14; },
+                window_api::EventRead::Failed(status) => {
+                    if status != abi::BAD_HANDLE { return 15; }
+                }
+            }
+            let full: window_api::Rect = make window_api::Rect { x: 0, y: 0, width: 32, height: 32 };
+            if window_api::update(created.value, full, 128, core::slice_of(PIXELS)).status != abi::OK { return 16; }
+            if window_api::destroy(created.value).status != abi::OK { return 17; }
+            round = round + 1_usize;
+        }
+    }
+    return 0;
+}
+
+pub fn forbidden_display() -> u32 {
+    // Deliberately invalid ordinary-user access: must fault this app only.
+    unsafe { *core::ptr::<u32>(abi::DISPLAY_BASE) = 0x00ffffff; }
+    return 99;
+}

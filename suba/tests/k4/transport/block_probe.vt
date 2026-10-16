@@ -1,0 +1,123 @@
+// Bare S-mode exploration: fixed reserved scratch DMA, one in-flight request, real external-interrupt completion (exploration only).
+module draft::block;
+import kernel::device::io;
+import kernel::device::virtio;
+const DESC: usize = 0x81000000;
+const AVAIL: usize = 0x81001000;
+const USED: usize = 0x81002000;
+const HEADER: usize = 0x81003000;
+const STATUS: usize = 0x81003010;
+pub const DATA: usize = 0x81004000;
+static mut DEVICE: virtio::DeviceRead = zero;
+static mut QUEUE: virtio::QueueRead = zero;
+static mut INTERRUPTS: usize = 0;
+extern abi(C) fn draft_irq_enable() -> ();
+pub fn handle(cause: usize) -> usize {
+    unsafe {
+        if cause != 0x8000000000000009_usize { loop {} }
+        match DEVICE {
+            virtio::DeviceRead::Missing => { loop {} }, virtio::DeviceRead::Invalid => { loop {} },
+            virtio::DeviceRead::Ready(device) => {
+                let irq: u32 = io::read32(0xc201004);
+                if irq != virtio::irq(device) { loop {} }
+                let status: u32 = virtio::interrupt(device);
+                if status != 1_u32 { loop {} }
+                if !virtio::acknowledge(device, status) { loop {} }
+                io::write32(0xc201004, irq);
+            },
+        }
+        INTERRUPTS = INTERRUPTS + 1_usize;
+    }
+    return 0;
+}
+pub unsafe fn put(address: usize, value: usize, width: usize) -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < width {
+            *core::ptr_add(core::ptr::<u8>(address), i) = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+pub fn initialize() -> usize {
+    unsafe {
+        var slot: usize = 1;
+        while slot <= 8_usize {
+            match virtio::probe(0x10000000_usize + slot * 4096_usize, slot) {
+                virtio::DeviceRead::Missing => {},
+                virtio::DeviceRead::Invalid => { return 0; },
+                virtio::DeviceRead::Ready(device) => {
+                    if virtio::id(device) == 2_u32 { return configure(device); }
+                },
+            }
+            slot = slot + 1_usize;
+        }
+        return 0;
+    }
+}
+unsafe fn configure(device: virtio::Device) -> usize {
+    unsafe {
+        if !virtio::begin(device, 0x200, 0x20) { return 0; }
+        let generation: u32 = virtio::config_generation(device);
+        if virtio::config32(device, 0) != 524288_u32 || virtio::config32(device, 4) != 0_u32 { return 0; }
+        if generation != virtio::config_generation(device) { return 0; }
+        var i: usize = 0;
+        while i < 0x14000_usize { *core::ptr_add(core::ptr::<u8>(DESC), i) = 0; i = i + 1_usize; }
+        match virtio::queue(device, 0, DESC, AVAIL, USED) {
+            virtio::QueueRead::Invalid => { return 0; },
+            virtio::QueueRead::Ready(queue) => { QUEUE = virtio::QueueRead::Ready(queue); },
+        }
+        if !virtio::ready(device) { return 0; }
+        let irq: usize = virtio::irq(device) as usize;
+        io::write32(0xc000000_usize + irq * 4_usize, 1);
+        io::write32(0xc002080, (1_usize << irq) as u32); io::write32(0xc201000, 0);
+        DEVICE = virtio::DeviceRead::Ready(device);
+        draft_irq_enable(); return irq;
+    }
+}
+pub fn transfer(kind: usize, sector: usize, bytes: usize) -> usize {
+    unsafe {
+        match QUEUE {
+            virtio::QueueRead::Invalid => { return 4; },
+            virtio::QueueRead::Ready(queue) => { return transfer_queue(queue, kind, sector, bytes); },
+        }
+    }
+}
+fn transfer_queue(initial: virtio::Queue, kind: usize, sector: usize, bytes: usize) -> usize {
+    var queue: virtio::Queue = initial;
+    if kind != 0_usize && kind != 1_usize && kind != 4_usize { return 1; }
+    if bytes > 65536_usize || bytes % 512_usize != 0_usize || sector > 524288_usize || bytes / 512_usize > 524288_usize - sector { return 2; }
+    if kind == 4_usize && (sector != 0_usize || bytes != 0_usize) { return 3; }
+    unsafe {
+        let before: usize = INTERRUPTS;
+        put(HEADER, kind, 4); put(HEADER + 4_usize, 0, 4); put(HEADER + 8_usize, sector, 8);
+        put(STATUS, 255, 1);
+        if !virtio::descriptor(core::addr_of(queue), 0, HEADER, 16, 1, 1) { return 4; }
+        if kind == 4_usize { if !virtio::descriptor(core::addr_of(queue), 1, STATUS, 1, 2, 0) { return 4; } }
+        else {
+            var flags: usize = 1;
+            if kind == 0_usize { flags = 3; }
+            if !virtio::descriptor(core::addr_of(queue), 1, DATA, bytes, flags, 2) { return 4; }
+            if !virtio::descriptor(core::addr_of(queue), 2, STATUS, 1, 2, 0) { return 4; }
+        }
+        if !virtio::publish(core::addr_of_mut(queue), 0) { return 4; }
+        virtio::kick(core::addr_of(queue));
+        let began: usize = io::time();
+        // Progress requires the trap handler: no used-ring polling can satisfy this wait.
+        while INTERRUPTS == before {
+            if io::time() - began > 10000000_usize { return 6; }
+        }
+        if INTERRUPTS != before + 1_usize { return 5; }
+        var expected: usize = 1;
+        if kind == 0_usize { expected = bytes + 1_usize; }
+        match virtio::take(core::addr_of_mut(queue)) {
+            virtio::Poll::Empty => { return 5; }, virtio::Poll::Invalid => { return 7; },
+            virtio::Poll::Done(item) => {
+                if item.head != 0_usize || item.bytes != expected || *core::ptr::<u8>(STATUS) != 0_u8 { return 8; }
+            },
+        }
+        QUEUE = virtio::QueueRead::Ready(queue);
+    }
+    return 0;
+}

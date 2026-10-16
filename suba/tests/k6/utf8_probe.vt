@@ -1,0 +1,34 @@
+module test::utf8_probe;
+import user::text::utf8;
+import test::transport;
+static mut INPUT: [65537]u8 = zero;
+pub fn run() -> u32 {
+    // SAFETY: exclusive input buffer; transport/read and decoder bounds all accesses.
+    unsafe {
+        let count: usize = transport::read(core::slice_of_mut(INPUT));
+        if count > 65536_usize { return 80; }
+        let input: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+        match utf8::validate(input) {
+            utf8::Validation::Invalid(offset) => { let sent: bool = transport::word(offset); return 1; },
+            utf8::Validation::Valid => {},
+        }
+        var offset: usize = 0;
+        while offset < count {
+            match utf8::decode(input, offset) {
+                utf8::Decode::Value(item) => {
+                    if !utf8::boundary(input, offset) || utf8::previous(input, item.next) != offset { return 82; }
+                    var i: usize = offset + 1_usize;
+                    while i < item.next {
+                        if utf8::boundary(input, i) { return 83; }
+                        i = i + 1_usize;
+                    }
+                    if !transport::word(item.value as usize) || !transport::word(item.next) { return 81; }
+                    offset = item.next;
+                },
+                utf8::Decode::End => { return 82; }, utf8::Decode::Invalid => { return 82; },
+            }
+        }
+        if !utf8::boundary(input, count) { return 82; }
+    }
+    return 0;
+}

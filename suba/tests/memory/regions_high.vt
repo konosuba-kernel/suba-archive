@@ -1,0 +1,143 @@
+// Stack backing gives a high virtual address. Only three pages near the final
+// physical-offset slot are donated; most of the 512 MiB span is not accessible.
+module test::memory;
+import kernel::memory;
+import test::memory_support;
+const BACKING_BYTES: usize = memory::PAGE_BYTES * 7_usize;
+
+unsafe fn expected_stats(free: usize, owned: usize) -> bool {
+    // SAFETY: serialized test context.
+    unsafe {
+        let value: memory::Stats = memory::stats();
+        return value.capacity == 3_usize && value.free == free &&
+            value.allocated == owned && value.retired == 0_usize;
+    }
+}
+
+unsafe fn released(frame: memory::Frame) -> bool {
+    // SAFETY: the test has ended every borrowed page access.
+    unsafe {
+        match memory::release(frame) {
+            memory::ReleaseResult::Released => { return true; },
+            memory::ReleaseResult::Invalid => { return false; }
+        }
+    }
+}
+
+unsafe fn check_pages(first: memory::Frame, second: memory::Frame,
+    last: memory::Frame, base: usize) -> u32 {
+    // SAFETY: this function owns three donated pages; holes are never borrowed.
+    unsafe {
+        let a: []u8 = memory_support::page(first);
+        let b: []u8 = memory_support::page(second);
+        let c: []u8 = memory_support::page(last);
+        if a.len != memory::PAGE_BYTES || b.len != a.len || c.len != a.len { return 20; }
+        if core::addr(a.data) != base + memory::PAGE_BYTES ||
+            core::addr(b.data) != base + memory::PAGE_BYTES * 3_usize ||
+            core::addr(c.data) != base + memory::PAGE_BYTES * 4_usize { return 21; }
+        if !memory_support::all(core::slice_const(a), 0) ||
+            !memory_support::all(core::slice_const(b), 0) ||
+            !memory_support::all(core::slice_const(c), 0) { return 22; }
+        if !expected_stats(0, 3) { return 23; }
+        memory_support::fill(a, 17);
+        memory_support::fill(b, 34);
+        memory_support::fill(c, 51);
+        match memory::allocate() {
+            memory::Allocation::Exhausted => {},
+            memory::Allocation::NotReady => { return 24; },
+            memory::Allocation::Ready(extra) => { return 25; }
+        }
+        if !released(last) || !expected_stats(1, 2) { return 26; }
+        match memory::release(last) {
+            memory::ReleaseResult::Invalid => {},
+            memory::ReleaseResult::Released => { return 27; }
+        }
+        match memory::allocate() {
+            memory::Allocation::Exhausted => { return 28; },
+            memory::Allocation::NotReady => { return 29; },
+            memory::Allocation::Ready(reused) => {
+                let page: []u8 = memory_support::page(reused);
+                if core::addr(page.data) != base + memory::PAGE_BYTES * 4_usize { return 30; }
+                if !memory_support::all(core::slice_const(page), 0) { return 31; }
+                match memory::address(last) {
+                    memory::AddressResult::Invalid => {},
+                    memory::AddressResult::Value(address) => { return 32; }
+                }
+                match memory::release(last) {
+                    memory::ReleaseResult::Invalid => {},
+                    memory::ReleaseResult::Released => { return 33; }
+                }
+                if !released(reused) { return 34; }
+            }
+        }
+        if !memory_support::all(core::slice_const(a), 17) ||
+            !memory_support::all(core::slice_const(b), 34) { return 35; }
+        if !released(first) || !released(second) || !expected_stats(3, 0) { return 36; }
+    }
+    return 0;
+}
+
+unsafe fn allocate_three(base: usize) -> u32 {
+    // SAFETY: single-threaded caller owns the initialized page pool.
+    unsafe {
+        match memory::allocate() {
+            memory::Allocation::NotReady => { return 10; },
+            memory::Allocation::Exhausted => { return 11; },
+            memory::Allocation::Ready(first) => {
+                match memory::allocate() {
+                    memory::Allocation::NotReady => { return 12; },
+                    memory::Allocation::Exhausted => { return 13; },
+                    memory::Allocation::Ready(second) => {
+                        match memory::allocate() {
+                            memory::Allocation::NotReady => { return 14; },
+                            memory::Allocation::Exhausted => { return 15; },
+                            memory::Allocation::Ready(last) => {
+                                return check_pages(first, second, last, base);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn run() -> u32 {
+    var backing: [BACKING_BYTES]u8 = zero;
+    // SAFETY: local backing remains live throughout the whole probe, including all
+    // allocations/releases. The allocator is never called after run returns.
+    unsafe {
+        let bytes: []u8 = core::slice_of_mut(backing);
+        memory_support::fill(bytes, 173);
+        let start: usize = core::addr(bytes.data);
+        let page: usize = memory::PAGE_BYTES;
+        let base: usize = (start + page - 1_usize) / page * page;
+        let offset: usize = (memory::PAGE_CAPACITY - 5_usize) * page;
+        if base <= offset { return 1; }
+        var regions: [2]memory::Region = [
+            make memory::Region { base: base + page, bytes: page },
+            make memory::Region { base: base + page * 3_usize, bytes: page * 2_usize }
+        ];
+        match memory::initialize_regions(base - offset, memory::PAGE_CAPACITY * page,
+            core::slice_of(regions)) {
+            memory::InitResult::Ready => {},
+            memory::InitResult::Invalid => { return 2; },
+            memory::InitResult::AlreadyInitialized => { return 3; }
+        }
+        if !expected_stats(3, 0) || !memory_support::all(core::slice_const(bytes), 173) { return 4; }
+        // The descriptor list is borrowed only during initialization.
+        regions[0] = make memory::Region { base: 0, bytes: 0 };
+        regions[1] = make memory::Region { base: 0, bytes: 0 };
+        let result: u32 = allocate_three(base);
+        if result != 0_u32 { return result; }
+        var index: usize = 0;
+        while index < bytes.len {
+            let address: usize = start + index;
+            let first: bool = address >= base + page && address < base + page * 2_usize;
+            let tail: bool = address >= base + page * 3_usize && address < base + page * 5_usize;
+            if !first && !tail && bytes[index] != 173_u8 { return 5; }
+            index = index + 1_usize;
+        }
+    }
+    return 0;
+}

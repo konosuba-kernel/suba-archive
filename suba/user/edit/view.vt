@@ -1,0 +1,175 @@
+// Editor view over the validated document. No text is copied into a second model.
+module user::edit::app;
+// Last successfully uploaded pixels. This cache has no document authority; it
+// only avoids waking the compositor for rows whose complete pixels are equal.
+static mut PRESENTED: [WIDTH * HEIGHT]u32 = zero;
+unsafe fn row_changed(row: usize) -> bool {
+    unsafe {
+        let start: usize = row * WIDTH;
+        var x: usize = 0;
+        while x < WIDTH {
+            let pixel: u32 = PIXELS[start + x];
+            if pixel != PRESENTED[start + x] { return true; }
+            x = x + 1_usize;
+        }
+    }
+    return false;
+}
+unsafe fn remember_rows(first: usize, rows: usize) -> () {
+    // SAFETY: both typed arrays are process-owned live RAM; first+rows <= HEIGHT
+    // is established by upload_changes. Pixel storage has natural u32 alignment.
+    unsafe {
+        var at: usize = first * WIDTH;
+        let end: usize = (first + rows) * WIDTH;
+        while at < end {
+            PRESENTED[at] = PIXELS[at];
+            at = at + 1_usize;
+        }
+    }
+    return ();
+}
+unsafe fn upload_changes() -> bool {
+    unsafe {
+        var y: usize = 0;
+        while y < HEIGHT {
+            if !row_changed(y) { y = y + 1_usize; continue; }
+            let first: usize = y;
+            y = y + 1_usize;
+            // At most 16 rows fit the existing bounded window-copy request.
+            while y < HEIGHT && y - first < 16_usize && row_changed(y) { y = y + 1_usize; }
+            let rows: usize = y - first;
+            let rect: window_api::Rect = make window_api::Rect { x: 0, y: first, width: WIDTH, height: rows };
+            // SAFETY: byte view borrows this complete run of live u32 pixels.
+            let address: usize = core::addr(core::slice_of(PIXELS).data) + first * WIDTH * 4_usize;
+            let pixels: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)),
+                rows * WIDTH * 4_usize);
+            if window_api::update(TOKEN, rect, WIDTH * 4_usize, pixels).status != abi::OK { return false; }
+            remember_rows(first, rows);
+        }
+    }
+    return true;
+}
+unsafe fn canvas() -> draw::Canvas {
+    unsafe { return make draw::Canvas { address: core::addr(core::slice_of_mut(PIXELS).data),
+        width: WIDTH, height: HEIGHT, stride: WIDTH * 4_usize }; }
+}
+unsafe fn width(face: font::Font, value: u32) -> usize {
+    if value == 9_u32 { return 32; }
+    unsafe { return font::glyph(face, value).width; }
+}
+unsafe fn follow_cursor(document: *const buffer::Document, face: font::Font) -> () {
+    unsafe {
+        let cursor: usize = buffer::state(document).cursor;
+        var at: usize = 0;
+        var line: usize = 0;
+        var column: usize = 0;
+        while at < cursor {
+            match buffer::decode(document, at) {
+                utf8::Decode::End => { break; }, utf8::Decode::Invalid => { break; },
+                utf8::Decode::Value(item) => {
+                    if item.value == 10_u32 { line = line + 1_usize; column = 0; }
+                    else { column = column + width(face, item.value); }
+                    at = item.next;
+                }
+            }
+        }
+        if line < TOP_LINE { TOP_LINE = line; }
+        if line >= TOP_LINE + BODY_ROWS { TOP_LINE = line - BODY_ROWS + 1_usize; }
+        if column < LEFT_PIXEL { LEFT_PIXEL = column; }
+        if column >= LEFT_PIXEL + WIDTH - 24_usize { LEFT_PIXEL = column - (WIDTH - 32_usize); }
+    }
+    return ();
+}
+unsafe fn body(document: *const buffer::Document, face: font::Font) -> () {
+    unsafe {
+        let target: draw::Canvas = canvas();
+        let state: buffer::State = buffer::state(document);
+        var first: usize = state.cursor;
+        var last: usize = state.anchor;
+        if first > last { first = state.anchor; last = state.cursor; }
+        var at: usize = 0;
+        var line: usize = 0;
+        var column: usize = 0;
+        loop {
+            if line >= TOP_LINE + BODY_ROWS { break; }
+            if line >= TOP_LINE && at == state.cursor && column >= LEFT_PIXEL && column - LEFT_PIXEL < WIDTH - 8_usize {
+                draw::fill(target, make draw::Rect { x: 8_usize + column - LEFT_PIXEL,
+                    y: BODY_TOP + (line - TOP_LINE) * 16_usize, width: 2, height: 16 }, 0xfbbf24);
+            }
+            match buffer::decode(document, at) {
+                utf8::Decode::End => { break; }, utf8::Decode::Invalid => { break; },
+                utf8::Decode::Value(item) => {
+                    if item.value == 10_u32 {
+                        line = line + 1_usize; column = 0;
+                    } else {
+                        let advance: usize = width(face, item.value);
+                        if line >= TOP_LINE && column >= LEFT_PIXEL && column - LEFT_PIXEL < WIDTH - 8_usize {
+                            let x: usize = 8_usize + column - LEFT_PIXEL;
+                            let y: usize = BODY_TOP + (line - TOP_LINE) * 16_usize;
+                            if at >= first && at < last {
+                                draw::fill(target, make draw::Rect { x: x, y: y, width: advance, height: 16 }, 0x334e68);
+                            }
+                            if item.value != 9_u32 {
+                                let drawn: usize = paint::scalar(target, face, item.value, x, y, 0xdbeafe);
+                            }
+                        }
+                        column = column + advance;
+                    }
+                    at = item.next;
+                }
+            }
+        }
+    }
+    return ();
+}
+unsafe fn point(document: *buffer::Document, face: font::Font, x: usize, y: usize) -> () {
+    if y < BODY_TOP || y >= BODY_TOP + BODY_ROWS * 16_usize { return (); }
+    unsafe {
+        let wanted_line: usize = TOP_LINE + (y - BODY_TOP) / 16_usize;
+        var wanted_column: usize = LEFT_PIXEL;
+        if x >= 8_usize { wanted_column = wanted_column + x - 8_usize; }
+        var at: usize = 0;
+        var line: usize = 0;
+        var column: usize = 0;
+        loop {
+            if line == wanted_line && column >= wanted_column { break; }
+            match buffer::decode(core::ptr_const(document), at) {
+                utf8::Decode::End => { break; }, utf8::Decode::Invalid => { break; },
+                utf8::Decode::Value(item) => {
+                    if item.value == 10_u32 {
+                        if line == wanted_line { break; }
+                        line = line + 1_usize; column = 0;
+                    } else { column = column + width(face, item.value); }
+                    at = item.next;
+                }
+            }
+        }
+        var anchor: usize = at;
+        if extending() { anchor = buffer::state(core::ptr_const(document)).anchor; }
+        edited(buffer::select(document, anchor, at));
+    }
+    return ();
+}
+unsafe fn render(document: *const buffer::Document, face: font::Font) -> bool {
+    unsafe {
+        follow_cursor(document, face);
+        let target: draw::Canvas = canvas();
+        draw::fill(target, make draw::Rect { x: 0, y: 0, width: WIDTH, height: HEIGHT }, 0x101b2b);
+        paint::line(target, face, path(), 8, 28, 0x7dd3fc);
+        paint::line(target, face, MESSAGE, 8, 48, 0xfbbf24);
+        if buffer::state(document).version != SAVED_VERSION {
+            paint::line(target, face, "*", WIDTH - 24_usize, 28, 0xfbbf24);
+        }
+        let label: []const u8 = prompt_label();
+        if label.len == 0_usize { paint::line(target, face, manifest_path(), 8, 64, 0x94a3b8); }
+        else {
+            paint::line(target, face, label, 8, 64, 0xfbbf24);
+            paint::line(target, face, core::slice_from_raw_parts(core::slice_of(OPEN_PATH).data, OPEN_BYTES), 104, 64, 0xffffff);
+        }
+        body(document, face);
+        draw::fill(target, make draw::Rect { x: 0, y: 368, width: WIDTH, height: 2 }, 0x334e68);
+        draw_log(target, face);
+        return upload_changes();
+    }
+    return true;
+}

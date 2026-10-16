@@ -1,0 +1,10 @@
+format 1
+profile suba-kernel
+entry kernel::entry::start
+bind panic=kernel::entry::panic
+bind trap_dispatch=kernel::entry::dispatch
+source abi/contract.vt
+source kernel/machine.vt
+source kernel/entry.vt
+assembly kernel/machine.s0
+output build/kernel.elf

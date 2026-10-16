@@ -1,0 +1,186 @@
+// Cwd and transient ownership are independent of File handles. Death scans bounded
+// metadata and never waits for an unrelated reader of a detached old version.
+module kernel::fs;
+struct WorkingDirectory { owner: Client, node: usize, dying: bool, scan: usize }
+static mut DIRECTORIES: [16]WorkingDirectory = zero;
+static mut CLEAN_CURSOR: usize = 0;
+static mut CLEAN_NODE: usize = abi::FS_NODE_COUNT;
+pub unsafe fn attach_client(client: Client) -> bool {
+    unsafe {
+        if client.slot >= 16_usize || client.generation == 0_usize || DIRECTORIES[client.slot].owner.generation != 0_usize { return false; }
+        GRANTS[client.slot] = zero;
+        DIRECTORIES[client.slot].owner = client;
+        DIRECTORIES[client.slot].node = 0;
+        DIRECTORIES[client.slot].dying = false;
+        DIRECTORIES[client.slot].scan = 0;
+        NODE_USE[0_usize].cwd = NODE_USE[0_usize].cwd + 1_usize;
+        return true;
+    }
+}
+unsafe fn cwd_node(client: Client) -> usize {
+    unsafe { return DIRECTORIES[client.slot].node; }
+}
+pub unsafe fn directory_release(node: usize) -> bool {
+    unsafe {
+        if node >= abi::FS_NODE_COUNT || NODE_USE[node].cwd == 0_usize { return false; }
+        NODE_USE[node].cwd = NODE_USE[node].cwd - 1_usize;
+        return true;
+    }
+}
+// Transfers one existing directory pin to the new process; old root pin is released.
+pub unsafe fn install_directory(client: Client, node: usize) -> bool {
+    unsafe {
+        if !same_client(DIRECTORIES[client.slot].owner, client) || node >= abi::FS_NODE_COUNT ||
+            NODES[node].kind != abi::NODE_DIRECTORY || NODE_USE[node].cwd == 0_usize { return false; }
+        if !directory_release(DIRECTORIES[client.slot].node) { return false; }
+        DIRECTORIES[client.slot].node = node;
+        return true;
+    }
+}
+pub enum PinnedDirectory { Invalid, Ready(usize) }
+// Returns one owned pin on the parent's resolved identity. The spawn request must
+// release it on failure/cancel or transfer it through install_directory on success.
+pub unsafe fn retain_directory(parent: Client) -> PinnedDirectory {
+    unsafe {
+        if parent.slot >= 16_usize || !same_client(DIRECTORIES[parent.slot].owner, parent) ||
+            DIRECTORIES[parent.slot].dying { return PinnedDirectory::Invalid; }
+        let node: usize = cwd_node(parent);
+        if NODE_USE[node].cwd == 0_usize || NODE_USE[node].cwd == 0xffffffffffffffff_usize {
+            return PinnedDirectory::Invalid;
+        }
+        NODE_USE[node].cwd = NODE_USE[node].cwd + 1_usize;
+        return PinnedDirectory::Ready(node);
+    }
+}
+pub unsafe fn end_client(client: Client) -> bool {
+    unsafe {
+        if client.slot >= 16_usize { return false; }
+        if DIRECTORIES[client.slot].owner.generation == 0_usize { return true; }
+        if !same_client(DIRECTORIES[client.slot].owner, client) { return false; }
+        if DIRECTORIES[client.slot].dying { return true; }
+        if !directory_release(DIRECTORIES[client.slot].node) { return false; }
+        DIRECTORIES[client.slot].dying = true;
+        DIRECTORIES[client.slot].scan = 0;
+        return true;
+    }
+}
+// This gate advances at most64 nodes and is called by the process Tail phase.
+pub unsafe fn settled(client: Client) -> bool {
+    unsafe {
+        if DIRECTORIES[client.slot].owner.generation == 0_usize { return true; }
+        if !same_client(DIRECTORIES[client.slot].owner, client) || !DIRECTORIES[client.slot].dying { return false; }
+        match OPERATIONS[client.slot].state {
+            RequestState::Empty => {}, RequestState::Queued => { return false; },
+            RequestState::Active => { return false; }, RequestState::Done(result) => { return false; }
+        }
+        if ACTIVE != 16_usize { return false; }
+        var count: usize = 0;
+        while count < 64_usize && DIRECTORIES[client.slot].scan < abi::FS_NODE_COUNT {
+            let node: usize = DIRECTORIES[client.slot].scan;
+            if NODES[node].kind != abi::NODE_FREE &&
+                ((same_client(NODE_USE[node].transient, client) && (NODES[node].flags & codec::TRANSIENT) != 0_u32) ||
+                 same_client(NODE_USE[node].cleanup, client)) {
+                if NODE_USE[node].readers != 0_usize || NODE_USE[node].writer { return false; }
+                detach_node(node, client);
+                return false;
+            }
+            DIRECTORIES[client.slot].scan = node + 1_usize;
+            count = count + 1_usize;
+        }
+        if DIRECTORIES[client.slot].scan != abi::FS_NODE_COUNT { return false; }
+        DIRECTORIES[client.slot].owner.generation = 0;
+        GRANTS[client.slot] = zero;
+        return true;
+    }
+}
+unsafe fn free_node(node: usize) -> () {
+    unsafe {
+        let generation: usize = NODES[node].generation;
+        if (NODES[node].flags & codec::DETACHED) != 0_u32 { DETACHED_COUNT = DETACHED_COUNT - 1_usize; }
+        var empty: codec::Node = zero;
+        empty.generation = generation;
+        NODES[node] = empty;
+        if generation != 0xffffffffffffffff_usize { FREE_NODES = FREE_NODES + 1_usize; }
+        var unused: NodeUse = zero;
+        NODE_USE[node] = unused;
+        dirty_node(node);
+    }
+    return ();
+}
+// Metadata cleanup only runs between serial transactions, at most64 FAT/node entries.
+unsafe fn cleanup_step() -> bool {
+    unsafe {
+        var count: usize = 0;
+        if CLEAN_NODE < abi::FS_NODE_COUNT {
+            while count < 64_usize && NODES[CLEAN_NODE].first != 0_u32 {
+                let block: usize = NODES[CLEAN_NODE].first as usize;
+                let next: u32 = FAT[block];
+                FAT[block] = abi::FAT_FREE;
+                FREE_BLOCKS = FREE_BLOCKS + 1_usize;
+                dirty_fat(block);
+                NODES[CLEAN_NODE].first = 0;
+                if next != abi::FAT_END { NODES[CLEAN_NODE].first = next; }
+                count = count + 1_usize;
+            }
+            if NODES[CLEAN_NODE].first == 0_u32 { free_node(CLEAN_NODE); CLEAN_NODE = abi::FS_NODE_COUNT; }
+            return true;
+        }
+        while count < 64_usize {
+            let node: usize = CLEAN_CURSOR;
+            CLEAN_CURSOR = (CLEAN_CURSOR + 1_usize) % abi::FS_NODE_COUNT;
+            count = count + 1_usize;
+            if NODES[node].kind != abi::NODE_FREE && (NODES[node].flags & codec::DETACHED) != 0_u32 &&
+                NODE_USE[node].readers == 0_usize && !NODE_USE[node].writer && NODE_USE[node].cwd == 0_usize {
+                CLEAN_NODE = node;
+                return true;
+            }
+        }
+        return false;
+    }
+}
+pub unsafe fn source_epoch() -> usize { unsafe { return SOURCE_EPOCH; } }
+unsafe fn changed() -> bool {
+    unsafe {
+        if SOURCE_EPOCH == 0xffffffffffffffff_usize { return false; }
+        SOURCE_EPOCH = SOURCE_EPOCH + 1_usize;
+        return true;
+    }
+}
+// Rights follow real parents, never the lexical prefix supplied by a user.
+unsafe fn permitted(node: usize, writing: bool) -> bool {
+    unsafe {
+        let client: Client = OPERATIONS[ACTIVE].client;
+        match domain_permission(node, client, writing) {
+            DomainPermission::Decided(value) => { return value; }, DomainPermission::Ordinary => {}
+        }
+        var current: usize = node;
+        var depth: usize = 0;
+        while depth <= 16_usize {
+            if current == 0_usize { return !writing; }
+            if NODES[current].parent == 0_u32 {
+                if matches(core::addr_of(NODES[current]), "work") { return !restricted(client); }
+                if matches(core::addr_of(NODES[current]), "sys") { return !writing; }
+                return false;
+            }
+            current = NODES[current].parent as usize;
+            depth = depth + 1_usize;
+        }
+        return false;
+    }
+}
+unsafe fn creation_depth(parent: usize) -> bool {
+    unsafe {
+        var at: usize = parent;
+        var depth: usize = 1;
+        while at != 0_usize && depth <= 16_usize { at = NODES[at].parent as usize; depth = depth + 1_usize; }
+        return depth <= 16_usize;
+    }
+}
+pub unsafe fn live_files() -> usize {
+    unsafe {
+        var i: usize = 0;
+        var count: usize = 0;
+        while i < FILE_CAPACITY { if FILES[i].live { count = count + 1_usize; } i = i + 1_usize; }
+        return count;
+    }
+}

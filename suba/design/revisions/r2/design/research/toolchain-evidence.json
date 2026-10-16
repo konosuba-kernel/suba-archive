@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-13",
+  "scope": "read-only source and existing artifact inspection; no new compiler or suba behavior test",
+  "git_head": "2c7061cbed13959697369879e5717a8ad0c9fb21",
+  "compiler": {
+    "path": "biomiya/core-s/build/snext-p4-r2/e3.elf",
+    "sha256": "7e1de550da39c31e203c83d0bce7e13dd5deb64923f3c5e4428aad8fbd7d7d20",
+    "sha256_matches_release": true,
+    "bytes": 999504,
+    "segments": [
+      {
+        "type": 1,
+        "flags": 5,
+        "offset": 4096,
+        "vaddr": 65536,
+        "paddr": 65536,
+        "filesz": 989896,
+        "memsz": 989896,
+        "align": 4096
+      },
+      {
+        "type": 1,
+        "flags": 4,
+        "offset": 995328,
+        "vaddr": 1056768,
+        "paddr": 1056768,
+        "filesz": 1836,
+        "memsz": 1836,
+        "align": 4096
+      },
+      {
+        "type": 1,
+        "flags": 6,
+        "offset": 999424,
+        "vaddr": 1060864,
+        "paddr": 1060864,
+        "filesz": 80,
+        "memsz": 55135764,
+        "align": 4096
+      }
+    ],
+    "writable_reservation": 55135764,
+    "image_span": 56131092
+  },
+  "frozen_inputs": [
+    {
+      "path": "next/q/blocking.vt",
+      "sha256": "044a0905e9c54b5c4555165f68c488d99605a9e71f1f15b01e1c3ccebf8cd958",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/check.vt",
+      "sha256": "b28c596bbdfb6e056b270627259ed143449bf649766e095008533c3d4ab8b205",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/compiler.build",
+      "sha256": "29d766fd9ccc67b19475c9bb1277ec39be99afb135e068d8f0a9e09173a4375b",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/image.vt",
+      "sha256": "21a8641c3a5f7d03a50682698969f7b1ad8f300ec0a5be256c7dd6a333e0389a",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/init.vt",
+      "sha256": "06df249b98ef394495425aba4a60ba44515b676017a03445998d08a96f47f615",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/input.vt",
+      "sha256": "32d9ce32f8059c110efff67e7f37f8ac7392867ad75f0bfbe1d75adbe4c7028b",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/ir.vt",
+      "sha256": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/lex.vt",
+      "sha256": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/main.vt",
+      "sha256": "f30ba4a2641da8f6a43f4cbc263f9fbfb2b4c49b3fe1d5cdcc8cdcc3572cb5f4",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/model.vt",
+      "sha256": "d3f90f15c19bfc51c97c903db696b5ca4313e2126ff0d5ca6c5e0b5e83de2caf",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/parse.vt",
+      "sha256": "31fbbeef18ec1564c0a80eef55c8af069a18d3739300168b3e4ed5167f476919",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/rules.vt",
+      "sha256": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/runtime/bytes.vt",
+      "sha256": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/runtime/linux.s0",
+      "sha256": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/runtime/linux.vt",
+      "sha256": "f50998235c8a049c26f9fa73d3eb724a5db4b7f233d521dceb449a3103f73a3a",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/rv64.vt",
+      "sha256": "ba613287c9c48eda58de7fe74ea264d5a010e896ca1d9f5089333a3254b6aabf",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/s0.vt",
+      "sha256": "c90d59a279926a1491fc43307deddc4e04acc0d9754a64aad56fe850fe53d9b7",
+      "matches_release": true
+    },
+    {
+      "path": "next/q/types.vt",
+      "sha256": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3",
+      "matches_release": true
+    }
+  ],
+  "compiler_statistics_from_release": {
+    "sources": 16,
+    "imports": 50,
+    "assembly_files": 1,
+    "source": 332326,
+    "assembly": 345,
+    "names": 4067,
+    "name_bytes": 81907,
+    "decls": 795,
+    "types": 414,
+    "fields": 355,
+    "params": 619,
+    "max_ast": 1119,
+    "max_ir": 1429,
+    "max_frame": 25808,
+    "max_bindings": 18,
+    "max_defers": 0,
+    "max_loops": 3,
+    "max_slots": 982,
+    "max_args": 185,
+    "max_params": 5,
+    "text": 989896,
+    "data": 1910,
+    "objects": 545,
+    "symbols": 12660,
+    "fixups": 27672,
+    "relocations": 4,
+    "elf": 999504
+  },
+  "release_sha256": "9195f147afe7b74543bb36928f59bfee55ab8b61fc07f7afbe665c4217c10118"
+}

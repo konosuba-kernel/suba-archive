@@ -1,0 +1,15 @@
+{
+  "capsule_and_stage_mismatches": [],
+  "command": [
+    "/usr/bin/qemu-riscv64",
+    "-s",
+    "1048576",
+    "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/perturbed.elf",
+    "build",
+    "program.build"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": "S-next-P4-PERTURBED-1fd5f5ff2118 sources=1 imports=0 assembly_files=0 source=56 assembly=0 names=6 name_bytes=48 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n",
+  "prefix_observed": true
+}

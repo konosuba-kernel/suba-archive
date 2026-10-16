@@ -1,0 +1,84 @@
+module test::memory;
+import kernel::memory;
+import test::memory_support;
+const BACKING_BYTES: usize = memory::PAGE_BYTES * 67_usize;
+static mut BACKING: [BACKING_BYTES]u8 = zero;
+
+pub fn run() -> u32 {
+    var regions: [65]memory::Region = zero;
+    var allocated: [64]memory::Allocation = [memory::Allocation::NotReady; 64];
+    // SAFETY: this process exclusively owns static backing and all allocator calls.
+    // Local descriptors stay valid until initialize_regions returns.
+    unsafe {
+        let bytes: []u8 = core::slice_of_mut(BACKING);
+        memory_support::fill(bytes, 173);
+        let start: usize = core::addr(bytes.data);
+        let page: usize = memory::PAGE_BYTES;
+        let base: usize = (start + page - 1_usize) / page * page;
+        var index: usize = 0;
+        while index < 65_usize {
+            regions[index] = make memory::Region { base: base + index * page, bytes: page };
+            index = index + 1_usize;
+        }
+        // All 65 entries would otherwise be valid; this isolates the list limit.
+        match memory::initialize_regions(base, page * 65_usize, core::slice_of(regions)) {
+            memory::InitResult::Invalid => {},
+            memory::InitResult::AlreadyInitialized => { return 1; },
+            memory::InitResult::Ready => { return 2; }
+        }
+        let initial: memory::Stats = memory::stats();
+        if initial.capacity != 0_usize || initial.free != 0_usize { return 3; }
+        let list: []const memory::Region = core::slice_from_raw_parts(
+            core::slice_of(regions).data, 64);
+        match memory::initialize_regions(base, page * 65_usize, list) {
+            memory::InitResult::Ready => {},
+            memory::InitResult::AlreadyInitialized => { return 4; },
+            memory::InitResult::Invalid => { return 5; }
+        }
+        index = 0;
+        while index < 64_usize {
+            allocated[index] = memory::allocate();
+            match allocated[index] {
+                memory::Allocation::NotReady => { return 6; },
+                memory::Allocation::Exhausted => { return 7; },
+                memory::Allocation::Ready(frame) => {
+                    let data: []u8 = memory_support::page(frame);
+                    if core::addr(data.data) != base + index * page { return 8; }
+                    if !memory_support::all(core::slice_const(data), 0) { return 9; }
+                    memory_support::fill(data, 99);
+                }
+            }
+            index = index + 1_usize;
+        }
+        match memory::allocate() {
+            memory::Allocation::Exhausted => {},
+            memory::Allocation::NotReady => { return 10; },
+            memory::Allocation::Ready(extra) => { return 11; }
+        }
+        index = 0;
+        while index < 64_usize {
+            match allocated[index] {
+                memory::Allocation::NotReady => { return 12; },
+                memory::Allocation::Exhausted => { return 13; },
+                memory::Allocation::Ready(frame) => {
+                    match memory::release(frame) {
+                        memory::ReleaseResult::Released => {},
+                        memory::ReleaseResult::Invalid => { return 14; }
+                    }
+                }
+            }
+            index = index + 1_usize;
+        }
+        let final_state: memory::Stats = memory::stats();
+        if final_state.capacity != 64_usize || final_state.free != 64_usize ||
+            final_state.allocated != 0_usize || final_state.retired != 0_usize { return 15; }
+        index = 0;
+        while index < bytes.len {
+            let address: usize = start + index;
+            if (address < base || address >= base + page * 64_usize) &&
+                bytes[index] != 173_u8 { return 16; }
+            index = index + 1_usize;
+        }
+    }
+    return 0;
+}

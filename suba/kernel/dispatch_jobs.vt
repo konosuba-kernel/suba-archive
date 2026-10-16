@@ -1,0 +1,116 @@
+// Job handle admission, FS serial transactions and final storage-hold release.
+// The process tree and filesystem remain separate owners; no leaf callbacks.
+module kernel::dispatch;
+static mut JOB_TAIL_CURSOR: usize = 0;
+
+unsafe fn job_create(id: process::Id, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if fs::restricted(client(id)) { return answer(id, abi::DENIED, 0); }
+        if (address == 0_usize && bytes != 0_usize) || (address != 0_usize &&
+            (bytes != files::JOB_INFO_BYTES || !usercopy::range(id, address, bytes, true))) { return answer(id, abi::INVALID, 0); }
+        var job: objects::Identity = zero;
+        match jobs::create() {
+            jobs::Created::Limit => { return answer(id, abi::LIMIT, 0); },
+            jobs::Created::Ready(value) => { job = value; }
+        }
+        var token: usize = 0;
+        match insert(id, objects::Object::Job(job), objects::PREPARE | objects::KILL | objects::COLLECT) {
+            objects::InsertResult::Invalid => { return false; },
+            objects::InsertResult::Limit => {
+                if !jobs::release(job) { return false; }
+                return answer(id, abi::LIMIT, 0);
+            },
+            objects::InsertResult::Ready(value) => { token = value; }
+        }
+        if address == 0_usize { return answer(id, abi::OK, token); }
+        if !jobs::hold_storage(job) { return false; }
+        match fs::enqueue(client(id), fs::Command::Job(fs::JobCommand::Create(job)), "", "") {
+            fs::Queued::Failed(error) => {
+                if close(id, token) != abi::OK { return false; }
+                return answer(id, file_error(error), 0);
+            },
+            fs::Queued::Ready(ticket) => {
+                return pending(id, request::Operation::Job(make request::Job {
+                    ticket: ticket, address: address, token: token, creating: true }));
+            }
+        }
+    }
+}
+
+unsafe fn job_call(id: process::Id, token: usize, freeze: bool, epoch: usize, boot: usize) -> bool {
+    unsafe {
+        var rights: u32 = objects::KILL;
+        if freeze { rights = objects::PREPARE; }
+        match handle(id, token, rights) {
+            objects::LookupResult::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            objects::LookupResult::Denied => { return answer(id, abi::DENIED, 0); },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Job(job) => {
+                        if !freeze {
+                            fs::end_domain(job);
+                            if !jobs::end(job) || !children::cancel_job(job) { return false; }
+                            return answer(id, abi::OK, 0);
+                        }
+                        if !fs::has_domain(job) { return answer(id, abi::UNSUPPORTED, 0); }
+                        let change: fs::Freeze = make fs::Freeze { job: job, epoch: epoch, boot: boot };
+                        match fs::enqueue(client(id), fs::Command::Job(fs::JobCommand::Freeze(change)), "", "") {
+                            fs::Queued::Failed(error) => { return answer(id, file_error(error), 0); },
+                            fs::Queued::Ready(ticket) => {
+                                return pending(id, request::Operation::Job(make request::Job {
+                                    ticket: ticket, address: 0, token: token, creating: false }));
+                            }
+                        }
+                    },
+                    objects::Object::Desktop(value) => {}, objects::Object::Empty => {},
+                    objects::Object::Child(value) => {}, objects::Object::File(value) => {},
+                    objects::Object::Window(value) => {}, objects::Object::StreamRead(value) => {}, objects::Object::StreamWrite(value) => {}
+                }
+            }
+        }
+        return answer(id, abi::BAD_HANDLE, 0);
+    }
+}
+
+unsafe fn job_step(work: request::Pending, change: request::Job) -> bool {
+    unsafe {
+        match fs::action(change.ticket) {
+            fs::Action::Wait => { return true; }, fs::Action::Invalid => { return false; },
+            fs::Action::Input(copy) => { return false; },
+            fs::Action::Output(copy) => {
+                if !change.creating || copy.offset != 0_usize || copy.bytes.len != files::JOB_INFO_BYTES { return false; }
+                if !usercopy::write(work.owner, change.address,
+                    core::slice_from_raw_parts(copy.bytes.data, copy.bytes.len)) {
+                    if !fs::cancel(change.ticket) || close(work.owner, change.token) != abi::OK { return false; }
+                    return finish(work, abi::INVALID, 0);
+                }
+                return fs::copied(change.ticket);
+            },
+            fs::Action::Done(result) => {
+                if !fs::take(change.ticket) { return false; }
+                match result {
+                    fs::Outcome::Value(value) => {
+                        var token: usize = 0;
+                        if change.creating { token = change.token; }
+                        return finish(work, abi::OK, token);
+                    },
+                    fs::Outcome::Failed(error) => {
+                        if change.creating && close(work.owner, change.token) != abi::OK { return false; }
+                        return finish(work, file_error(error), 0);
+                    },
+                    fs::Outcome::File(file) => { return false; }, fs::Outcome::Directory(node) => { return false; }
+                }
+            }
+        }
+    }
+}
+unsafe fn job_tail_step() -> bool {
+    unsafe {
+        let id: objects::Identity = jobs::storage_tail(JOB_TAIL_CURSOR);
+        JOB_TAIL_CURSOR = (JOB_TAIL_CURSOR + 1_usize) % 32_usize;
+        if id.generation == 0_usize { return true; }
+        fs::end_domain(id);
+        if fs::drain_domain(id) { return jobs::release_storage(id); }
+        return true;
+    }
+}

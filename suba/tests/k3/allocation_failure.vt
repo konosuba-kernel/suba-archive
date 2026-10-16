@@ -1,0 +1,14 @@
+// Host tool injects a labelled test-only private allocation failure after 0/1/2 pages.
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+pub fn run() -> u32 {
+    let before: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+    let allocation: syscall::Reply = services::allocate_pages(3);
+    let after: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+    if allocation.status != abi::NO_MEMORY { return 110; }
+    if after.value != before.value { return 111; }
+    return 0;
+}

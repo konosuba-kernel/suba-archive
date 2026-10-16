@@ -1,0 +1,63 @@
+{
+  "passed": true,
+  "compiler_sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+  "system": "/home/mii/code/konOSuba/suba/build/k7-system-r6",
+  "products": {
+    "hello.log": {
+      "sha256": "2643894d39231f56f85dc66a1d7b5b166e56370befac8c1815a97a9b945b01d7",
+      "bytes": 305
+    },
+    "c2.log": {
+      "sha256": "9821b1b3359e21ec2db89f266f751e2796e1434e99ab4b859e795303e4805f43",
+      "bytes": 360
+    },
+    "after.log": {
+      "sha256": "0251be8abb1c3c8e8d81506c21624bfc006126a9fb6e1fb5d7c884ee90ed6ec6",
+      "bytes": 52
+    },
+    "before.log": {
+      "sha256": "0251be8abb1c3c8e8d81506c21624bfc006126a9fb6e1fb5d7c884ee90ed6ec6",
+      "bytes": 52
+    },
+    "mutant.log": {
+      "sha256": "9821b1b3359e21ec2db89f266f751e2796e1434e99ab4b859e795303e4805f43",
+      "bytes": 360
+    },
+    "c2.elf": {
+      "sha256": "872580a5751997a32c7b91c127987117e375a866fa99ecb36292ab443d0bb63c",
+      "bytes": 1061008
+    },
+    "hello.elf": {
+      "sha256": "5f0cc70459dadaeae4ac422cec97317916a8043604251b6e3358d9dfbef1bb85",
+      "bytes": 12289
+    },
+    "mutant.elf": {
+      "sha256": "6b21f25989ce1fa85b7832a54f56c9caeeeede76b4636d1dd40e04ad0fc4aa76",
+      "bytes": 1061008
+    },
+    "c3.elf": {
+      "sha256": "872580a5751997a32c7b91c127987117e375a866fa99ecb36292ab443d0bb63c",
+      "bytes": 1061008
+    },
+    "c1.elf": {
+      "sha256": "872580a5751997a32c7b91c127987117e375a866fa99ecb36292ab443d0bb63c",
+      "bytes": 1061008
+    },
+    "c3.log": {
+      "sha256": "9821b1b3359e21ec2db89f266f751e2796e1434e99ab4b859e795303e4805f43",
+      "bytes": 360
+    },
+    "c1.log": {
+      "sha256": "9821b1b3359e21ec2db89f266f751e2796e1434e99ab4b859e795303e4805f43",
+      "bytes": 360
+    }
+  },
+  "host_full_byte_equal": [
+    "c1",
+    "hello",
+    "mutant"
+  ],
+  "guest_elapsed_seconds": 1349.035437188002,
+  "full_report": "build/k8-native-r1/verification.json",
+  "full_report_sha256": "f8cc16228b98594146a7116afdd7a0c526f9ecfd9035cdbbaef6288d332cbc8c"
+}

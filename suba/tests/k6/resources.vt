@@ -1,0 +1,131 @@
+module test::resources;
+import user::edit::buffer;
+import tool::fontpack;
+import user::text::font;
+import user::text::utf8;
+static mut OLD: [128]u8 = zero;
+static mut NEW: [256]u8 = zero;
+static mut COPY: [128]u8 = zero;
+static mut FONT: [font::FILE_BYTES]u8 = zero;
+
+unsafe fn equal(left: []const u8, right: []const u8) -> bool {
+    if left.len != right.len { return false; }
+    // SAFETY: test owns both live buffers, cursor bounded by equal lengths.
+    unsafe {
+        var i: usize = 0;
+        while i < left.len { if left[i] != right[i] { return false; } i = i + 1_usize; }
+    }
+    return true;
+}
+fn done(result: buffer::Edit) -> bool {
+    match result {
+        buffer::Edit::Done => { return true; }, buffer::Edit::InvalidUtf8(offset) => { return false; },
+        buffer::Edit::InvalidPosition => { return false; }, buffer::Edit::Limit => { return false; },
+        buffer::Edit::NoMemory => { return false; }, buffer::Edit::Aliased => { return false; },
+        buffer::Edit::VersionLimit => { return false; },
+    }
+}
+unsafe fn exercise(document: *buffer::Document) -> u32 {
+    // SAFETY: single test owns document and backing; it verifies alias rejection before any mutation.
+    unsafe {
+        if !done(buffer::select(document, 1, 4)) { return 10; }
+        match buffer::copy_selection(core::ptr_const(document), core::slice_of_mut(COPY)) {
+            buffer::Copy::Done(bytes) => {
+                if !equal(core::slice_from_raw_parts(core::slice_of(COPY).data, bytes), "中") { return 11; }
+            },
+            buffer::Copy::NoMemory => { return 12; }, buffer::Copy::Aliased => { return 13; },
+        }
+        match buffer::decode(core::ptr_const(document), 4) {
+            utf8::Decode::Value(item) => { if item.value != 0x1f600_u32 || item.next != 8_usize { return 29; } },
+            utf8::Decode::End => { return 29; }, utf8::Decode::Invalid => { return 29; },
+        }
+        match buffer::decode(core::ptr_const(document), 1) {
+            utf8::Decode::Value(item) => { if item.value != 0x4e2d_u32 || item.next != 4_usize { return 30; } },
+            utf8::Decode::End => { return 30; }, utf8::Decode::Invalid => { return 30; },
+        }
+        if !done(buffer::select(document, 8, 1)) { return 31; }
+        match buffer::copy_selection(core::ptr_const(document), core::slice_of_mut(COPY)) {
+            buffer::Copy::Done(bytes) => {
+                if !equal(core::slice_from_raw_parts(core::slice_of(COPY).data, bytes), "中😀") { return 32; }
+            },
+            buffer::Copy::NoMemory => { return 32; }, buffer::Copy::Aliased => { return 32; },
+        }
+        if !done(buffer::select(document, 1, 4)) { return 33; }
+        match buffer::rehome(document, core::slice_of_mut(OLD)) {
+            buffer::Edit::Aliased => {}, buffer::Edit::Done => { return 34; },
+            buffer::Edit::InvalidUtf8(offset) => { return 34; }, buffer::Edit::InvalidPosition => { return 34; },
+            buffer::Edit::Limit => { return 34; }, buffer::Edit::NoMemory => { return 34; },
+            buffer::Edit::VersionLimit => { return 34; },
+        }
+        COPY[0] = 173;
+        match buffer::copy_selection(core::ptr_const(document),
+            core::slice_from_raw_parts_mut(core::slice_of_mut(COPY).data, 1)) {
+            buffer::Copy::NoMemory => {}, buffer::Copy::Done(bytes) => { return 25; },
+            buffer::Copy::Aliased => { return 25; },
+        }
+        if COPY[0] != 173_u8 { return 26; }
+        match buffer::open(core::slice_of_mut(OLD), "bad\xff") {
+            buffer::Open::InvalidUtf8(offset) => {}, buffer::Open::Ready(value) => { return 27; },
+            buffer::Open::NoMemory => { return 27; }, buffer::Open::Limit => { return 27; },
+            buffer::Open::Aliased => { return 27; },
+        }
+        match buffer::open(core::slice_of_mut(OLD), core::slice_of(NEW)) {
+            buffer::Open::NoMemory => {}, buffer::Open::Ready(value) => { return 28; },
+            buffer::Open::InvalidUtf8(offset) => { return 28; }, buffer::Open::Limit => { return 28; },
+            buffer::Open::Aliased => { return 28; },
+        }
+        let before: buffer::State = buffer::state(core::ptr_const(document));
+        let borrowed: buffer::Spans = buffer::spans(core::ptr_const(document));
+        match buffer::replace(document, borrowed.prefix) {
+            buffer::Edit::Aliased => {}, buffer::Edit::Done => { return 14; },
+            buffer::Edit::InvalidUtf8(offset) => { return 14; }, buffer::Edit::InvalidPosition => { return 14; },
+            buffer::Edit::Limit => { return 14; }, buffer::Edit::NoMemory => { return 14; },
+            buffer::Edit::VersionLimit => { return 14; },
+        }
+        match buffer::rehome(document, core::slice_from_raw_parts_mut(core::slice_of_mut(NEW).data, 1)) {
+            buffer::Edit::NoMemory => {}, buffer::Edit::Done => { return 15; },
+            buffer::Edit::InvalidUtf8(offset) => { return 15; }, buffer::Edit::InvalidPosition => { return 15; },
+            buffer::Edit::Limit => { return 15; }, buffer::Edit::Aliased => { return 15; },
+            buffer::Edit::VersionLimit => { return 15; },
+        }
+        let after: buffer::State = buffer::state(core::ptr_const(document));
+        if before.cursor != after.cursor || before.anchor != after.anchor || before.version != after.version { return 16; }
+        if !done(buffer::rehome(document, core::slice_of_mut(NEW))) { return 17; }
+        var i: usize = 0;
+        while i < 128_usize { OLD[i] = 255; i = i + 1_usize; }
+        match buffer::snapshot(core::ptr_const(document), core::slice_of_mut(COPY)) {
+            buffer::Copy::Done(bytes) => {
+                if !equal(core::slice_from_raw_parts(core::slice_of(COPY).data, bytes), "A中😀é\nZ") { return 18; }
+            },
+            buffer::Copy::NoMemory => { return 19; }, buffer::Copy::Aliased => { return 19; },
+        }
+        let pieces: buffer::Spans = buffer::spans(core::ptr_const(document));
+        if !equal(pieces.prefix, "A中") || !equal(pieces.suffix, "😀é\nZ") { return 20; }
+        match fontpack::pack("0041:00000000000000000000000000000000\n0042:XYZ\n", core::slice_of_mut(FONT)) {
+            fontpack::Pack::Invalid(offset) => {}, fontpack::Pack::Ready(count) => { return 21; },
+            fontpack::Pack::NoMemory => { return 21; }, fontpack::Pack::Limit => { return 21; },
+            fontpack::Pack::Aliased => { return 21; },
+        }
+        if FONT[0] != 173_u8 || FONT[font::FILE_BYTES - 1_usize] != 173_u8 { return 22; }
+        match fontpack::pack("0041:00000000000000000000000000000000\n",
+            core::slice_from_raw_parts_mut(core::slice_of_mut(FONT).data, 1)) {
+            fontpack::Pack::NoMemory => {}, fontpack::Pack::Ready(count) => { return 23; },
+            fontpack::Pack::Invalid(offset) => { return 23; }, fontpack::Pack::Limit => { return 23; },
+            fontpack::Pack::Aliased => { return 23; },
+        }
+        if FONT[0] != 173_u8 { return 24; }
+    }
+    return 0;
+}
+pub fn run() -> u32 {
+    // SAFETY: all test buffers are exclusive; failed operations must preserve checked sentinels.
+    unsafe {
+        FONT[0] = 173;
+        FONT[font::FILE_BYTES - 1_usize] = 173;
+        match buffer::open(core::slice_of_mut(OLD), "A中😀é\nZ") {
+            buffer::Open::Ready(value) => { var document: buffer::Document = value; return exercise(core::addr_of_mut(document)); },
+            buffer::Open::InvalidUtf8(offset) => { return 1; }, buffer::Open::Limit => { return 2; },
+            buffer::Open::NoMemory => { return 3; }, buffer::Open::Aliased => { return 4; },
+        }
+    }
+}

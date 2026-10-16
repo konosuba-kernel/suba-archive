@@ -1,0 +1,236 @@
+// A write accepts <=64KiB into private staging, reserves every extra block, then
+// submits DMA. Cancellation before submission rolls back; after submission the
+// accepted transaction finishes without touching user storage.
+module kernel::fs;
+unsafe fn begin_transfer(access: Access, writing: bool) -> Progress {
+    unsafe {
+        if access.bytes > 65536_usize { return failed(Error::Limit); }
+        if writing && (!file_mode(access.file, true) || !permitted(NODE, true)) { return failed(Error::Denied); }
+        if !writing && !file_mode(access.file, false) { return failed(Error::Denied); }
+        OFFSET = access.offset;
+        LENGTH = access.bytes;
+        COPIED = 0;
+        if writing {
+            if OFFSET > NODES[NODE].bytes || OFFSET > abi::FS_FILE_BYTES_MAX ||
+                LENGTH > abi::FS_FILE_BYTES_MAX - OFFSET { return failed(Error::Invalid); }
+            if !epoch_available(NODE) { return failed(Error::Limit); }
+            if LENGTH == 0_usize { return complete(Outcome::Value(0)); }
+            PHASE = Phase::Input;
+            return Progress::More;
+        }
+        if OFFSET >= NODES[NODE].bytes || LENGTH == 0_usize { return complete(Outcome::Value(0)); }
+        if LENGTH > NODES[NODE].bytes - OFFSET { LENGTH = NODES[NODE].bytes - OFFSET; }
+        begin_locate();
+        return Progress::More;
+    }
+}
+unsafe fn begin_locate() -> () {
+    unsafe {
+        FILE_BLOCK = OFFSET / 4096_usize;
+        SCAN = 0;
+        CHAIN_AT = NODES[NODE].first;
+        BLOCK_COUNT = 0;
+        COPIED = 0;
+        IO_INDEX = 0;
+        PHASE = Phase::Locate;
+    }
+    return ();
+}
+unsafe fn writing() -> bool {
+    unsafe {
+        match OPERATIONS[ACTIVE].command {
+            Command::Write(access) => { return true; },
+            Command::Read(access) => {}, Command::Open(flags) => {}, Command::Stat(file) => {},
+            Command::Sync(sync) => {}, Command::Mkdir => {}, Command::List(cursor) => {},
+            Command::Unlink => {}, Command::Replace => {}, Command::SyncAll => {}, Command::Directory => {},
+            Command::Job(command) => {}
+        }
+        return false;
+    }
+}
+unsafe fn locate_step() -> Progress {
+    unsafe {
+        let end: usize = (OFFSET + LENGTH + 4095_usize) / 4096_usize;
+        let existing: usize = (NODES[NODE].bytes + 4095_usize) / 4096_usize;
+        var count: usize = 0;
+        while count < 64_usize && SCAN < existing && SCAN < end {
+            if !codec::data_block(CHAIN_AT) { return Progress::Invalid; }
+            if SCAN >= FILE_BLOCK {
+                if BLOCK_COUNT >= 17_usize { return Progress::Invalid; }
+                BLOCK_IDS[BLOCK_COUNT] = CHAIN_AT;
+                BLOCK_COUNT = BLOCK_COUNT + 1_usize;
+            }
+            CHAIN_AT = FAT[CHAIN_AT as usize];
+            SCAN = SCAN + 1_usize; count = count + 1_usize;
+        }
+        if SCAN < existing && SCAN < end { return Progress::More; }
+        REQUIRED = 0;
+        if end > existing { REQUIRED = end - existing; }
+        if !writing() { PHASE = Phase::Read; return Progress::More; }
+        if REQUIRED > 16_usize { return Progress::Invalid; }
+        SCAN = abi::FS_DATA_START;
+        PHASE = Phase::Reserve;
+        return Progress::More;
+    }
+}
+unsafe fn rollback_reserved() -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < RESERVED_COUNT {
+            FAT[RESERVED[i] as usize] = abi::FAT_FREE;
+            FREE_BLOCKS = FREE_BLOCKS + 1_usize;
+            i = i + 1_usize;
+        }
+        RESERVED_COUNT = 0;
+    }
+    return ();
+}
+unsafe fn reserve_step() -> Progress {
+    unsafe {
+        var count: usize = 0;
+        while count < 64_usize && RESERVED_COUNT < REQUIRED && SCAN < abi::FS_BLOCKS {
+            let block: usize = SCAN;
+            SCAN = SCAN + 1_usize; count = count + 1_usize;
+            if FAT[block] == abi::FAT_FREE {
+                FAT[block] = abi::FAT_RESERVED;
+                FREE_BLOCKS = FREE_BLOCKS - 1_usize;
+                RESERVED[RESERVED_COUNT] = block as u32;
+                RESERVED_COUNT = RESERVED_COUNT + 1_usize;
+                BLOCK_IDS[BLOCK_COUNT] = block as u32;
+                BLOCK_COUNT = BLOCK_COUNT + 1_usize;
+            }
+        }
+        if RESERVED_COUNT == REQUIRED { PHASE = Phase::PrepareWrite; return Progress::More; }
+        if SCAN == abi::FS_BLOCKS { rollback_reserved(); return failed(Error::NoSpace); }
+        return Progress::More;
+    }
+}
+unsafe fn output_bytes() -> usize {
+    unsafe {
+        var count: usize = LENGTH - COPIED;
+        var limit: usize = 4096;
+        match OPERATIONS[ACTIVE].command {
+            Command::Read(access) => { if IO_INDEX == 0_usize { limit = limit - OFFSET % 4096_usize; } },
+            Command::Stat(file) => {}, Command::List(cursor) => {}, Command::Open(flags) => {},
+            Command::Write(access) => {}, Command::Sync(sync) => {}, Command::Mkdir => {},
+            Command::Unlink => {}, Command::Replace => {}, Command::SyncAll => {}, Command::Directory => {},
+            Command::Job(command) => {}
+        }
+        if count > limit { count = limit; }
+        return count;
+    }
+}
+unsafe fn submit_read() -> Progress {
+    unsafe {
+        if IO_INDEX >= BLOCK_COUNT || !block::submit(block::Command::Read(DISK_BASE + BLOCK_IDS[IO_INDEX] as usize)) {
+            return Progress::Invalid;
+        }
+        SUBMITTED = true; PHASE = Phase::Reading;
+        return Progress::Wait;
+    }
+}
+unsafe fn disk_complete() -> Progress {
+    unsafe {
+        match block::state() {
+            block::State::Submitted => { return Progress::Wait; },
+            block::State::Completed => { return Progress::Ready; },
+            block::State::Offline => {}, block::State::Idle => {}, block::State::Failed => {}
+        }
+        return Progress::Invalid;
+    }
+}
+unsafe fn read_completed() -> Progress {
+    unsafe {
+        match disk_complete() { Progress::Ready => {}, Progress::Wait => { return Progress::Wait; },
+            Progress::Invalid => { return Progress::Invalid; }, Progress::More => { return Progress::Invalid; } }
+        if OPERATIONS[ACTIVE].cancelled {
+            if !block::finish() { return Progress::Invalid; }
+            return failed(Error::Invalid);
+        }
+        let buffer: []u8 = block::buffer();
+        var offset: usize = 0;
+        if IO_INDEX == 0_usize { offset = OFFSET % 4096_usize; }
+        let count: usize = output_bytes();
+        var i: usize = 0;
+        while i < count { STAGING[i] = buffer[offset + i]; i = i + 1_usize; }
+        if !block::finish() { return Progress::Invalid; }
+        SUBMITTED = false; PHASE = Phase::Output;
+        return Progress::More;
+    }
+}
+unsafe fn prepare_write() -> Progress {
+    unsafe {
+        if IO_INDEX == BLOCK_COUNT { PHASE = Phase::Commit; return Progress::More; }
+        let old_blocks: usize = (NODES[NODE].bytes + 4095_usize) / 4096_usize;
+        let first: usize = (FILE_BLOCK + IO_INDEX) * 4096_usize;
+        let partial: bool = OFFSET > first || OFFSET + LENGTH < first + 4096_usize;
+        if FILE_BLOCK + IO_INDEX < old_blocks && partial {
+            if !block::submit(block::Command::Read(DISK_BASE + BLOCK_IDS[IO_INDEX] as usize)) { return Progress::Invalid; }
+            SUBMITTED = true; PHASE = Phase::EdgeReading; return Progress::Wait;
+        }
+        let buffer: []u8 = block::buffer();
+        var i: usize = 0;
+        while i < 4096_usize { buffer[i] = 0; i = i + 1_usize; }
+        return write_buffer();
+    }
+}
+unsafe fn edge_completed() -> Progress {
+    unsafe {
+        match disk_complete() { Progress::Ready => {}, Progress::Wait => { return Progress::Wait; },
+            Progress::Invalid => { return Progress::Invalid; }, Progress::More => { return Progress::Invalid; } }
+        if !block::finish() { return Progress::Invalid; }
+        return write_buffer();
+    }
+}
+unsafe fn write_buffer() -> Progress {
+    unsafe {
+        let buffer: []u8 = block::buffer();
+        let first: usize = (FILE_BLOCK + IO_INDEX) * 4096_usize;
+        var start: usize = 0;
+        if OFFSET > first { start = OFFSET - first; }
+        var end: usize = 4096;
+        if OFFSET + LENGTH < first + end { end = OFFSET + LENGTH - first; }
+        // Existing final-block padding is zeroed before an extending write is published.
+        if NODES[NODE].bytes > first && NODES[NODE].bytes < first + 4096_usize {
+            var tail: usize = NODES[NODE].bytes - first;
+            while tail < 4096_usize { buffer[tail] = 0; tail = tail + 1_usize; }
+        }
+        var i: usize = start;
+        while i < end { buffer[i] = STAGING[first + i - OFFSET]; i = i + 1_usize; }
+        if !block::submit(block::Command::Write(DISK_BASE + BLOCK_IDS[IO_INDEX] as usize)) { return Progress::Invalid; }
+        SUBMITTED = true; PHASE = Phase::Writing;
+        return Progress::Wait;
+    }
+}
+unsafe fn write_completed() -> Progress {
+    unsafe {
+        match disk_complete() { Progress::Ready => {}, Progress::Wait => { return Progress::Wait; },
+            Progress::Invalid => { return Progress::Invalid; }, Progress::More => { return Progress::Invalid; } }
+        if !block::finish() { return Progress::Invalid; }
+        IO_INDEX = IO_INDEX + 1_usize; PHASE = Phase::PrepareWrite;
+        return Progress::More;
+    }
+}
+unsafe fn commit_write() -> Progress {
+    unsafe {
+        if RESERVED_COUNT != 0_usize {
+            if NODES[NODE].last != 0_u32 {
+                FAT[NODES[NODE].last as usize] = RESERVED[0_usize];
+                dirty_fat(NODES[NODE].last as usize);
+            } else { NODES[NODE].first = RESERVED[0_usize]; }
+            var i: usize = 0;
+            while i < RESERVED_COUNT {
+                FAT[RESERVED[i] as usize] = abi::FAT_END;
+                if i + 1_usize < RESERVED_COUNT { FAT[RESERVED[i] as usize] = RESERVED[i + 1_usize]; }
+                dirty_fat(RESERVED[i] as usize);
+                i = i + 1_usize;
+            }
+            NODES[NODE].last = RESERVED[RESERVED_COUNT - 1_usize];
+        }
+        if OFFSET + LENGTH > NODES[NODE].bytes { NODES[NODE].bytes = OFFSET + LENGTH; }
+        dirty_node(NODE);
+        if !changed_at(NODE) { return Progress::Invalid; }
+        RESERVED_COUNT = 0;
+        return complete(Outcome::Value(LENGTH));
+    }
+}

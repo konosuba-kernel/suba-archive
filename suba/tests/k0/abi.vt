@@ -1,0 +1,113 @@
+// ABI boundary probe. Its external byte oracle is built independently by the host test.
+module test::abi;
+import suba::abi;
+import runtime::linux;
+
+unsafe fn put(data: []u8, offset: usize, value: usize, width: usize) -> () {
+    var i: usize = 0;
+    // SAFETY: caller provides a live local buffer; offsets in this probe are bounded constants.
+    unsafe {
+        while i < width {
+            data[offset + i] = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub fn run() -> u32 {
+    var output: [16384]u8 = [0;16384];
+    var expected: [16385]u8 = [0;16385];
+    if abi::SLOT_A_OFFSET + abi::SLOT_BYTES != abi::SLOT_B_OFFSET { return 1; }
+    if abi::SLOT_B_OFFSET + abi::SLOT_BYTES != abi::FS_OFFSET { return 2; }
+    if abi::FS_OFFSET + abi::FS_BLOCKS * abi::BLOCK_BYTES != abi::DISK_BYTES { return 3; }
+    if abi::FS_NODES_START + abi::FS_NODES_BLOCKS != abi::FS_DATA_START { return 4; }
+    if abi::ARGUMENT_ENTRIES + abi::ARGUMENT_COUNT_MAX * abi::ARGUMENT_ENTRY_BYTES != abi::ARGUMENT_DATA { return 5; }
+    if abi::FRAME_BYTES > abi::FRAME_ALLOCATION_BYTES || abi::FRAME_ALLOCATION_BYTES % 16_usize != 0_usize { return 6; }
+    // SAFETY: both arrays remain live throughout bounded access and synchronous Linux I/O.
+    unsafe {
+        let out: []u8 = core::slice_of_mut(output);
+        put(out, abi::BOOT_INFO_MAGIC, abi::BOOT_MAGIC, 8);
+        put(out, abi::BOOT_INFO_VERSION, abi::VERSION as usize, 4);
+        put(out, abi::BOOT_INFO_LENGTH, abi::BOOT_INFO_BYTES, 4);
+        put(out, abi::BOOT_INFO_RAM_BASE, abi::RAM_BASE, 8);
+        put(out, abi::BOOT_INFO_RAM_BYTES, abi::RAM_BYTES, 8);
+        put(out, abi::BOOT_INFO_DTB_BASE, 0x80300000, 8);
+        put(out, abi::BOOT_INFO_DTB_BYTES, 0x1000, 8);
+        put(out, abi::BOOT_INFO_KERNEL_BASE, abi::KERNEL_BASE, 8);
+        put(out, abi::BOOT_INFO_KERNEL_END, abi::KERNEL_BASE + 0x40000_usize, 8);
+        put(out, abi::BOOT_INFO_SLOT, 1, 4);
+        put(out, abi::BOOT_INFO_CRC32, 0x12345678, 4);
+        put(out, abi::BOOT_INFO_RESERVATION_COUNT, 1, 4);
+        put(out, abi::BOOT_INFO_RESERVATIONS, abi::BOOT_BASE, 8);
+        put(out, abi::BOOT_INFO_RESERVATIONS + 8_usize, abi::BOOT_BYTES, 8);
+        var reg: usize = 1;
+        while reg <= 31_usize {
+            put(out, 512_usize + (reg - 1_usize) * abi::FRAME_REGISTER_BYTES, reg * 0x101_usize, 8);
+            reg = reg + 1_usize;
+        }
+        put(out, 512_usize + abi::FRAME_SEPC, 0x10000, 8);
+        put(out, 512_usize + abi::FRAME_SSTATUS, 32, 8);
+        put(out, 512_usize + abi::FRAME_SCAUSE, 8, 8);
+        put(out, 512_usize + abi::FRAME_STVAL, 0xdeadbeef, 8);
+        put(out, 1024, abi::ARGUMENT_MAGIC, 8);
+        put(out, 1024_usize + abi::ARGUMENT_VERSION, abi::VERSION as usize, 4);
+        put(out, 1024_usize + abi::ARGUMENT_LENGTH, abi::ARGUMENT_BYTES, 4);
+        put(out, 1024_usize + abi::ARGUMENT_COUNT, 1, 4);
+        put(out, 1024_usize + abi::ARGUMENT_STDOUT, (1_usize << abi::HANDLE_SLOT_BITS) | 1_usize, 8);
+        put(out, 1024_usize + abi::ARGUMENT_STDERR, (1_usize << abi::HANDLE_SLOT_BITS) | 2_usize, 8);
+        put(out, 1024_usize + abi::ARGUMENT_CWD_OFFSET, abi::ARGUMENT_DATA, 4);
+        put(out, 1024_usize + abi::ARGUMENT_CWD_LENGTH, 1, 4);
+        put(out, 1024_usize + abi::ARGUMENT_DATA_BYTES, 2, 4);
+        put(out, 1024_usize + abi::ARGUMENT_ENTRIES, abi::ARGUMENT_DATA + 1_usize, 4);
+        put(out, 1028_usize + abi::ARGUMENT_ENTRIES, 1, 4);
+        put(out, 1024_usize + abi::ARGUMENT_DATA, 0x612f, 2);
+        put(out, 5120_usize + abi::EVENT_VERSION, abi::VERSION as usize, 4);
+        put(out, 5120_usize + abi::EVENT_LENGTH, abi::EVENT_BYTES, 4);
+        put(out, 5120_usize + abi::EVENT_KIND, abi::EVENT_POINTER as usize, 4);
+        put(out, 5120_usize + abi::EVENT_WINDOW, 257, 8);
+        put(out, 5120_usize + abi::EVENT_SEQUENCE, 3, 8);
+        put(out, 5120_usize + abi::EVENT_PAYLOAD, 100, 4);
+        put(out, 5124_usize + abi::EVENT_PAYLOAD, 200, 4);
+        put(out, 5128_usize + abi::EVENT_PAYLOAD, 1, 4);
+        put(out, 6144_usize + abi::BOOT_HEADER_MAGIC, abi::BOOT_HEADER_MAGIC_VALUE, 8);
+        put(out, 6144_usize + abi::BOOT_HEADER_VERSION, abi::VERSION as usize, 4);
+        put(out, 6144_usize + abi::BOOT_HEADER_LENGTH, abi::BOOT_HEADER_BYTES, 4);
+        put(out, 6144_usize + abi::BOOT_HEADER_ACTIVE, 1, 4);
+        put(out, 6144_usize + abi::BOOT_HEADER_SLOTS + abi::BOOT_SLOT_RECORD_BYTES + abi::BOOT_SLOT_VALID, 1, 4);
+        put(out, 6144_usize + abi::BOOT_HEADER_SLOTS + abi::BOOT_SLOT_RECORD_BYTES + abi::BOOT_SLOT_LENGTH, 4096, 4);
+        put(out, 6144_usize + abi::BOOT_HEADER_SLOTS + abi::BOOT_SLOT_RECORD_BYTES + abi::BOOT_SLOT_CRC32, 0x12345678, 4);
+        put(out, 10240_usize + abi::NODE_KIND, abi::NODE_FILE as usize, 4);
+        put(out, 10240_usize + abi::NODE_GENERATION, 7, 8);
+        put(out, 10240_usize + abi::NODE_PARENT, 1, 4);
+        put(out, 10240_usize + abi::NODE_NAME_LENGTH, 1, 4);
+        put(out, 10240_usize + abi::NODE_FILE_BYTES, 5, 8);
+        put(out, 10240_usize + abi::NODE_FIRST_BLOCK, abi::FS_DATA_START, 4);
+        put(out, 10240_usize + abi::NODE_LAST_BLOCK, abi::FS_DATA_START, 4);
+        put(out, 10240_usize + abi::NODE_NAME, 97, 1);
+        put(out, 11264_usize + abi::FS_SUPER_MAGIC, abi::FS_MAGIC_VALUE, 8);
+        put(out, 11264_usize + abi::FS_SUPER_VERSION, abi::VERSION as usize, 4);
+        put(out, 11264_usize + abi::FS_SUPER_BLOCK_BYTES, abi::BLOCK_BYTES, 4);
+        put(out, 11264_usize + abi::FS_SUPER_BLOCKS, abi::FS_BLOCKS, 4);
+        put(out, 11264_usize + abi::FS_SUPER_FAT_START, abi::FS_FAT_START, 4);
+        put(out, 11264_usize + abi::FS_SUPER_FAT_BLOCKS, abi::FS_FAT_BLOCKS, 4);
+        put(out, 11264_usize + abi::FS_SUPER_NODES_START, abi::FS_NODES_START, 4);
+        put(out, 11264_usize + abi::FS_SUPER_NODE_COUNT, abi::FS_NODE_COUNT, 4);
+        put(out, 11264_usize + abi::FS_SUPER_DATA_START, abi::FS_DATA_START, 4);
+        put(out, 11264_usize + abi::FS_SUPER_ROOT, 1, 4);
+        match linux::read_file("expected.bin", core::slice_of_mut(expected)) {
+            linux::CountResult::Failed(error) => { return 10; },
+            linux::CountResult::Value(count) => { if count != 16384_usize { return 11; } },
+        }
+        var i: usize = 0;
+        while i < 16384_usize {
+            if output[i] != expected[i] { return 12; }
+            i = i + 1_usize;
+        }
+        match linux::save_new("actual.bin", core::slice_of(output)) {
+            linux::SaveResult::Failed(error) => { return 13; },
+            linux::SaveResult::Done => {},
+        }
+    }
+    return 0;
+}

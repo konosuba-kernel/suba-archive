@@ -1,0 +1,63 @@
+{
+  "node": "I",
+  "revision": "r1",
+  "author": "/root",
+  "independent_reviewer": "/root/ram_acceptance",
+  "status": "frozen-for-independent-acceptance",
+  "dependencies": {
+    "docs/workflows/k2-ram/D-candidate-r3.json": "4ef4ddfc49864d263087a9bfc8f0b201dcdc30f00f0cb624b601cb1bb63cf5ed",
+    "docs/workflows/k2-ram/D-acceptance-r3.md": "681dd6adc9f51e4ce572ea79299565505a838de7cf4562801184387b744b59ca",
+    "docs/workflows/k2-ram/F-candidate-r1.json": "588e86b450a07ce648e3e6aec3f633333f24a661921098a98e2745d282eefdbf",
+    "docs/workflows/k2-ram/F-acceptance-r1.md": "4529ae7d53a706dc7cd2d02c368896ed457fde4ad3a0f3ed7db7862cfcdf477f",
+    "docs/workflows/k2-ram/M-candidate-r2.json": "a7c47872e619f3179b0ad5c89eabcd345cfac80293af30202de49ef4dbaa1e99",
+    "docs/workflows/k2-ram/M-acceptance-r2.md": "810cc40ac073401991ac636b48b90f399dae18bce7200bd94936c001003e0a8e",
+    "docs/workflows/k2-ram/CONTRACT.md": "64af9154441e1a66c8c70e17566b53ebee651f01c336a0381ae38b69f5f1d409"
+  },
+  "inputs": {
+    "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "kernel/machine.vt": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca",
+    "kernel/machine.s0": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde",
+    "kernel/memory.vt": "3d032d74f870ea20e099db7e5862189a4a440d8abfdf671684ef8be7e4cb80eb",
+    "platform/fdt.vt": "d37da23b811cd667fddf8597194439b65d63ac74449170f6a20e16e398896cc6",
+    "platform/fdt_tree.vt": "5d609dc16136980d061c10a9b0b254b4151f32921ca0b4fbe285661df0c861ae",
+    "platform/fdt_properties.vt": "57a0c670787f9603765e148c806fd940bf8434b1d00824466a1ab71bc0201b42",
+    "tests/k0/boot.vt": "3c100e990f995446be631c92289d07fa5c3da00818c24a66967fbcc4a3dbe8bb",
+    "tests/k0/fw_cfg.vt": "607ad68e260adf0b0c638ecdf4389de51c2f8a615088349399d64f7f24c7ddc6",
+    "../biomiya/compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "../biomiya/compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+    "../biomiya/compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+    "../biomiya/compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "../biomiya/build/layout-p4-r1/e3.elf": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "CODE_STYLE.md": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99"
+  },
+  "files": {
+    "README.md": "53971d12dea6c7d79c4081d094901eedf19092b51d70cffe8751b51a9046a611",
+    "docs/K2_RAM.md": "4de40d30bcbec716e45bdebcf21d1a782345e42f2b9ee3261068f9f8eece707b",
+    "kernel/entry.vt": "7943f2c9a1a6afc7d315718318855ee73078a3dedeb1f41d9a9e46b98c5b3dd9",
+    "kernel/kernel.build": "f778666678cca33e70aac89a0617036408a3dd6cfdc2d5eef235125a0045380d",
+    "platform/boot_info.vt": "bb6e66270c3d384e69923a1705926941ad0158de562dc5748019f0ede135d13a",
+    "kernel/ram.vt": "09cf53b9fe6632ffd715d975209275af3dbd1a2b49bbbb9af620b2853707facd",
+    "tests/k2_ram/boot_info_probe.vt": "172c55816150c33319a98c3296c95030e4d9394045f9789fce766936a3c526a1",
+    "tests/k2_ram/memory_probe.vt": "4064765f5369d6f651d60251b8af7e626ad57d07e075162cfe30451d3458a252",
+    "tools/check_boot_info.py": "0e195cacada554f00409b65516db5a166e7f5974cc0e01b52ed51fab06c9a960",
+    "tools/check_ram_boot.py": "3ba6da76421c209b7f065591f92271a934c46aac3c7a0190025d94d97019a849",
+    "tools/check_kernel_entry.py": "ea54c262911ca809db1db861213be26986fcc77cf211f5b31a730be25ccb6cde",
+    "tools/measure_kernel.py": "82265574e9bf41172bb972c4505faf50ef490af234e98d5ee45f9bc062b77dea",
+    "docs/workflows/k2-ram/I-report-r1.md": "d738ff2d2f907c77cf864068883534047d66f3b7d24e93fa6e0c254efa618ef2",
+    "docs/workflows/k2-ram/I-cost-r1.json": "bf285906788ec162b4fc3bbd0ca174c22df9120ade5bc44f5deb841db7ec8b81",
+    "docs/workflows/k2-ram/I-boot-info-r1.json": "20b8bc7c4d38d22a21ebfb38a2888d9352b7d075d5ec41b343d5e3860fd06221",
+    "docs/workflows/k2-ram/I-qemu-r1.json": "e2f9f702a3f225df576a0f6840006c1e41c91162e48336aa40c24b1b45a728f9",
+    "docs/workflows/k2-ram/I-k0-r1.json": "fa4130c7d01408082748b23e0253f2a84900fed756bd904b9a0c3522f294bdf8"
+  },
+  "deleted": [
+    "kernel/bootstrap_memory.vt",
+    "tests/k2/memory_probe.vt",
+    "tools/check_memory_boot.py"
+  ],
+  "acceptance_required": [
+    "Validated bytes before DTB pointer use; all reservation sources excluded before one-time page admission",
+    "Actual QEMU allocation crosses reserved holes, lifecycle and required negative controls",
+    "Old K0 behavior, exact current source identity and cost/stack scope",
+    "Independent discrimination and no mandatory unverified requirement"
+  ]
+}

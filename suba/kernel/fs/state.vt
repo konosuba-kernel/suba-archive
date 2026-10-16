@@ -1,0 +1,43 @@
+// Serialized filesystem owner. Metadata has one authoritative RAM copy.
+// No callbacks/scheduler, no hidden disk polling; caller advances one bounded step.
+module kernel::fs;
+import suba::abi;
+import suba::files;
+import suba::argument_wire;
+import kernel::objects;
+import kernel::fs::path;
+import kernel::fs::codec;
+import kernel::fs::mount_check;
+import kernel::device::block;
+const FAT_COUNT: usize = 65536;
+const DISK_BASE: usize = abi::FS_OFFSET / abi::BLOCK_BYTES;
+static mut FAT: [FAT_COUNT]u32 = zero;
+static mut NODES: [abi::FS_NODE_COUNT]codec::Node = zero;
+static mut MARKS: [abi::FS_BLOCKS]u32 = zero;
+enum Mount { Start, Reading(usize), Decode(Decode), Check(mount_check::Walker), Purge(usize), Reclaim, Persist, Stamp, Stamping, Flushing, Ready, Failed }
+struct Decode { block: usize, cursor: usize }
+static mut MOUNT: Mount = zero;
+pub enum Progress { More, Wait, Ready, Invalid }
+pub enum Error { Invalid, Denied, NotFound, Exists, Busy, NoMemory, NoSpace, Limit }
+pub struct Missing { pub parent: usize, pub name: path::Part }
+pub enum Resolved { More, Found(usize), Missing(Missing), Failed(Error) }
+enum ResolvePhase { Next, Scan(path::Part), Done }
+pub struct Resolver { node: usize, cursor: usize, scan: usize, phase: ResolvePhase }
+
+// File references are kernel handles/request pins; no pointer to a table escapes.
+const FILE_CAPACITY: usize = 64;
+pub struct Client { pub slot: usize, pub generation: usize }
+enum JobZone { Ordinary, Root, Source, Output }
+struct NodeUse { readers: usize, writer: bool, cwd: usize, transient: Client, cleanup: Client,
+    domain: objects::Identity, zone: JobZone }
+enum Lease { Revoked, Read, Write }
+struct File { live: bool, generation: usize, node: usize, references: usize, lease: Lease, owner: Client }
+static mut NODE_USE: [abi::FS_NODE_COUNT]NodeUse = zero;
+static mut FILES: [FILE_CAPACITY]File = zero;
+static mut DIRTY: [abi::FS_DATA_START]bool = zero;
+static mut BOOT_ID: usize = 0;
+static mut SOURCE_EPOCH: usize = 0;
+pub enum Opened { Ready(objects::Identity), Failed(Error) }
+
+static mut FREE_BLOCKS: usize = 0;
+static mut FREE_NODES: usize = 0;

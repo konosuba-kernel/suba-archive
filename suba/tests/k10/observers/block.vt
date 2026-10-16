@@ -1,0 +1,7 @@
+// TEST ONLY: read stored driver state without invoking the watchdog in state().
+pub unsafe fn k10_state() -> usize {
+    unsafe {
+        match STATE { State::Idle => { return 0; }, State::Submitted => { return 1; },
+            State::Completed => { return 2; }, State::Offline => { return 3; }, State::Failed => { return 4; } }
+    }
+}

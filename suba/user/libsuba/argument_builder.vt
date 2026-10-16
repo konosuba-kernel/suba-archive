@@ -1,0 +1,39 @@
+// Builds the explicit one-page argv/cwd wire format in caller-owned user storage.
+module libsuba::argument_builder;
+import suba::abi;
+import suba::argument_wire;
+pub unsafe fn initialize(page: []u8, cwd: []const u8) -> bool {
+    if page.len != abi::ARGUMENT_BYTES || cwd.len > 255_usize { return false; }
+    // SAFETY: caller grants exclusive output and immutable non-overlapping cwd.
+    unsafe {
+        var i: usize = 0;
+        while i < page.len { page[i] = 0; i = i + 1_usize; }
+        argument_wire::put(page, 0, abi::ARGUMENT_MAGIC, 8);
+        argument_wire::put(page, abi::ARGUMENT_VERSION, abi::VERSION as usize, 4);
+        argument_wire::put(page, abi::ARGUMENT_LENGTH, abi::ARGUMENT_BYTES, 4);
+        argument_wire::put(page, abi::ARGUMENT_CWD_OFFSET, abi::ARGUMENT_DATA, 4);
+        argument_wire::put(page, abi::ARGUMENT_CWD_LENGTH, cwd.len, 4);
+        argument_wire::put(page, abi::ARGUMENT_DATA_BYTES, cwd.len, 4);
+        i = 0;
+        while i < cwd.len { page[abi::ARGUMENT_DATA + i] = cwd[i]; i = i + 1_usize; }
+    }
+    return true;
+}
+pub unsafe fn append(page: []u8, argument: []const u8) -> bool {
+    // SAFETY: caller owns a builder page and keeps argument immutable/non-overlapping.
+    unsafe {
+        let view: []const u8 = core::slice_from_raw_parts(page.data, page.len);
+        if !argument_wire::valid(view) { return false; }
+        let count: usize = argument_wire::word(view, abi::ARGUMENT_COUNT, 4);
+        let used: usize = argument_wire::word(view, abi::ARGUMENT_DATA_BYTES, 4);
+        if count == abi::ARGUMENT_COUNT_MAX || argument.len > abi::ARGUMENT_BYTES - abi::ARGUMENT_DATA - used { return false; }
+        let offset: usize = abi::ARGUMENT_DATA + used;
+        var i: usize = 0;
+        while i < argument.len { page[offset + i] = argument[i]; i = i + 1_usize; }
+        argument_wire::put(page, abi::ARGUMENT_ENTRIES + count * abi::ARGUMENT_ENTRY_BYTES, offset, 4);
+        argument_wire::put(page, abi::ARGUMENT_ENTRIES + count * abi::ARGUMENT_ENTRY_BYTES + 4_usize, argument.len, 4);
+        argument_wire::put(page, abi::ARGUMENT_COUNT, count + 1_usize, 4);
+        argument_wire::put(page, abi::ARGUMENT_DATA_BYTES, used + argument.len, 4);
+    }
+    return true;
+}

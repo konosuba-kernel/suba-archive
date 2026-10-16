@@ -1,0 +1,283 @@
+// Exploration fixture: protected U controller, ordinary FS-loaded workers.
+module test::k10;
+import suba::abi;
+import suba::syscalls;
+import suba::files as wire;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+import libsuba::arguments;
+import test::k10_memory;
+import test::k10_streams;
+import test::k10_handles;
+import test::k10_config as config;
+static mut ARGS: [4096]u8 = zero;
+static mut DATA: [4096]u8 = zero;
+static mut BASE: [9]usize = zero;
+static mut PRIVATE: usize = 0x123456789abcdef;
+static mut DIVISOR: usize = 0;
+static mut NEXT_COUNTER: usize = 1;
+extern abi(C) fn __k10_load(address: usize) -> ();
+extern abi(C) fn __k10_store(address: usize) -> ();
+extern abi(C) fn __k10_privileged() -> ();
+extern abi(C) fn __k10_illegal() -> ();
+
+fn tick() -> () {
+    let now: usize = services::stats(syscalls::STATS_TIME_TICKS).value;
+    let ignored: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, now + 10000_usize, 0, 0, 0);
+    return ();
+}
+unsafe fn spawn(role: []const u8, output: usize) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") ||
+            !argument_builder::append(core::slice_of_mut(ARGS), role) { return make syscall::Reply { status: abi::INVALID, value: 0 }; }
+        return services::spawn("/sys/worker", core::slice_of(ARGS), output, 0, 0);
+    }
+}
+fn collect(child: usize, status: usize, cause: usize) -> bool {
+    let watches: [1]services::Watch = [make services::Watch { handle: child, events: syscalls::EXITED }];
+    let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+    unsafe { if services::wait(core::slice_of(watches), until, false).value != 1_usize { return false; } }
+    match services::collect(child) {
+        services::Collected::Failed(error) => { return false; },
+        services::Collected::Ready(exit) => { return exit.status == status && exit.cause == cause; }
+    }
+}
+fn selector(index: usize) -> usize {
+    if index == 0_usize { return syscalls::STATS_FREE_PAGES; }
+    if index == 1_usize { return syscalls::STATS_STREAMS; }
+    return index + 4_usize;
+}
+unsafe fn baseline() -> () {
+    unsafe { var i: usize = 0; while i < 8_usize { BASE[i] = services::stats(selector(i)).value; i = i + 1_usize; } }
+    let captured: syscall::Reply = syscall::invoke(abi::SYS_STATS, 202, 0, 0, 0, 0, 0);
+    if captured.status != abi::OK { let failed: u32 = finish(80); }
+    return ();
+}
+unsafe fn restored() -> bool {
+    unsafe {
+        let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+        while services::stats(syscalls::STATS_TIME_TICKS).value < until {
+            var equal: bool = true;
+            var i: usize = 0;
+            while i < 8_usize { if services::stats(selector(i)).value != BASE[i] { equal = false; } i = i + 1_usize; }
+            if equal { return true; }
+            tick();
+        }
+    }
+    return false;
+}
+unsafe fn signal(read: usize, expected: u8) -> bool {
+    let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+    let watches: [1]services::Watch = [make services::Watch { handle: read, events: syscalls::READABLE }];
+    unsafe {
+        if services::wait(core::slice_of(watches), until, false).value != 1_usize { return false; }
+        let reply: syscall::Reply = services::read(read, core::slice_from_raw_parts_mut(core::slice_of_mut(DATA).data, 1), false);
+        return reply.status == abi::OK && reply.value == 1_usize && DATA[0_usize] == expected;
+    }
+}
+unsafe fn observed(child: usize, expected: usize) -> bool {
+    unsafe {
+        let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+        while services::stats(syscalls::STATS_TIME_TICKS).value < until {
+            let state: syscall::Reply = syscall::invoke(abi::SYS_STATS, 200, child, 0, 0, 0, 0);
+            if state.status != abi::OK { return false; }
+            if state.value == expected { return true; }
+            tick();
+        }
+    }
+    return false;
+}
+unsafe fn rounds(waiting: bool) -> u32 {
+    unsafe {
+        baseline();
+        var round: usize = 0;
+        var old: usize = 0;
+        while round < config::ROUNDS {
+            var pipe: services::StreamPair = zero;
+            match services::streams() { services::Streams::Failed(error) => { return 1; }, services::Streams::Ready(value) => { pipe = value; } }
+            var role: []const u8 = "ready";
+            var state: usize = 1;
+            if waiting {
+                role = "stream"; state = 2;
+                var count: usize = 0;
+                while count < 65536_usize {
+                    let sent: syscall::Reply = services::write(pipe.write, core::slice_of(DATA), false);
+                    if sent.status != abi::OK || sent.value == 0_usize || sent.value > 4096_usize { return 2; }
+                    count = count + sent.value;
+                }
+            }
+            let child: syscall::Reply = spawn(role, pipe.write);
+            if child.status != abi::OK || child.value == old { return 3; }
+            if syscall::close(pipe.write).status != abi::OK { return 4; }
+            if !waiting && !signal(pipe.read, 82) { return 5; }
+            if !observed(child.value, state) { return 6; }
+            if old != 0_usize && syscall::kill_child(old).status != abi::BAD_HANDLE { return 7; }
+            if syscall::kill_child(child.value).status != abi::OK || !collect(child.value, abi::CANCELLED, 0) { return 8; }
+            var received: usize = 0;
+            loop {
+                let read: syscall::Reply = services::read(pipe.read, core::slice_of_mut(DATA), false);
+                if read.status != abi::OK { return 9; }
+                if read.value == 0_usize { break; }
+                var i: usize = 0;
+                while i < read.value { if DATA[i] != 0_u8 { return 10; } i = i + 1_usize; }
+                received = received + read.value;
+            }
+            if waiting && received != 65536_usize { return 11; }
+            if !waiting && received != 0_usize { return 12; }
+            if syscall::close(pipe.read).status != abi::OK || !restored() { return 13; }
+            if syscall::kill_child(child.value).status != abi::BAD_HANDLE { return 14; }
+            let logged: syscall::Reply = syscall::invoke(abi::SYS_STATS, 201, round + 1_usize, state, 0, 0, 0);
+            if logged.status != abi::OK { return 15; }
+            old = child.value;
+            round = round + 1_usize;
+            DATA[0_usize] = 0;
+        }
+    }
+    return 0;
+}
+unsafe fn identity_test() -> u32 {
+    unsafe {
+        baseline();
+        let roles: [3][]const u8 = ["memory", "streams", "handles"];
+        var i: usize = 0;
+        while i < 3_usize {
+            let child: syscall::Reply = spawn(roles[i], 0);
+            if child.status != abi::OK || !collect(child.value, 0, 0) || !restored() { return (31_usize + i) as u32; }
+            i = i + 1_usize;
+        }
+        if syscall::kill_child(1).status != abi::BAD_HANDLE ||
+            syscall::kill_child(0xffffffffffffffff).status != abi::BAD_HANDLE { return 34; }
+    }
+    return 0;
+}
+unsafe fn victim_progress(read: usize) -> bool {
+    // Drain old reports, then require a new report generated after WouldBlock.
+    // The worker checks its private sentinel immediately before each write.
+    unsafe {
+        let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+        loop {
+            if services::stats(syscalls::STATS_TIME_TICKS).value >= until { return false; }
+            let received: syscall::Reply = services::read(read, core::slice_of_mut(DATA), true);
+            if received.status == abi::WOULD_BLOCK { break; }
+            if received.status != abi::OK || received.value == 0_usize { return false; }
+            var i: usize = 0;
+            while i < received.value {
+                if DATA[i] != (NEXT_COUNTER % 251_usize) as u8 { return false; }
+                NEXT_COUNTER = NEXT_COUNTER + 1_usize;
+                i = i + 1_usize;
+            }
+        }
+        if !signal(read, (NEXT_COUNTER % 251_usize) as u8) { return false; }
+        NEXT_COUNTER = NEXT_COUNTER + 1_usize;
+    }
+    return true;
+}
+unsafe fn isolation_test() -> u32 {
+    unsafe {
+        baseline();
+        var pipe: services::StreamPair = zero;
+        match services::streams() { services::Streams::Failed(error) => { return 40; }, services::Streams::Ready(value) => { pipe = value; } }
+        let victim: syscall::Reply = spawn("victim", pipe.write);
+        if victim.status != abi::OK || syscall::close(pipe.write).status != abi::OK || !victim_progress(pipe.read) { return 41; }
+        let roles: [9][]const u8 = ["kernel", "virtio", "plic", "guard", "readonly", "privileged", "illegal", "divide", "private"];
+        let causes: [9]usize = [13, 13, 13, 13, 15, 2, 2, 0, 0];
+        var i: usize = 0;
+        while i < 9_usize {
+            let child: syscall::Reply = spawn(roles[i], 0);
+            var status: usize = 128_usize + causes[i];
+            if i == 7_usize { status = 101; }
+            if i == 8_usize { status = 0; }
+            if child.status != abi::OK || !collect(child.value, status, causes[i]) { return (42_usize + i) as u32; }
+            if PRIVATE != 0x123456789abcdef_usize || !victim_progress(pipe.read) { return 52; }
+            i = i + 1_usize;
+        }
+        if syscall::kill_child(victim.value).status != abi::OK || !collect(victim.value, abi::CANCELLED, 0) ||
+            syscall::close(pipe.read).status != abi::OK || !restored() { return 53; }
+    }
+    return 0;
+}
+fn finish(code: u32) -> u32 {
+    // SAFETY: only the designated trusted controller calls these entries.
+    unsafe {
+        var color: u32 = 0x0000ff00;
+        if code != 0_u32 { color = 0x00ff0000_u32 | code; }
+        *core::ptr::<u32>(abi::DISPLAY_BASE) = color;
+        loop { tick(); }
+    }
+    return 0;
+}
+pub fn ready() -> u32 { unsafe { return finish(rounds(false)); } }
+pub fn streamwait() -> u32 { unsafe { return finish(rounds(true)); } }
+pub fn identity() -> u32 {
+    unsafe {
+        let result: u32 = identity_test();
+        if result != 0_u32 { return finish(result); }
+        if syscall::invoke(abi::SYS_STATS, 201, 1, 0, 0, 0, 0).status != abi::OK { return finish(81); }
+        return finish(0);
+    }
+}
+pub fn isolation() -> u32 {
+    unsafe {
+        let result: u32 = isolation_test();
+        if result != 0_u32 { return finish(result); }
+        if syscall::invoke(abi::SYS_STATS, 201, 1, 0, 0, 0, 0).status != abi::OK { return finish(81); }
+        return finish(0);
+    }
+}
+pub fn ledgercontrol() -> u32 {
+    // Deliberately sample before cleanup once: the gate must reject real live
+    // child/pages/stream/handles, then accept the same baseline after cleanup.
+    unsafe {
+        baseline();
+        var pipe: services::StreamPair = zero;
+        match services::streams() { services::Streams::Failed(error) => { return finish(82); }, services::Streams::Ready(value) => { pipe = value; } }
+        let child: syscall::Reply = spawn("ready", pipe.write);
+        if child.status != abi::OK || syscall::close(pipe.write).status != abi::OK ||
+            !signal(pipe.read, 82) || !observed(child.value, 1) { return finish(83); }
+        if syscall::invoke(abi::SYS_STATS, 201, 1, 0, 0, 0, 0).status != abi::INVALID { return finish(84); }
+        if syscall::kill_child(child.value).status != abi::OK || !collect(child.value, abi::CANCELLED, 0) ||
+            syscall::close(pipe.read).status != abi::OK || !restored() { return finish(85); }
+        if syscall::invoke(abi::SYS_STATS, 201, 2, 0, 0, 0, 0).status != abi::OK { return finish(86); }
+        return finish(0);
+    }
+}
+pub fn worker() -> u32 {
+    unsafe {
+        match arguments::argument(0) {
+            arguments::BytesResult::Invalid => { return 60; },
+            arguments::BytesResult::Value(role) => {
+                if role.len == 0_usize { return 61; }
+                let first: u8 = role[0_usize];
+                if first == 109_u8 { return k10_memory::run(); }
+                if first == 104_u8 { return k10_handles::run(); }
+                if first == 115_u8 && role.len == 7_usize { return k10_streams::run(); }
+                if first == 115_u8 { let sent: syscall::Reply = services::write(arguments::output(false), "X", false); return 62; }
+                if first == 114_u8 && role.len == 5_usize {
+                    if services::write(arguments::output(false), "R", false).status != abi::OK { return 63; }
+                    loop {}
+                }
+                if first == 118_u8 && role.len == 6_usize && role[2_usize] == 99_u8 {
+                    var count: usize = 1;
+                    loop {
+                        if PRIVATE != 0x123456789abcdef_usize { return 64; }
+                        DATA[0_usize] = (count % 251_usize) as u8;
+                        if services::write(arguments::output(false), core::slice_from_raw_parts(core::slice_of(DATA).data, 1), false).status != abi::OK { return 65; }
+                        count = count + 1_usize;
+                        tick();
+                    }
+                }
+                if first == 107_u8 { __k10_load(0x80400000); }
+                if first == 118_u8 { __k10_load(0x50001000); }
+                if first == 112_u8 && role.len == 4_usize { __k10_load(0x4c201000); }
+                if first == 103_u8 { __k10_load(0x3feff000); }
+                if first == 114_u8 { __k10_store(0x3fe00000); }
+                if first == 112_u8 && role.len == 10_usize { __k10_privileged(); }
+                if first == 105_u8 { __k10_illegal(); }
+                if first == 100_u8 { return (123_usize / DIVISOR) as u32; }
+                if first == 112_u8 && role.len == 7_usize { PRIVATE = 99; return 0; }
+            }
+        }
+    }
+    return 66;
+}

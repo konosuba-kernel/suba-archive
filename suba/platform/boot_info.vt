@@ -1,0 +1,117 @@
+// Decodes only the fixed RAM-boot handoff. No described physical region is read.
+// Caller provides immutable readable bytes; returned facts contain no borrowed views.
+module platform::boot_info;
+import suba::abi;
+
+pub struct Region { pub base: usize, pub bytes: usize }
+pub struct Description {
+    pub dtb_base: usize,
+    pub dtb_bytes: usize,
+    pub kernel_end: usize,
+    pub reserved_count: usize,
+    pub reserved: [16]Region
+}
+pub enum ReadResult { Ready(Description), Invalid }
+
+unsafe fn word(data: []const u8, offset: usize, width: usize) -> usize {
+    // SAFETY: decode checked the fixed record length; all callers use ABI fields.
+    unsafe {
+        var value: usize = 0;
+        var i: usize = 0;
+        while i < width {
+            value = value | ((data[offset + i] as usize) << (i * 8_usize));
+            i = i + 1_usize;
+        }
+        return value;
+    }
+}
+
+fn in_range(base: usize, size: usize, address: usize, bytes: usize) -> bool {
+    if address < base || address - base > size { return false; }
+    return bytes <= size - (address - base);
+}
+
+unsafe fn zero_bytes(data: []const u8, start: usize, end: usize) -> bool {
+    // SAFETY: decode supplies fixed ABI offsets bounded by its exact input length.
+    unsafe {
+        var i: usize = start;
+        while i < end {
+            if data[i] != 0_u8 { return false; }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+unsafe fn fields(data: []const u8) -> bool {
+    // SAFETY: decode proved data.len==BOOT_INFO_BYTES; these fields all fit.
+    unsafe {
+        if word(data, abi::BOOT_INFO_MAGIC, 8) != abi::BOOT_MAGIC { return false; }
+        if word(data, abi::BOOT_INFO_VERSION, 4) != abi::VERSION as usize { return false; }
+        if word(data, abi::BOOT_INFO_LENGTH, 4) != abi::BOOT_INFO_BYTES { return false; }
+        if word(data, abi::BOOT_INFO_RAM_BASE, 8) != abi::RAM_BASE { return false; }
+        if word(data, abi::BOOT_INFO_RAM_BYTES, 8) != abi::RAM_BYTES { return false; }
+        if word(data, abi::BOOT_INFO_KERNEL_BASE, 8) != abi::KERNEL_BASE { return false; }
+        let end: usize = word(data, abi::BOOT_INFO_KERNEL_END, 8);
+        if end <= abi::KERNEL_BASE || end - abi::KERNEL_BASE > abi::IMAGE_BYTES_MAX {
+            return false;
+        }
+        let dtb: usize = word(data, abi::BOOT_INFO_DTB_BASE, 8);
+        let length: usize = word(data, abi::BOOT_INFO_DTB_BYTES, 8);
+        if length < 40_usize || length > abi::IO_BYTES_MAX || dtb % 8_usize != 0_usize {
+            return false;
+        }
+        if !in_range(abi::BOOT_BASE, abi::BOOT_BYTES, dtb, length) { return false; }
+        if word(data, abi::BOOT_INFO_SLOT, 4) > 1_usize { return false; }
+        if !zero_bytes(data, abi::BOOT_INFO_RESERVATION_COUNT + 4_usize,
+            abi::BOOT_INFO_RESERVATIONS) { return false; }
+    }
+    return true;
+}
+
+// Caller keeps the entire input readable and immutable throughout the operation.
+// Validation has no effects on the page allocator and never follows described pointers.
+pub unsafe fn decode(data: []const u8) -> ReadResult {
+    if data.len != abi::BOOT_INFO_BYTES { return ReadResult::Invalid; }
+    // SAFETY: every byte read is within the fixed ABI record. Arithmetic uses
+    // subtraction-based containment before an extent end is ever computed.
+    unsafe {
+        if !fields(data) { return ReadResult::Invalid; }
+        let count: usize = word(data, abi::BOOT_INFO_RESERVATION_COUNT, 4);
+        if count == 0_usize || count > abi::BOOT_RESERVATION_MAX { return ReadResult::Invalid; }
+        var info: Description = zero;
+        info.dtb_base = word(data, abi::BOOT_INFO_DTB_BASE, 8);
+        info.dtb_bytes = word(data, abi::BOOT_INFO_DTB_BYTES, 8);
+        info.kernel_end = word(data, abi::BOOT_INFO_KERNEL_END, 8);
+        info.reserved_count = count;
+        var covered: bool = false;
+        var i: usize = 0;
+        while i < count {
+            let at: usize = abi::BOOT_INFO_RESERVATIONS + i * abi::BOOT_RESERVATION_BYTES;
+            let base: usize = word(data, at, 8);
+            let size: usize = word(data, at + 8_usize, 8);
+            if size == 0_usize || !in_range(abi::RAM_BASE, abi::RAM_BYTES, base, size) {
+                return ReadResult::Invalid;
+            }
+            if in_range(base, size, info.dtb_base, info.dtb_bytes) { covered = true; }
+            info.reserved[i] = make Region { base: base, bytes: size };
+            i = i + 1_usize;
+        }
+        let unused: usize = abi::BOOT_INFO_RESERVATIONS + count * abi::BOOT_RESERVATION_BYTES;
+        if !covered || !zero_bytes(data, unused, abi::BOOT_INFO_BYTES) { return ReadResult::Invalid; }
+        return ReadResult::Ready(info);
+    }
+}
+
+// Fixed platform boundary: caller runs in bare S-mode with the boot window readable.
+pub unsafe fn read(address: usize) -> ReadResult {
+    if address % 8_usize != 0_usize ||
+        !in_range(abi::BOOT_BASE, abi::BOOT_BYTES, address, abi::BOOT_INFO_BYTES) {
+        return ReadResult::Invalid;
+    }
+    // SAFETY: the caller's platform premise plus the range check bounds this view.
+    unsafe {
+        return decode(core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)),
+            abi::BOOT_INFO_BYTES));
+    }
+}

@@ -1,0 +1,131 @@
+// Rectangle admission is pure arithmetic after a live identity lookup. Each copy
+// borrows one physical page only for this call; metadata may cross scheduler slices.
+module kernel::window;
+pub struct Copy {
+    pub window: objects::Identity, pub address: usize, pub row_bytes: usize,
+    pub stride: usize, pub rows: usize, pub x_bytes: usize, pub y: usize,
+    pub surface_stride: usize, pub extent: usize,
+}
+pub enum CopyRead { Ready(Copy), Invalid, BadHandle }
+pub struct Span { pub surface: usize, pub user: usize, pub bytes: usize }
+pub enum SpanRead { Ready(Span), Done, Invalid }
+
+// Caller owns this readable 40-byte ordinary-RAM record for the call.
+pub unsafe fn rectangle(id: objects::Identity, data: []const u8) -> CopyRead {
+    unsafe {
+        if !live(id) { return CopyRead::BadHandle; }
+        if data.len != windows::RECT_BYTES || argument_wire::word(data, 0, 4) != 1_usize ||
+            argument_wire::word(data, 4, 4) != windows::RECT_BYTES ||
+            argument_wire::word(data, windows::RECT_RESERVED, 4) != 0_usize {
+            return CopyRead::Invalid;
+        }
+        let x: usize = argument_wire::word(data, windows::RECT_X, 4);
+        let y: usize = argument_wire::word(data, windows::RECT_Y, 4);
+        let width: usize = argument_wire::word(data, windows::RECT_WIDTH, 4);
+        let height: usize = argument_wire::word(data, windows::RECT_HEIGHT, 4);
+        let stride: usize = argument_wire::word(data, windows::RECT_STRIDE, 4);
+        let address: usize = argument_wire::word(data, windows::RECT_ADDRESS, 8);
+        let limit_x: usize = RECORDS[id.slot].width;
+        let limit_y: usize = RECORDS[id.slot].height;
+        if x > limit_x || y > limit_y || width == 0_usize || height == 0_usize {
+            return CopyRead::Invalid;
+        }
+        if width > limit_x - x || height > limit_y - y { return CopyRead::Invalid; }
+        let row: usize = width * windows::PIXEL_BYTES;
+        if stride < row || stride > 65536_usize || (height - 1_usize) > (65536_usize - row) / stride {
+            return CopyRead::Invalid;
+        }
+        let extent: usize = (height - 1_usize) * stride + row;
+        if address > 0xffffffffffffffff_usize - extent { return CopyRead::Invalid; }
+        return CopyRead::Ready(make Copy { window: id, address: address, row_bytes: row,
+            stride: stride, rows: height, x_bytes: x * windows::PIXEL_BYTES, y: y,
+            surface_stride: limit_x * windows::PIXEL_BYTES, extent: extent });
+    }
+}
+
+// done counts packed pixel bytes; user padding never enters the surface.
+pub fn span(copy: Copy, done: usize) -> SpanRead {
+    let total: usize = copy.row_bytes * copy.rows;
+    if done == total { return SpanRead::Done; }
+    if done > total || copy.row_bytes == 0_usize { return SpanRead::Invalid; }
+    let row: usize = done / copy.row_bytes;
+    let within: usize = done % copy.row_bytes;
+    let surface: usize = (copy.y + row) * copy.surface_stride + copy.x_bytes + within;
+    let user: usize = copy.address + row * copy.stride + within;
+    var bytes: usize = copy.row_bytes - within;
+    // Full-width tightly packed rows form one continuous byte range. Crossing
+    // their row boundary needs no extra scheduler round; padding still stops us.
+    if copy.stride == copy.row_bytes && copy.surface_stride == copy.row_bytes {
+        bytes = total - done;
+    }
+    if bytes > 2048_usize { bytes = 2048; }
+    if bytes > 4096_usize - surface % 4096_usize { bytes = 4096_usize - surface % 4096_usize; }
+    if bytes > 4096_usize - user % 4096_usize { bytes = 4096_usize - user % 4096_usize; }
+    return SpanRead::Ready(make Span { surface: surface, user: user, bytes: bytes });
+}
+
+unsafe fn surface_address(id: objects::Identity, offset: usize, bytes: usize) -> usize {
+    unsafe {
+        if !live(id) || bytes > 2048_usize { return 0; }
+        let total: usize = RECORDS[id.slot].width * RECORDS[id.slot].height * windows::PIXEL_BYTES;
+        if offset > total || bytes > total - offset || bytes > 4096_usize - offset % 4096_usize {
+            return 0;
+        }
+        match FRAMES[id.slot * PAGE_LIMIT + offset / 4096_usize] {
+            SurfacePage::Empty => { return 0; },
+            SurfacePage::Owned(frame) => {
+                match memory::address(frame) {
+                    memory::AddressResult::Invalid => { return 0; },
+                    memory::AddressResult::Value(value) => { return value + offset % 4096_usize; }
+                }
+            }
+        }
+    }
+}
+
+// Caller proves both ordinary RAM ranges stay alive, exclusive destination, no
+// overlap. Matching modulo-8 alignment permits native words without misaligned
+// accesses; all other views keep the byte path. No device or user VA enters here.
+unsafe fn copy_ram(source: usize, destination: usize, bytes: usize) -> () {
+    unsafe {
+        var copied: usize = 0;
+        if source % 8_usize == destination % 8_usize {
+            while copied < bytes && (destination + copied) % 8_usize != 0_usize {
+                *core::ptr::<u8>(destination + copied) = *core::ptr::<u8>(source + copied);
+                copied = copied + 1_usize;
+            }
+            while bytes - copied >= 8_usize {
+                *core::ptr::<usize>(destination + copied) = *core::ptr::<usize>(source + copied);
+                copied = copied + 8_usize;
+            }
+        }
+        while copied < bytes {
+            *core::ptr::<u8>(destination + copied) = *core::ptr::<u8>(source + copied);
+            copied = copied + 1_usize;
+        }
+    }
+    return ();
+}
+
+// Caller supplies an exclusive live kernel scratch view, never a user-address slice.
+pub unsafe fn update(id: objects::Identity, offset: usize, data: []const u8) -> bool {
+    unsafe {
+        let address: usize = surface_address(id, offset, data.len);
+        if address == 0_usize { return false; }
+        copy_ram(core::addr(data.data), address, data.len);
+        RECORDS[id.slot].damage = RECORDS[id.slot].damage +% 1_usize;
+        CHANGED = true;
+    }
+    return true;
+}
+
+// A source killed between slices yields false; caller returns BadHandle/value=0,
+// and desktop discards the whole partial local snapshot. No Frame is pinned.
+pub unsafe fn copy_out(id: objects::Identity, offset: usize, data: []u8) -> bool {
+    unsafe {
+        let address: usize = surface_address(id, offset, data.len);
+        if address == 0_usize { return false; }
+        copy_ram(address, core::addr(data.data), data.len);
+    }
+    return true;
+}

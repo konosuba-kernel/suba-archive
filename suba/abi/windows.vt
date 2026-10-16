@@ -1,0 +1,63 @@
+// Window wire records use little-endian scalar fields, never native struct layout.
+module suba::windows;
+pub const SYS_DESKTOP_TRY_EVENT: usize = 62;
+pub const SCREEN_WIDTH: usize = 1024;
+pub const SCREEN_HEIGHT: usize = 768;
+pub const PIXEL_BYTES: usize = 4;
+pub const SCREEN_STRIDE: usize = SCREEN_WIDTH * PIXEL_BYTES;
+pub const SCREEN_BYTES: usize = SCREEN_STRIDE * SCREEN_HEIGHT;
+pub const SCREEN_PAGES: usize = SCREEN_BYTES / 4096;
+pub const WINDOW_CAPACITY: usize = 16;
+pub const OWNER_WINDOWS: usize = 4;
+pub const EVENT_CAPACITY: usize = 64;
+// A rectangle request: version,length,x,y,width,height,stride,zero,u64 address.
+pub const RECT_BYTES: usize = 40;
+pub const RECT_X: usize = 8;
+pub const RECT_Y: usize = 12;
+pub const RECT_WIDTH: usize = 16;
+pub const RECT_HEIGHT: usize = 20;
+pub const RECT_STRIDE: usize = 24;
+pub const RECT_RESERVED: usize = 28;
+pub const RECT_ADDRESS: usize = 32;
+// Desktop list header: version,length,count,zero,layout_version,focus_version.
+// Each record: slot,generation,width,height,x,y,z,flags,damage_version,zero.
+pub const LIST_HEADER_BYTES: usize = 32;
+pub const WINDOW_RECORD_BYTES: usize = 64;
+pub const LIST_BYTES: usize = LIST_HEADER_BYTES + WINDOW_CAPACITY * WINDOW_RECORD_BYTES;
+pub const LIST_COUNT: usize = 8;
+pub const LIST_LAYOUT: usize = 16;
+pub const LIST_FOCUS: usize = 24;
+pub const WINDOW_SLOT: usize = 0;
+pub const WINDOW_GENERATION: usize = 8;
+pub const WINDOW_WIDTH: usize = 16;
+pub const WINDOW_HEIGHT: usize = 20;
+pub const WINDOW_X: usize = 24;
+pub const WINDOW_Y: usize = 28;
+pub const WINDOW_Z: usize = 32;
+pub const WINDOW_FLAGS: usize = 36;
+pub const WINDOW_DAMAGE: usize = 40;
+pub const WINDOW_FOCUSED: u32 = 1;
+// Layout commit changes one live window, raises it and optionally focuses it.
+// Header, slot,generation,expected_layout,x,y,focus,zero.
+pub const LAYOUT_BYTES: usize = 48;
+pub const LAYOUT_SLOT: usize = 8;
+pub const LAYOUT_GENERATION: usize = 16;
+pub const LAYOUT_EXPECTED: usize = 24;
+pub const LAYOUT_X: usize = 32;
+pub const LAYOUT_Y: usize = 36;
+pub const LAYOUT_FOCUS: usize = 40;
+pub const LAYOUT_RESERVED: usize = 44;
+// Event payload: key(code,value), pointer(x,y,buttons), focus(bool), reset(cause).
+// Raw events carry a monotonically increasing sequence; route consumes exactly
+// that saved raw event, with current layout/focus versions, not user-chosen keys.
+pub const EVENT_RESET: u32 = 5;
+pub const EVENT_CHANGED: u32 = 6;
+pub const RESET_SOFTWARE: u32 = 1;
+pub const RESET_DEVICE: u32 = 2;
+pub const RESET_FOCUS: u32 = 3;
+pub const ROUTE_BYTES: usize = 48;
+pub const ROUTE_SLOT: usize = 8;
+pub const ROUTE_GENERATION: usize = 16;
+pub const ROUTE_LAYOUT: usize = 24;
+pub const ROUTE_FOCUS: usize = 32;
+pub const ROUTE_SEQUENCE: usize = 40;

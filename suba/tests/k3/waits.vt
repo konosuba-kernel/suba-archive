@@ -1,0 +1,55 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+unsafe fn run_pair(pair: services::StreamPair) -> u32 {
+    unsafe {
+        var watchers: [2]services::Watch = [make services::Watch { handle: pair.write, events: syscalls::WRITABLE };2];
+        watchers[1_usize] = make services::Watch { handle: 0xffffffffffffffff, events: syscalls::READABLE };
+        let rejected: syscall::Reply = services::wait(core::slice_of(watchers), 0, true);
+        if rejected.status != abi::BAD_HANDLE { return 90; }
+        var sixteen: [16]services::Watch = [make services::Watch { handle: pair.read, events: syscalls::READABLE };16];
+        let sent: syscall::Reply = services::write(pair.write, "x", false);
+        if sent.status != abi::OK { return 100; }
+        let ready: syscall::Reply = services::wait(core::slice_of(sixteen), 0, true);
+        if ready.status != abi::OK || ready.value != 65535_usize { return 101; }
+        let too_many: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 17, 0, 0, 0, 0);
+        if too_many.status != abi::LIMIT { return 102; }
+        var one: [1]u8 = zero;
+        let drained: syscall::Reply = services::read(pair.read, core::slice_of_mut(one), false);
+        if drained.status != abi::OK || drained.value != 1_usize { return 103; }
+        watchers[0_usize] = make services::Watch { handle: pair.read, events: syscalls::READABLE };
+        let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+        let deadline: usize = now.value + 30000_usize;
+        let timeout: syscall::Reply = services::wait(core::slice_from_raw_parts(core::slice_of(watchers).data, 1), deadline, false);
+        let after: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+        if timeout.status != abi::OK || timeout.value != 0_usize || after.value < deadline { return 91; }
+        let naked: syscall::Reply = syscall::kill_child(1);
+        if naked.status != abi::BAD_HANDLE { return 92; }
+        let sleeper: syscall::Reply = common::spawn("sleep", 0, 0, 0);
+        if sleeper.status != abi::OK { return 93; }
+        let pause: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, after.value + 100000_usize, 0, 0, 0);
+        if pause.status != abi::OK { return 94; }
+        let killed: syscall::Reply = syscall::kill_child(sleeper.value);
+        let repeated: syscall::Reply = syscall::kill_child(sleeper.value);
+        if killed.status != abi::OK || repeated.status != abi::OK || !common::collect(sleeper.value, abi::CANCELLED) { return 95; }
+        let next: syscall::Reply = common::spawn("sleep", 0, 0, 0);
+        if next.status != abi::OK || next.value == sleeper.value { return 96; }
+        let stale: syscall::Reply = syscall::kill_child(sleeper.value);
+        if stale.status != abi::BAD_HANDLE { return 97; }
+        let stop: syscall::Reply = syscall::kill_child(next.value);
+        if stop.status != abi::OK || !common::collect(next.value, abi::CANCELLED) { return 98; }
+        let read_closed: syscall::Reply = syscall::close(pair.read);
+        let write_closed: syscall::Reply = syscall::close(pair.write);
+        if read_closed.status != abi::OK || write_closed.status != abi::OK { return 99; }
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    match services::streams() {
+        services::Streams::Failed(status) => { return 89; },
+        services::Streams::Ready(pair) => { unsafe { return run_pair(pair); } }
+    }
+}

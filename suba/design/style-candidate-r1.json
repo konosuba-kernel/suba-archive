@@ -1,0 +1,18 @@
+{
+  "candidate": "S1-r1",
+  "date": "2026-10-14",
+  "author": "/root",
+  "architecture_input": "C-r3 + A-r2 + B-r1",
+  "scope": "code style and executable documentation examples only",
+  "files": {
+    "CODE_STYLE.md": "000bae0954805fb5de69f7317314103051788a21898ccf157b3e84b1a4505aad",
+    "README.md": "5ef82add5517d6cfb0ea6a960050e54f9a2f5835d643b59f6b37ff43fa5b6870",
+    "docs/examples/style/README.md": "b36b6e19b9acaed2c7037f37f7d76ef7439db777dda3c5552fda3de284e81094",
+    "docs/examples/style/bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+    "docs/examples/style/main.vt": "4690c0589ad343c017be6fca091730ea86d0345e7303ab474251e654a298db0c",
+    "docs/examples/style/program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b",
+    "docs/examples/style/ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+    "docs/examples/style/verification.json": "238f21565e727563abc34cc015107cc4de375ca225b1e047ba1628a98652446e"
+  },
+  "readme_change": "navigation only; previous C-r3 README hash retained in its frozen manifest"
+}

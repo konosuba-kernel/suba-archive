@@ -1,0 +1,172 @@
+// Build-process snapshot owner. One invocation per process; all borrowed paths
+// and Plan views remain live until exit. Only ordinary synchronous file calls.
+module user::build::snapshot;
+import suba::abi;
+import libsuba::job_api;
+import libsuba::argument_builder;
+import user::build::manifest;
+import user::build::io;
+import user::build::records;
+import user::build::compiler_streams;
+static mut ORIGINAL: [16385]u8 = zero;
+static mut REWRITTEN: [16384]u8 = zero;
+static mut INPUT: [4194305]u8 = zero;
+static mut NOTES: [32768]u8 = zero;
+static mut PATH: [255]u8 = zero;
+static mut PREFIX: [64]u8 = zero;
+static mut ARGV: [4096]u8 = zero;
+static mut OUTPUT: []const u8 = "";
+static mut KERNEL: bool = false;
+static mut NOTE_BYTES: usize = 0;
+static mut SOURCE_BYTES: usize = 0;
+static mut ASSEMBLY_BYTES: usize = 0;
+static mut PHASE: []const u8 = "manifest";
+
+pub unsafe fn phase() -> []const u8 { unsafe { return PHASE; } }
+pub unsafe fn output() -> []const u8 {
+    unsafe { return OUTPUT; }
+}
+pub unsafe fn kernel() -> bool { unsafe { return KERNEL; } }
+pub unsafe fn notes() -> []const u8 { unsafe { return core::slice_from_raw_parts(core::slice_of(NOTES).data, NOTE_BYTES); } }
+pub unsafe fn arguments() -> []const u8 { unsafe { return core::slice_of(ARGV); } }
+
+// Destination is beneath the Job's src root; only that subtree's owner can create.
+unsafe fn save(prefix: []const u8, name: []const u8, bytes: []const u8) -> usize {
+    unsafe {
+        let path: []const u8 = io::join(core::slice_of_mut(PATH), prefix, name);
+        if path.len == 0_usize { return abi::LIMIT; }
+        let parents: usize = io::directories(path, prefix.len);
+        if parents != abi::OK { return parents; }
+        return io::save_new(path, bytes, true);
+    }
+}
+unsafe fn copied_input(prefix: []const u8, item: manifest::File, ordinal: usize, writer: *records::Writer) -> usize {
+    unsafe {
+        var capacity: usize = 4194304_usize - SOURCE_BYTES;
+        if item.assembly { capacity = 1048576_usize - ASSEMBLY_BYTES; }
+        let target: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(INPUT).data, capacity + 1_usize);
+        var count: usize = 0;
+        match io::read(item.path, target) {
+            io::Read::Failed(error) => { return error; },
+            io::Read::Ready(bytes) => { count = bytes; }
+        }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+        if !records::input(writer, ordinal, item.path, data) { return abi::LIMIT; }
+        let status: usize = save(prefix, item.path, data);
+        if status != abi::OK { return status; }
+        if item.assembly { ASSEMBLY_BYTES = ASSEMBLY_BYTES + count; }
+        else { SOURCE_BYTES = SOURCE_BYTES + count; }
+    }
+    return abi::OK;
+}
+unsafe fn policy_copy(prefix: []const u8, policy: []const u8, writer: *records::Writer) -> usize {
+    if policy.len == 0_usize { return abi::OK; }
+    unsafe {
+        var count: usize = 0;
+        match io::read(policy, core::slice_from_raw_parts_mut(core::slice_of_mut(INPUT).data, 16385)) {
+            io::Read::Failed(error) => { return error; },
+            io::Read::Ready(bytes) => { count = bytes; }
+        }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+        if !records::input(writer, 0, policy, data) { return abi::LIMIT; }
+        return save(prefix, policy, data);
+    }
+}
+unsafe fn compiler_identity(writer: *records::Writer) -> usize {
+    unsafe {
+        var count: usize = 0;
+        match io::read("/sys/compiler.elf", core::slice_of_mut(INPUT)) {
+            io::Read::Failed(error) => { return error; },
+            io::Read::Ready(bytes) => { count = bytes; }
+        }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+        if !records::input(writer, 0, "/sys/compiler.elf", data) { return abi::LIMIT; }
+    }
+    return abi::OK;
+}
+unsafe fn command_line(job: *const job_api::Job, policy: []const u8) -> usize {
+    unsafe {
+        let root: []const u8 = job_api::path(job);
+        let page: []u8 = core::slice_of_mut(ARGV);
+        if !argument_builder::initialize(page, root) || !argument_builder::append(page, "compiler") ||
+            !argument_builder::append(page, "build") || !argument_builder::append(page, "src/program.build") {
+            return abi::LIMIT;
+        }
+        if policy.len != 0_usize {
+            let path: []const u8 = io::join(core::slice_of_mut(PATH), "src/", policy);
+            if path.len == 0_usize || !argument_builder::append(page, "--blocking") ||
+                !argument_builder::append(page, path) { return abi::LIMIT; }
+        }
+    }
+    return abi::OK;
+}
+
+// Job creation captured epoch before any source read. Source paths are relative
+// to this worker's /work cwd; compiler cwd is changed to the isolated Job root.
+pub unsafe fn prepare(job: *const job_api::Job, name: []const u8, policy: []const u8) -> usize {
+    unsafe {
+        var plan: manifest::Plan = manifest::begin();
+        var record: records::Writer = records::begin(core::slice_of_mut(NOTES));
+        let writer: *records::Writer = core::addr_of_mut(record);
+        var count: usize = 0;
+        match io::read(name, core::slice_of_mut(ORIGINAL)) {
+            io::Read::Failed(error) => { return error; },
+            io::Read::Ready(bytes) => { count = bytes; }
+        }
+        let original: []const u8 = core::slice_from_raw_parts(core::slice_of(ORIGINAL).data, count);
+        match manifest::prepare(core::addr_of_mut(plan), original, core::slice_of_mut(REWRITTEN)) {
+            manifest::Outcome::Invalid(at) => { return abi::INVALID; },
+            manifest::Outcome::Limit => { return abi::LIMIT; },
+            manifest::Outcome::Ready => {}
+        }
+        if !manifest::context(core::addr_of(plan), name, policy) { return abi::INVALID; }
+        let prefix: []const u8 = io::join(core::slice_of_mut(PREFIX), job_api::path(job), "/src/");
+        if prefix.len == 0_usize { return abi::LIMIT; }
+        if !records::text(writer, "suba-build-inputs 1\nboot ") ||
+            !records::number(writer, (*job).boot_id) ||
+            !records::text(writer, "\nepoch ") ||
+            !records::number(writer, (*job).source_epoch) ||
+            !records::text(writer, "\n") ||
+            !records::input(writer, 0, name, original) { return abi::LIMIT; }
+        var status: usize = save(prefix, ".suba-original.build", original);
+        if status != abi::OK { return status; }
+        let rewritten: []const u8 = core::slice_from_raw_parts(core::slice_of(REWRITTEN).data,
+            manifest::rewritten_bytes(core::addr_of(plan)));
+        if !records::input(writer, 0, "src/program.build", rewritten) { return abi::LIMIT; }
+        status = save(prefix, "program.build", rewritten);
+        if status != abi::OK { return status; }
+        PHASE = "copy inputs";
+        var ordinal: usize = 1;
+        var pass: usize = 0;
+        while pass < 2_usize {
+            var i: usize = 0;
+            while i < manifest::count(core::addr_of(plan)) {
+                let item: manifest::File = manifest::file(core::addr_of(plan), i);
+                if item.assembly == (pass == 1_usize) {
+                    status = copied_input(prefix, item, ordinal, writer);
+                    if status != abi::OK { return status; }
+                    ordinal = ordinal + 1_usize;
+                }
+                i = i + 1_usize;
+            }
+            pass = pass + 1_usize;
+        }
+        PHASE = "copy policy";
+        status = policy_copy(prefix, policy, writer);
+        if status != abi::OK { return status; }
+        PHASE = "compiler identity";
+        status = compiler_identity(writer);
+        if status != abi::OK { return status; }
+        OUTPUT = manifest::output_path(core::addr_of(plan));
+        KERNEL = manifest::kernel(core::addr_of(plan));
+        NOTE_BYTES = records::bytes(core::ptr_const(writer)).len;
+        PHASE = "freeze inputs";
+        status = save(prefix, ".suba-inputs.txt", notes());
+        if status != abi::OK { return status; }
+        status = job_api::freeze(*job).status;
+        if status != abi::OK { return status; }
+        status = compiler_streams::emit(notes());
+        if status != abi::OK { return status; }
+        return command_line(job, policy);
+    }
+}

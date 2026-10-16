@@ -1,0 +1,65 @@
+// Pure startup-page wire validation. Strings are explicit bytes, not NUL-terminated pointers.
+// Kernel overwrites inherited handles/cwd before publishing a new readonly user page.
+module suba::argument_wire;
+import suba::abi;
+
+pub unsafe fn word(bytes: []const u8, at: usize, count: usize) -> usize {
+    // SAFETY: caller has checked at/count in the live immutable byte view.
+    unsafe {
+        var value: usize = 0;
+        var i: usize = 0;
+        while i < count {
+            value = value | ((bytes[at + i] as usize) << (i * 8_usize));
+            i = i + 1_usize;
+        }
+        return value;
+    }
+}
+
+pub unsafe fn put(bytes: []u8, at: usize, value: usize, count: usize) -> () {
+    // SAFETY: caller owns output and bounds at/count; explicit protocol truncation per byte.
+    unsafe {
+        var i: usize = 0;
+        while i < count {
+            bytes[at + i] = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+fn string_range(offset: usize, length: usize, used: usize) -> bool {
+    if offset < abi::ARGUMENT_DATA { return false; }
+    let relative: usize = offset - abi::ARGUMENT_DATA;
+    return relative <= used && length <= used - relative;
+}
+
+// Caller owns the exact immutable page. Unknown versions/reserved bytes fail before use.
+pub unsafe fn valid(bytes: []const u8) -> bool {
+    if bytes.len != abi::ARGUMENT_BYTES { return false; }
+    unsafe {
+        if word(bytes, 0, 8) != abi::ARGUMENT_MAGIC ||
+            word(bytes, abi::ARGUMENT_VERSION, 4) != abi::VERSION as usize ||
+            word(bytes, abi::ARGUMENT_LENGTH, 4) != abi::ARGUMENT_BYTES { return false; }
+        let count: usize = word(bytes, abi::ARGUMENT_COUNT, 4);
+        let used: usize = word(bytes, abi::ARGUMENT_DATA_BYTES, 4);
+        if count > abi::ARGUMENT_COUNT_MAX || used > abi::ARGUMENT_BYTES - abi::ARGUMENT_DATA { return false; }
+        if word(bytes, 20, 4) != 0_usize || word(bytes, 52, 4) != 0_usize || word(bytes, 56, 8) != 0_usize { return false; }
+        let cwd_offset: usize = word(bytes, abi::ARGUMENT_CWD_OFFSET, 4);
+        let cwd_bytes: usize = word(bytes, abi::ARGUMENT_CWD_LENGTH, 4);
+        if cwd_bytes > 255_usize || !string_range(cwd_offset, cwd_bytes, used) { return false; }
+        var i: usize = 0;
+        while i < abi::ARGUMENT_COUNT_MAX {
+            let at: usize = abi::ARGUMENT_ENTRIES + i * abi::ARGUMENT_ENTRY_BYTES;
+            let offset: usize = word(bytes, at, 4);
+            let length: usize = word(bytes, at + 4_usize, 4);
+            if i < count {
+                if !string_range(offset, length, used) { return false; }
+            } else {
+                if offset != 0_usize || length != 0_usize { return false; }
+            }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}

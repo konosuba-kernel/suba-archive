@@ -1,0 +1,85 @@
+// Narrow publication regression: an unfinished compiler output is private and
+// disappears with its owner. This does not repeat the full K7 Job-rights matrix.
+module test::program;
+import suba::abi;
+import suba::files as wire;
+import suba::syscalls;
+import suba::argument_wire;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::arguments;
+import libsuba::argument_builder;
+static mut INFO: [64]u8 = zero;
+static mut ROOT: [31]u8 = zero;
+static mut ROOT_BYTES: usize = 0;
+static mut PATH: [255]u8 = zero;
+static mut ARGS: [4096]u8 = zero;
+static mut DATA: [32]u8 = zero;
+unsafe fn path(suffix: []const u8) -> []const u8 {
+    unsafe {
+        var i: usize = 0;
+        while i < ROOT_BYTES { PATH[i] = ROOT[i]; i = i + 1_usize; }
+        i = 0;
+        while i < suffix.len { PATH[ROOT_BYTES + i] = suffix[i]; i = i + 1_usize; }
+        return core::slice_from_raw_parts(core::slice_of(PATH).data, ROOT_BYTES + suffix.len);
+    }
+}
+fn exited(handle: usize) -> bool {
+    let watches: [1]services::Watch = [make services::Watch { handle: handle, events: syscalls::EXITED }];
+    let deadline: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+    unsafe { let waited: syscall::Reply = services::wait(core::slice_of(watches), deadline, false);
+        return waited.status == abi::OK && waited.value == 1_usize; }
+}
+unsafe fn producer() -> u32 {
+    unsafe {
+        let file: syscall::Reply = files::open("out/unsealed", wire::WRITE | wire::CREATE_NEW | wire::TRANSIENT);
+        if file.status != abi::OK || files::write_at(file.value, 0, "unfinished output").status != abi::OK ||
+            files::sync(file.value, false).status != abi::OK || syscall::close(file.value).status != abi::OK { return 90; }
+        if services::write(arguments::output(false), "R", false).value != 1_usize { return 91; }
+        loop { let waited: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, 0, 0, 0, 0); }
+    }
+    return 0;
+}
+pub fn run() -> u32 {
+    unsafe {
+        match arguments::argument(0) { arguments::BytesResult::Invalid => { return 92; },
+            arguments::BytesResult::Value(role) => { if role.len == 1_usize && role[0_usize] == 112_u8 { return producer(); } } }
+        let blocks: usize = services::stats(wire::STATS_FS_FREE_BLOCKS).value;
+        let nodes: usize = services::stats(wire::STATS_FS_FREE_NODES).value;
+        let created: syscall::Reply = syscall::invoke(abi::SYS_JOB_CREATE, core::addr(core::slice_of_mut(INFO).data), 64, 0, 0, 0, 0);
+        if created.status != abi::OK { return 93; }
+        ROOT_BYTES = argument_wire::word(core::slice_of(INFO), wire::JOB_PATH_BYTES, 4);
+        if ROOT_BYTES == 0_usize || ROOT_BYTES > 31_usize { return 94; }
+        var i: usize = 0;
+        while i < ROOT_BYTES { ROOT[i] = INFO[wire::JOB_PATH + i]; i = i + 1_usize; }
+        let epoch: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_SOURCE_EPOCH, 8);
+        let boot: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_BOOT_ID, 8);
+        if syscall::invoke(abi::SYS_JOB_FREEZE, created.value, epoch, boot, 0, 0, 0).status != abi::OK { return 95; }
+        var pair: services::StreamPair = zero;
+        match services::streams() { services::Streams::Failed(error) => { return 96; }, services::Streams::Ready(value) => { pair = value; } }
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), core::slice_from_raw_parts(core::slice_of(ROOT).data, ROOT_BYTES)) ||
+            !argument_builder::append(core::slice_of_mut(ARGS), "p") { return 97; }
+        let child: syscall::Reply = services::spawn("/sys/worker", core::slice_of(ARGS), pair.write, 0, created.value);
+        if child.status != abi::OK || syscall::close(pair.write).status != abi::OK { return 98; }
+        let signal: syscall::Reply = services::read(pair.read, core::slice_of_mut(DATA), false);
+        if signal.status != abi::OK || signal.value != 1_usize || DATA[0_usize] != 82_u8 { return 99; }
+        // Child has flushed and closed its writer but deliberately not sealed.
+        if files::open(path("/out/unsealed"), wire::READ).status != abi::DENIED { return 100; }
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), "/work") { return 101; }
+        if services::spawn(path("/out/unsealed"), core::slice_of(ARGS), 0, 0, 0).status != abi::DENIED { return 102; }
+        let old: syscall::Reply = files::open("/work/probe", wire::READ);
+        if old.status != abi::OK || files::read_at(old.value, 0, core::slice_of_mut(DATA)).value != 3_usize ||
+            DATA[0_usize] != 111_u8 || DATA[1_usize] != 108_u8 || DATA[2_usize] != 100_u8 ||
+            syscall::close(old.value).status != abi::OK { return 103; }
+        if syscall::kill_child(child.value).status != abi::OK || !exited(child.value) { return 104; }
+        match services::collect(child.value) { services::Collected::Failed(error) => { return 105; },
+            services::Collected::Ready(exit) => { if exit.status != abi::CANCELLED || exit.cause != 0_usize { return 106; } } }
+        if services::read(pair.read, core::slice_of_mut(DATA), false).value != 0_usize || syscall::close(pair.read).status != abi::OK { return 107; }
+        if files::open(path("/out/unsealed"), wire::READ).status != abi::NOT_FOUND { return 108; }
+        if services::job_end(created.value).status != abi::OK || !exited(created.value) || syscall::close(created.value).status != abi::OK { return 109; }
+        if services::stats(wire::STATS_FS_FREE_NODES).value != nodes || services::stats(wire::STATS_FS_FREE_BLOCKS).value != blocks ||
+            services::stats(wire::STATS_FS_DETACHED).value != 0_usize { return 110; }
+        return 0;
+    }
+}

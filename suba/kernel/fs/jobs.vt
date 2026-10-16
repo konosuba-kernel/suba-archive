@@ -1,0 +1,356 @@
+// FS owns Job directories and grants; jobs owns process membership/cancellation.
+// All namespace changes and revocation run under the serial worker. A Job identity
+// remains held by dispatch until this tree has drained and domain_settled is true.
+module kernel::fs;
+const JOB_CAPACITY: usize = 32;
+enum DomainState { Empty, Creating, Preparing, Frozen, Ending, Cleaning }
+struct Domain {
+    generation: usize, owner: Client, state: DomainState, root: usize,
+    source: usize, output: usize, compiler: Client, scan: usize, depth: usize,
+}
+static mut DOMAINS: [JOB_CAPACITY]Domain = zero;
+static mut GRANTS: [16]objects::Identity = zero;
+static mut DOMAIN_CURSOR: usize = 0;
+static mut JOB_STAGE: usize = 0;
+static mut JOB_SCAN: usize = 0;
+static mut JOBS_ROOT: usize = abi::FS_NODE_COUNT;
+pub struct Freeze { pub job: objects::Identity, pub epoch: usize, pub boot: usize }
+pub enum JobCommand { Create(objects::Identity), Freeze(Freeze) }
+enum DomainPermission { Ordinary, Decided(bool) }
+
+unsafe fn domain_valid(id: objects::Identity) -> bool {
+    unsafe {
+        if id.slot >= JOB_CAPACITY || id.generation == 0_usize || DOMAINS[id.slot].generation != id.generation { return false; }
+        match DOMAINS[id.slot].state {
+            DomainState::Empty => { return false; }, DomainState::Creating => {}, DomainState::Preparing => {},
+            DomainState::Frozen => {}, DomainState::Ending => {}, DomainState::Cleaning => {}
+        }
+        return true;
+    }
+}
+pub unsafe fn restricted(client: Client) -> bool {
+    unsafe { return client.slot < 16_usize && GRANTS[client.slot].generation != 0_usize; }
+}
+pub unsafe fn inherited_job(client: Client) -> objects::Identity {
+    unsafe { return GRANTS[client.slot]; }
+}
+// Called after child attach, before cwd install or publication. Prepare never inherits.
+// A selected compiler's descendants keep the same read-src/write-out grant.
+pub unsafe fn grant_child(parent: Client, child: Client, job: objects::Identity) -> bool {
+    unsafe {
+        let inherited: objects::Identity = GRANTS[parent.slot];
+        if inherited.generation != 0_usize {
+            if job.slot != inherited.slot || job.generation != inherited.generation || !domain_valid(job) { return false; }
+            match DOMAINS[job.slot].state { DomainState::Frozen => {}, DomainState::Empty => { return false; },
+                DomainState::Creating => { return false; }, DomainState::Preparing => { return false; },
+                DomainState::Ending => { return false; }, DomainState::Cleaning => { return false; } }
+            GRANTS[child.slot] = inherited;
+            return true;
+        }
+        if job.generation == 0_usize { return true; }
+        if !domain_valid(job) { return true; }
+        if !same_client(DOMAINS[job.slot].owner, parent) || DOMAINS[job.slot].compiler.generation != 0_usize { return false; }
+        match DOMAINS[job.slot].state { DomainState::Frozen => {}, DomainState::Empty => { return false; },
+            DomainState::Creating => { return false; }, DomainState::Preparing => { return false; },
+            DomainState::Ending => { return false; }, DomainState::Cleaning => { return false; } }
+        DOMAINS[job.slot].compiler = child;
+        GRANTS[child.slot] = job;
+        return true;
+    }
+}
+pub unsafe fn spawn_allowed(parent: Client, job: objects::Identity) -> bool {
+    unsafe {
+        if !domain_valid(job) { return !restricted(parent); }
+        match DOMAINS[job.slot].state { DomainState::Frozen => {}, DomainState::Empty => { return false; },
+            DomainState::Creating => { return false; }, DomainState::Preparing => { return false; },
+            DomainState::Ending => { return false; }, DomainState::Cleaning => { return false; } }
+        if restricted(parent) {
+            return GRANTS[parent.slot].slot == job.slot && GRANTS[parent.slot].generation == job.generation;
+        }
+        return same_client(DOMAINS[job.slot].owner, parent) && DOMAINS[job.slot].compiler.generation == 0_usize;
+    }
+}
+
+unsafe fn domain_permission(node: usize, client: Client, writing: bool) -> DomainPermission {
+    unsafe {
+        let id: objects::Identity = NODE_USE[node].domain;
+        if id.generation == 0_usize { return DomainPermission::Ordinary; }
+        if !domain_valid(id) { return DomainPermission::Decided(false); }
+        match DOMAINS[id.slot].state {
+            DomainState::Empty => { return DomainPermission::Decided(false); },
+            DomainState::Creating => { return DomainPermission::Decided(false); },
+            DomainState::Ending => { return DomainPermission::Decided(false); },
+            DomainState::Cleaning => { return DomainPermission::Decided(false); },
+            DomainState::Preparing => { return DomainPermission::Decided(same_client(DOMAINS[id.slot].owner, client)); },
+            DomainState::Frozen => {}
+        }
+        let owner: bool = same_client(DOMAINS[id.slot].owner, client);
+        let compiler: bool = GRANTS[client.slot].slot == id.slot && GRANTS[client.slot].generation == id.generation;
+        if !owner && !compiler { return DomainPermission::Decided(false); }
+        if !writing { return DomainPermission::Decided(true); }
+        match NODE_USE[node].zone {
+            JobZone::Output => { return DomainPermission::Decided(compiler); },
+            JobZone::Ordinary => {}, JobZone::Root => {}, JobZone::Source => {}
+        }
+        return DomainPermission::Decided(false);
+    }
+}
+pub unsafe fn child_directory_allowed(child: Client, node: usize) -> bool {
+    unsafe {
+        match domain_permission(node, child, false) {
+            DomainPermission::Decided(value) => { return value; }, DomainPermission::Ordinary => {}
+        }
+        return true;
+    }
+}
+unsafe fn epoch_available(node: usize) -> bool {
+    unsafe { return NODE_USE[node].domain.generation != 0_usize || SOURCE_EPOCH != 0xffffffffffffffff_usize; }
+}
+unsafe fn changed_at(node: usize) -> bool {
+    unsafe { if NODE_USE[node].domain.generation != 0_usize { return true; } return changed(); }
+}
+
+unsafe fn job_begin(command: JobCommand) -> Progress {
+    unsafe {
+        match command {
+            JobCommand::Freeze(freeze) => {
+                let id: objects::Identity = freeze.job;
+                if !domain_valid(id) || !same_client(DOMAINS[id.slot].owner, OPERATIONS[ACTIVE].client) { return failed(Error::Denied); }
+                match DOMAINS[id.slot].state { DomainState::Preparing => {},
+                    DomainState::Empty => { return failed(Error::Denied); }, DomainState::Creating => { return failed(Error::Busy); },
+                    DomainState::Frozen => { return failed(Error::Denied); }, DomainState::Ending => { return failed(Error::Denied); },
+                    DomainState::Cleaning => { return failed(Error::Denied); } }
+                if freeze.epoch != SOURCE_EPOCH || freeze.boot != BOOT_ID { return failed(Error::Busy); }
+                // At this serial point all previous active writes have finished.
+                // Queued writes recheck Revoked/domain permission when they start.
+                var i: usize = 0;
+                while i < FILE_CAPACITY {
+                    if FILES[i].live && file_mode(make objects::Identity { slot: i, generation: FILES[i].generation }, true) {
+                        let node: usize = FILES[i].node;
+                        if NODE_USE[node].domain.slot == id.slot && NODE_USE[node].domain.generation == id.generation {
+                            match NODE_USE[node].zone { JobZone::Source => { revoke_file(i); },
+                                JobZone::Root => {}, JobZone::Output => {}, JobZone::Ordinary => {} }
+                        }
+                    }
+                    i = i + 1_usize;
+                }
+                DOMAINS[id.slot].state = DomainState::Frozen;
+                return complete(Outcome::Value(0));
+            },
+            JobCommand::Create(id) => {
+                if id.slot >= JOB_CAPACITY || id.generation == 0_usize || restricted(OPERATIONS[ACTIVE].client) {
+                    return failed(Error::Denied);
+                }
+                match DOMAINS[id.slot].state { DomainState::Empty => {}, DomainState::Creating => { return failed(Error::Busy); },
+                    DomainState::Preparing => { return failed(Error::Busy); }, DomainState::Frozen => { return failed(Error::Busy); },
+                    DomainState::Ending => { return failed(Error::Busy); }, DomainState::Cleaning => { return failed(Error::Busy); } }
+                var domain: Domain = zero;
+                domain.generation = id.generation;
+                domain.owner = OPERATIONS[ACTIVE].client;
+                domain.state = DomainState::Creating;
+                domain.root = abi::FS_NODE_COUNT;
+                domain.source = abi::FS_NODE_COUNT;
+                domain.output = abi::FS_NODE_COUNT;
+                DOMAINS[id.slot] = domain;
+                JOB_STAGE = 0;
+                JOB_SCAN = 1;
+                PHASE = Phase::Job;
+                return Progress::More;
+            }
+        }
+    }
+}
+
+// Decimal generation, not a handle token, names the kernel-owned directory.
+unsafe fn job_name(id: objects::Identity, data: []u8) -> usize {
+    unsafe {
+        var digits: [20]u8 = zero;
+        var count: usize = 0;
+        var value: usize = id.generation;
+        loop { digits[count] = ((value % 10_usize) as u8) + 48_u8; count = count + 1_usize;
+            value = value / 10_usize; if value == 0_usize { break; } }
+        var cursor: usize = 0;
+        if id.slot >= 10_usize { data[cursor] = ((id.slot / 10_usize) as u8) + 48_u8; cursor = cursor + 1_usize; }
+        data[cursor] = ((id.slot % 10_usize) as u8) + 48_u8;
+        cursor = cursor + 1_usize;
+        data[cursor] = 45; cursor = cursor + 1_usize;
+        while count != 0_usize { count = count - 1_usize; data[cursor] = digits[count]; cursor = cursor + 1_usize; }
+        return cursor;
+    }
+}
+unsafe fn job_output(id: objects::Identity) -> Progress {
+    unsafe {
+        let data: []u8 = record_header(files::JOB_INFO_BYTES);
+        argument_wire::put(data, files::JOB_BOOT_ID, BOOT_ID, 8);
+        argument_wire::put(data, files::JOB_SOURCE_EPOCH, SOURCE_EPOCH, 8);
+        let prefix: []const u8 = "/jobs/";
+        var i: usize = 0;
+        while i < prefix.len { data[files::JOB_PATH + i] = prefix[i]; i = i + 1_usize; }
+        let suffix: []u8 = core::slice_from_raw_parts_mut(core::ptr_add(data.data, files::JOB_PATH + prefix.len), 25);
+        let count: usize = job_name(id, suffix) + prefix.len;
+        argument_wire::put(data, files::JOB_PATH_BYTES, count, 4);
+        LENGTH = files::JOB_INFO_BYTES;
+        COPIED = 0;
+        PHASE = Phase::Output;
+        return Progress::More;
+    }
+}
+unsafe fn job_step() -> Progress {
+    unsafe {
+        var id: objects::Identity = zero;
+        match OPERATIONS[ACTIVE].command {
+            Command::Job(command) => { match command { JobCommand::Create(value) => { id = value; },
+                JobCommand::Freeze(value) => { return Progress::Invalid; } } },
+            Command::SyncAll => { return Progress::Invalid; }, Command::Open(value) => { return Progress::Invalid; },
+            Command::Read(value) => { return Progress::Invalid; }, Command::Write(value) => { return Progress::Invalid; },
+            Command::Stat(value) => { return Progress::Invalid; }, Command::Sync(value) => { return Progress::Invalid; },
+            Command::Mkdir => { return Progress::Invalid; }, Command::List(value) => { return Progress::Invalid; },
+            Command::Unlink => { return Progress::Invalid; }, Command::Replace => { return Progress::Invalid; },
+            Command::Directory => { return Progress::Invalid; }
+        }
+        if JOB_STAGE == 4_usize { DOMAINS[id.slot].state = DomainState::Preparing; return job_output(id); }
+        var count: usize = 0;
+        while count < 64_usize && JOB_SCAN < abi::FS_NODE_COUNT {
+            let node: usize = JOB_SCAN;
+            JOB_SCAN = JOB_SCAN + 1_usize;
+            count = count + 1_usize;
+            if JOB_STAGE == 0_usize {
+                if NODES[node].parent == 0_u32 && NODES[node].kind == abi::NODE_DIRECTORY &&
+                    matches(core::addr_of(NODES[node]), "jobs") { JOBS_ROOT = node; JOB_STAGE = 1; JOB_SCAN = 1; return Progress::More; }
+            } else {
+                if NODES[node].kind == abi::NODE_FREE && NODES[node].generation != 0xffffffffffffffff_usize {
+                    var created: codec::Node = zero;
+                    created.kind = abi::NODE_DIRECTORY;
+                    created.generation = NODES[node].generation + 1_usize;
+                    NODE_USE[node].domain = id;
+                    if JOB_STAGE == 1_usize {
+                        created.parent = JOBS_ROOT as u32;
+                        created.length = job_name(id, core::slice_of_mut(created.name));
+                        NODE_USE[node].zone = JobZone::Root;
+                        DOMAINS[id.slot].root = node;
+                    } else {
+                        created.parent = DOMAINS[id.slot].root as u32;
+                        created.length = 3;
+                        var name: []const u8 = "src";
+                        NODE_USE[node].zone = JobZone::Source;
+                        if JOB_STAGE == 2_usize { DOMAINS[id.slot].source = node; }
+                        if JOB_STAGE == 3_usize {
+                            name = "out";
+                            NODE_USE[node].zone = JobZone::Output;
+                            DOMAINS[id.slot].output = node;
+                        }
+                        var i: usize = 0;
+                        while i < 3_usize { created.name[i] = name[i]; i = i + 1_usize; }
+                    }
+                    NODES[node] = created;
+                    FREE_NODES = FREE_NODES - 1_usize;
+                    dirty_node(node);
+                    JOB_STAGE = JOB_STAGE + 1_usize;
+                    JOB_SCAN = 1;
+                    return Progress::More;
+                }
+            }
+        }
+        if JOB_SCAN == abi::FS_NODE_COUNT { return failed(Error::NoSpace); }
+        return Progress::More;
+    }
+}
+
+pub unsafe fn end_domain(id: objects::Identity) -> () {
+    unsafe {
+        if !domain_valid(id) { return (); }
+        match DOMAINS[id.slot].state { DomainState::Cleaning => {}, DomainState::Empty => {},
+            DomainState::Creating => { DOMAINS[id.slot].state = DomainState::Ending; },
+            DomainState::Preparing => { DOMAINS[id.slot].state = DomainState::Ending; },
+            DomainState::Frozen => { DOMAINS[id.slot].state = DomainState::Ending; }, DomainState::Ending => {} }
+    }
+    return ();
+}
+// Dispatch calls only after all Job members have released requests, DMA and cwd.
+pub unsafe fn drain_domain(id: objects::Identity) -> bool {
+    unsafe {
+        if !domain_valid(id) { return true; }
+        match DOMAINS[id.slot].state {
+            DomainState::Ending => {
+                if ACTIVE != 16_usize { return false; }
+                var i: usize = 0;
+                while i < FILE_CAPACITY {
+                    if FILES[i].live && FILES[i].node < abi::FS_NODE_COUNT {
+                        let node: usize = FILES[i].node;
+                        if NODE_USE[node].domain.slot == id.slot && NODE_USE[node].domain.generation == id.generation { revoke_file(i); }
+                    }
+                    i = i + 1_usize;
+                }
+                DOMAINS[id.slot].state = DomainState::Cleaning;
+                DOMAINS[id.slot].scan = 1;
+                DOMAINS[id.slot].depth = 16;
+            },
+            DomainState::Empty => { return true; }, DomainState::Cleaning => {},
+            DomainState::Creating => {}, DomainState::Preparing => {}, DomainState::Frozen => {}
+        }
+        return false;
+    }
+}
+unsafe fn node_depth(node: usize) -> usize {
+    unsafe {
+        var at: usize = node;
+        var depth: usize = 0;
+        while at != 0_usize && depth < 17_usize { at = NODES[at].parent as usize; depth = depth + 1_usize; }
+        return depth;
+    }
+}
+unsafe fn domain_cleanup() -> bool {
+    unsafe {
+        var slot: usize = JOB_CAPACITY;
+        var searched: usize = 0;
+        while searched < JOB_CAPACITY {
+            let candidate: usize = DOMAIN_CURSOR;
+            DOMAIN_CURSOR = (DOMAIN_CURSOR + 1_usize) % JOB_CAPACITY;
+            searched = searched + 1_usize;
+            match DOMAINS[candidate].state {
+                DomainState::Cleaning => { slot = candidate; break; }, DomainState::Empty => {},
+                DomainState::Creating => {}, DomainState::Preparing => {}, DomainState::Frozen => {}, DomainState::Ending => {}
+            }
+        }
+        if slot == JOB_CAPACITY { return false; }
+        var count: usize = 0;
+        while count < 64_usize && DOMAINS[slot].scan < abi::FS_NODE_COUNT {
+            let node: usize = DOMAINS[slot].scan;
+            let id: objects::Identity = NODE_USE[node].domain;
+            if NODES[node].kind != abi::NODE_FREE && id.slot == slot && id.generation == DOMAINS[slot].generation &&
+                node_depth(node) == DOMAINS[slot].depth {
+                if NODE_USE[node].cwd != 0_usize || NODE_USE[node].readers != 0_usize || NODE_USE[node].writer { return true; }
+                if NODES[node].kind == abi::NODE_DIRECTORY { free_node(node); }
+                else { detach_node(node, DOMAINS[slot].owner); return true; }
+            }
+            DOMAINS[slot].scan = node + 1_usize;
+            count = count + 1_usize;
+        }
+        if DOMAINS[slot].scan == abi::FS_NODE_COUNT {
+            if DOMAINS[slot].depth == 1_usize { DOMAINS[slot].state = DomainState::Empty; }
+            else { DOMAINS[slot].depth = DOMAINS[slot].depth - 1_usize; DOMAINS[slot].scan = 1; }
+        }
+        return true;
+    }
+}
+
+pub unsafe fn has_domain(id: objects::Identity) -> bool { unsafe { return domain_valid(id); } }
+
+// Only an unpublished child's failed/cancelled loader may roll back this grant.
+pub unsafe fn abort_grant(child: Client) -> () {
+    unsafe {
+        let id: objects::Identity = GRANTS[child.slot];
+        if domain_valid(id) && same_client(DOMAINS[id.slot].compiler, child) {
+            DOMAINS[id.slot].compiler.generation = 0;
+        }
+        GRANTS[child.slot] = zero;
+    }
+    return ();
+}
+unsafe fn domain_anchor(node: usize) -> bool {
+    unsafe {
+        let id: objects::Identity = NODE_USE[node].domain;
+        if !domain_valid(id) { return false; }
+        return node == DOMAINS[id.slot].root || node == DOMAINS[id.slot].source || node == DOMAINS[id.slot].output;
+    }
+}

@@ -1,0 +1,32 @@
+// Runtime S-mode boundary; excluded from the bare RAM boot image.
+module kernel::machine;
+extern abi(C) fn __suba_time() -> usize;
+extern abi(C) fn __suba_timer(deadline: usize) -> usize;
+extern abi(C) fn __suba_activate(token: usize) -> ();
+extern abi(C) fn __suba_resume(frame: usize) -> ();
+
+pub fn time() -> usize { unsafe { return __suba_time(); } }
+
+// SBI TIME, fixed QEMU 10 MHz timebase. Error is a trusted platform failure.
+pub fn timer(deadline: usize) -> bool { unsafe { return __suba_timer(deadline) == 0_usize; } }
+
+// Caller supplies a live validated root; shared kernel mappings keep code/stack valid.
+pub unsafe fn activate(token: usize) -> () {
+    unsafe { __suba_activate(token); }
+    return ();
+}
+
+// First user entry or a selected trap return. Never returns to this call site.
+pub unsafe fn resume(frame: usize) -> () {
+    unsafe { __suba_resume(frame); }
+    halt();
+    return ();
+}
+
+extern abi(C) fn __suba_idle() -> ();
+// SIE remains off; enabled timer pending wakes WFI without recursively trapping.
+pub fn idle() -> () { unsafe { __suba_idle(); } return (); }
+
+extern abi(C) fn __suba_power_off() -> usize;
+// SBI SRST shutdown. Success stops QEMU; any return is a platform failure.
+pub fn power_off() -> bool { unsafe { let error: usize = __suba_power_off(); } return false; }

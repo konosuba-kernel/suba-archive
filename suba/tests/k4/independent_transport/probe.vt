@@ -1,0 +1,155 @@
+// Independent transport contract probe; RAM imitates device registers and used ring.
+// This checks validation/state, not actual device ordering or interrupt delivery.
+module acceptance::transport;
+import kernel::machine;
+import kernel::device::io;
+import kernel::device::virtio;
+extern abi(C) fn draft_shutdown() -> ();
+const MMIO: usize = 0x81000000;
+const DESC: usize = 0x81001000;
+const AVAIL: usize = 0x81002000;
+const USED: usize = 0x81003000;
+pub fn panic(code: u32) -> u32 {
+    unsafe {
+        machine::text("independent transport FAIL ");
+        var digits: [8]u8 = zero;
+        var i: usize = 0;
+        while i < 8_usize {
+            let n: u32 = (code >> ((7_usize - i) * 4_usize) as u32) & 15_u32;
+            var value: u32 = n + 48_u32;
+            if n > 9_u32 { value = n + 87_u32; }
+            digits[i] = value as u8; i = i + 1_usize;
+        }
+        machine::text(core::slice_of(digits)); machine::text("\n");
+    }
+    machine::halt(); return code;
+}
+pub fn trap(cause: usize) -> usize { panic(999); return cause; }
+fn check(value: bool, code: u32) -> () { if !value { panic(code); } return (); }
+unsafe fn invalid(q: *virtio::Queue, code: u32) -> () {
+    unsafe {
+        match virtio::take(q) {
+            virtio::Poll::Invalid => {},
+            virtio::Poll::Empty => { panic(code); },
+            virtio::Poll::Done(item) => { panic(code); },
+        }
+    }
+    return ();
+}
+unsafe fn done(q: *virtio::Queue, head: usize, bytes: usize, code: u32) -> () {
+    unsafe {
+        match virtio::take(q) {
+            virtio::Poll::Invalid => { panic(code); },
+            virtio::Poll::Empty => { panic(code); },
+            virtio::Poll::Done(item) => { check(item.head == head && item.bytes == bytes, code); },
+        }
+    }
+    return ();
+}
+unsafe fn queue_invalid(device: virtio::Device, d: usize, a: usize, u: usize, code: u32) -> () {
+    unsafe {
+        match virtio::queue(device, 0, d, a, u) {
+            virtio::QueueRead::Invalid => {},
+            virtio::QueueRead::Ready(q) => { panic(code); },
+        }
+    }
+    return ();
+}
+unsafe fn exercise(device: virtio::Device, initial: virtio::Queue) -> () {
+    var q: virtio::Queue = initial;
+    unsafe {
+        check(virtio::id(device) == 18_u32 && virtio::irq(device) == 8_u32, 10);
+        check(!virtio::acknowledge(device, 0) && !virtio::acknowledge(device, 4), 11);
+        check(io::read32(MMIO + 0x64_usize) == 0_u32, 12);
+        check(virtio::acknowledge(device, 3) && io::read32(MMIO + 0x64_usize) == 3_u32, 13);
+        check(!virtio::descriptor(core::addr_of(q), 64, 1, 1, 0, 0), 14);
+        check(!virtio::descriptor(core::addr_of(q), 0, 1, 65537, 0, 0), 15);
+        check(!virtio::descriptor(core::addr_of(q), 0, 1, 1, 4, 0), 16);
+        check(!virtio::descriptor(core::addr_of(q), 0, 1, 1, 0, 64), 17);
+        check(io::read32(DESC) == 0_u32 && io::read32(DESC + 12_usize) == 0_u32, 18);
+        check(virtio::descriptor(core::addr_of(q), 63, 0x123456789abcdef0, 65536, 3, 63), 19);
+        check(io::read32(DESC + 1008_usize) == 0x9abcdef0_u32, 20);
+        check(io::read32(DESC + 1012_usize) == 0x12345678_u32, 21);
+        check(io::read32(DESC + 1016_usize) == 65536_u32, 22);
+        check(io::read32(DESC + 1020_usize) == 0x003f0003_u32, 23);
+        var i: usize = 0;
+        while i < 64_usize {
+            check(virtio::publish(core::addr_of_mut(q), i), 24);
+            check(!virtio::publish(core::addr_of_mut(q), i), 25);
+            check(!virtio::descriptor(core::addr_of(q), i, 0, 0, 0, 0), 26);
+            check(io::read8(AVAIL + 4_usize + i * 2_usize) == i as u8, 27);
+            i = i + 1_usize;
+        }
+        check(!virtio::publish(core::addr_of_mut(q), 64), 28);
+        check(io::read32(AVAIL) == 0x00400000_u32, 29);
+        // Invalid index must not consume. Correct the same ring and finish in reverse order.
+        io::write16(USED + 2_usize, 65); invalid(core::addr_of_mut(q), 30);
+        i = 0;
+        while i < 64_usize {
+            io::write32(USED + 4_usize + i * 8_usize, (63_usize - i) as u32);
+            io::write32(USED + 8_usize + i * 8_usize, 0xffffffff);
+            i = i + 1_usize;
+        }
+        io::write16(USED + 2_usize, 64);
+        i = 0;
+        while i < 64_usize {
+            done(core::addr_of_mut(q), 63_usize - i, 0xffffffff, 31);
+            i = i + 1_usize;
+        }
+        match virtio::take(core::addr_of_mut(q)) {
+            virtio::Poll::Empty => {},
+            virtio::Poll::Invalid => { panic(32); },
+            virtio::Poll::Done(item) => { panic(32); },
+        }
+        // used.len is intentionally raw. Unknown/duplicate heads fail without consuming.
+        check(virtio::publish(core::addr_of_mut(q), 0), 33);
+        check(virtio::publish(core::addr_of_mut(q), 1), 34);
+        io::write16(USED + 2_usize, 67); invalid(core::addr_of_mut(q), 35);
+        io::write16(USED + 2_usize, 65);
+        io::write32(USED + 4_usize, 64); invalid(core::addr_of_mut(q), 36);
+        io::write32(USED + 4_usize, 2); invalid(core::addr_of_mut(q), 37);
+        io::write32(USED + 4_usize, 0); io::write32(USED + 8_usize, 7);
+        done(core::addr_of_mut(q), 0, 7, 38);
+        io::write16(USED + 2_usize, 66);
+        io::write32(USED + 12_usize, 0); invalid(core::addr_of_mut(q), 39);
+        io::write32(USED + 12_usize, 1); io::write32(USED + 16_usize, 8);
+        done(core::addr_of_mut(q), 1, 8, 40);
+        check(virtio::descriptor(core::addr_of(q), 0, 0, 0, 0, 0), 41);
+        // Width isolation: surrounding bytes remain unchanged.
+        io::write32(MMIO + 0x180_usize, 0xaabbccdd);
+        io::write16(MMIO + 0x182_usize, 0x12345678);
+        check(io::read32(MMIO + 0x180_usize) == 0x5678ccdd_u32, 42);
+        virtio::select8(device, 0x81, 0x99);
+        check(io::read32(MMIO + 0x180_usize) == 0x567899dd_u32, 43);
+        check(virtio::config8(device, 0x81) == 0x99_u8, 44);
+        check(virtio::config32(device, 0x80) == 0x567899dd_u32, 45);
+        virtio::kick(core::addr_of(q)); check(io::read32(MMIO + 0x50_usize) == 7_u32, 46);
+    }
+    return ();
+}
+pub fn start(info: usize) -> u32 {
+    machine::initialize();
+    unsafe {
+        var i: usize = 0;
+        while i < 16384_usize { *core::ptr_add(core::ptr::<u8>(MMIO), i) = 0; i = i + 1_usize; }
+        io::write32(MMIO, 0x74726976); io::write32(MMIO + 4_usize, 2);
+        io::write32(MMIO + 8_usize, 18); io::write32(MMIO + 0x34_usize, 64);
+        match virtio::probe(MMIO, 8) {
+            virtio::DeviceRead::Missing => { return panic(1); },
+            virtio::DeviceRead::Invalid => { return panic(2); },
+            virtio::DeviceRead::Ready(device) => {
+                queue_invalid(device, DESC + 1_usize, AVAIL, USED, 3);
+                queue_invalid(device, DESC, DESC, USED, 4);
+                io::write32(MMIO + 0x34_usize, 63); queue_invalid(device, DESC, AVAIL, USED, 5);
+                io::write32(MMIO + 0x34_usize, 64);
+                match virtio::queue(device, 7, DESC, AVAIL, USED) {
+                    virtio::QueueRead::Invalid => { return panic(6); },
+                    virtio::QueueRead::Ready(q) => { exercise(device, q); },
+                }
+                queue_invalid(device, DESC, AVAIL, USED, 47);
+            },
+        }
+        machine::text("independent transport boundaries PASS\n"); draft_shutdown();
+    }
+    return panic(1000);
+}

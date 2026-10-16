@@ -1,0 +1,164 @@
+{
+  "method": "physical UTF-8 lines including comments/blanks; ELF64 PT_LOAD program headers; compiler-reported maximum function frame",
+  "files": {
+    "kernel/memory.vt": {
+      "bytes": 6491,
+      "physical_lines": 164,
+      "sha256": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+    },
+    "tests/memory/initialize.vt": {
+      "bytes": 3085,
+      "physical_lines": 66,
+      "sha256": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497"
+    },
+    "tests/memory/lifecycle.vt": {
+      "bytes": 5457,
+      "physical_lines": 119,
+      "sha256": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638"
+    },
+    "tests/memory/retirement.vt": {
+      "bytes": 2657,
+      "physical_lines": 62,
+      "sha256": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c"
+    },
+    "tests/memory/support.vt": {
+      "bytes": 2698,
+      "physical_lines": 74,
+      "sha256": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd"
+    },
+    "tools/check_memory.py": {
+      "bytes": 6191,
+      "physical_lines": 130,
+      "sha256": "95c59bd0aff4268788f60905713f5125bd23a64df1f504436ece91c39e319fab"
+    }
+  },
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "page_bytes": 4096,
+  "page_capacity": 131072,
+  "slot_layout_bytes": 12,
+  "metadata_array_bytes": 1572864,
+  "frame_value_bytes": 8,
+  "stats_value_bytes": 32,
+  "allocator_probe": {
+    "elf_sha256": "2f9307c5ef7bb87061cd6c4d148080d27d5c8540f3dd7c282badc54043c5ab73",
+    "segments": [
+      {
+        "flags": 5,
+        "address": 65536,
+        "file_bytes": 12100,
+        "memory_bytes": 12100,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "address": 77824,
+        "file_bytes": 1,
+        "memory_bytes": 1,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "address": 81920,
+        "file_bytes": 4,
+        "memory_bytes": 1572913,
+        "bss_bytes": 1572909,
+        "alignment": 4096
+      }
+    ],
+    "compiler_metrics": {
+      "sources": "3",
+      "imports": "2",
+      "assembly_files": "0",
+      "source": "14335",
+      "assembly": "0",
+      "names": "491",
+      "name_bytes": "8986",
+      "decls": "208",
+      "types": "27",
+      "fields": "19",
+      "params": "5",
+      "max_ast": "315",
+      "max_ir": "294",
+      "max_frame": "1376",
+      "max_bindings": "5",
+      "max_defers": "0",
+      "max_loops": "1",
+      "max_slots": "178",
+      "max_args": "1",
+      "max_params": "1",
+      "text": "12100",
+      "data": "4",
+      "objects": "8",
+      "symbols": "235",
+      "fixups": "438",
+      "relocations": "0",
+      "elf": "20484"
+    }
+  },
+  "empty_probe": {
+    "elf_sha256": "a03b2c010a7a716e3acaca41b79ec96cf19d4df2169336b7a8f48abb4e904bdc",
+    "segments": [
+      {
+        "flags": 5,
+        "address": 65536,
+        "file_bytes": 208,
+        "memory_bytes": 208,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 4,
+        "address": 69632,
+        "file_bytes": 1,
+        "memory_bytes": 1,
+        "bss_bytes": 0,
+        "alignment": 4096
+      },
+      {
+        "flags": 6,
+        "address": 73728,
+        "file_bytes": 1,
+        "memory_bytes": 1,
+        "bss_bytes": 0,
+        "alignment": 4096
+      }
+    ],
+    "compiler_metrics": {
+      "sources": "2",
+      "imports": "0",
+      "assembly_files": "0",
+      "source": "7821",
+      "assembly": "0",
+      "names": "370",
+      "name_bytes": "7026",
+      "decls": "181",
+      "types": "5",
+      "fields": "0",
+      "params": "0",
+      "max_ast": "183",
+      "max_ir": "3",
+      "max_frame": "32",
+      "max_bindings": "0",
+      "max_defers": "0",
+      "max_loops": "0",
+      "max_slots": "1",
+      "max_args": "0",
+      "max_params": "0",
+      "text": "208",
+      "data": "0",
+      "objects": "0",
+      "symbols": "9",
+      "fixups": "6",
+      "relocations": "0",
+      "elf": "12289"
+    }
+  },
+  "max_test_function_frame": 2384,
+  "limitations": [
+    "Slot layout follows current S-next field layout; no internal fields were made public.",
+    "Fixed table reserves capacity for full ABI RAM even when only a small extent is donated.",
+    "max_frame is a single-function metric, not a complete kernel stack peak."
+  ]
+}

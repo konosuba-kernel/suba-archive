@@ -1,0 +1,327 @@
+{
+  "counting": "Physical lines including blank/comment lines. Production, runtime, shared ABI, test fixtures and Python verification are separate. Generated build outputs and historical files excluded. I-cost.json retains the pre-migration count.",
+  "groups": {
+    "q_production_vt": {
+      "lines": 11307,
+      "bytes": 337083,
+      "files": {
+        "biomiya/compiler/blocking.vt": {
+          "lines": 350,
+          "bytes": 12014,
+          "sha256": "63639c5fb1447fdd884c2c762446af7f02446a114be98117c140a3e3c4d9d1bc"
+        },
+        "biomiya/compiler/check.vt": {
+          "lines": 2093,
+          "bytes": 69044,
+          "sha256": "7fbd67385fcc3de9c68cd6056a281a48409d48fbd4a8a17fb3eaca2aad2adff0"
+        },
+        "biomiya/compiler/image.vt": {
+          "lines": 601,
+          "bytes": 19251,
+          "sha256": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06"
+        },
+        "biomiya/compiler/init.vt": {
+          "lines": 554,
+          "bytes": 17959,
+          "sha256": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2"
+        },
+        "biomiya/compiler/input.vt": {
+          "lines": 440,
+          "bytes": 17016,
+          "sha256": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00"
+        },
+        "biomiya/compiler/ir.vt": {
+          "lines": 867,
+          "bytes": 18524,
+          "sha256": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8"
+        },
+        "biomiya/compiler/lex.vt": {
+          "lines": 309,
+          "bytes": 10159,
+          "sha256": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28"
+        },
+        "biomiya/compiler/main.vt": {
+          "lines": 238,
+          "bytes": 8327,
+          "sha256": "1fd5f5ff2118137c9f1bddc0408d3f6f0ac1f33a57d28cd3fe0b2af0a0c87516"
+        },
+        "biomiya/compiler/model.vt": {
+          "lines": 716,
+          "bytes": 18175,
+          "sha256": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a"
+        },
+        "biomiya/compiler/parse.vt": {
+          "lines": 1821,
+          "bytes": 46268,
+          "sha256": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c"
+        },
+        "biomiya/compiler/rules.vt": {
+          "lines": 225,
+          "bytes": 5644,
+          "sha256": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951"
+        },
+        "biomiya/compiler/rv64.vt": {
+          "lines": 1374,
+          "bytes": 42939,
+          "sha256": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0"
+        },
+        "biomiya/compiler/s0.vt": {
+          "lines": 521,
+          "bytes": 13457,
+          "sha256": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe"
+        },
+        "biomiya/compiler/target.vt": {
+          "lines": 69,
+          "bytes": 2107,
+          "sha256": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108"
+        },
+        "biomiya/compiler/types.vt": {
+          "lines": 1129,
+          "bytes": 36199,
+          "sha256": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+        }
+      }
+    },
+    "q_runtime_vt": {
+      "lines": 375,
+      "bytes": 14473,
+      "files": {
+        "biomiya/compiler/runtime/bytes.vt": {
+          "lines": 58,
+          "bytes": 2333,
+          "sha256": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5"
+        },
+        "biomiya/compiler/runtime/host_linux.vt": {
+          "lines": 85,
+          "bytes": 3858,
+          "sha256": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37"
+        },
+        "biomiya/compiler/runtime/linux.vt": {
+          "lines": 232,
+          "bytes": 8282,
+          "sha256": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0"
+        }
+      }
+    },
+    "q_runtime_s0": {
+      "lines": 19,
+      "bytes": 345,
+      "files": {
+        "biomiya/compiler/runtime/linux.s0": {
+          "lines": 19,
+          "bytes": 345,
+          "sha256": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a"
+        }
+      }
+    },
+    "suba_kernel_vt": {
+      "lines": 152,
+      "bytes": 6306,
+      "files": {
+        "suba/kernel/entry.vt": {
+          "lines": 88,
+          "bytes": 3942,
+          "sha256": "fdde814179d05254a9c1b8258d4b4452bf738d4e4178f32971a15f6dfdab8151"
+        },
+        "suba/kernel/machine.vt": {
+          "lines": 64,
+          "bytes": 2364,
+          "sha256": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca"
+        }
+      }
+    },
+    "suba_kernel_s0": {
+      "lines": 111,
+      "bytes": 2348,
+      "files": {
+        "suba/kernel/machine.s0": {
+          "lines": 111,
+          "bytes": 2348,
+          "sha256": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde"
+        }
+      }
+    },
+    "suba_abi": {
+      "lines": 199,
+      "bytes": 7766,
+      "files": {
+        "suba/abi/contract.vt": {
+          "lines": 199,
+          "bytes": 7766,
+          "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d"
+        }
+      }
+    },
+    "suba_tests": {
+      "lines": 239,
+      "bytes": 11693,
+      "files": {
+        "suba/tests/k0/abi.vt": {
+          "lines": 113,
+          "bytes": 6651,
+          "sha256": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa"
+        },
+        "suba/tests/k0/boot.vt": {
+          "lines": 78,
+          "bytes": 3230,
+          "sha256": "3c100e990f995446be631c92289d07fa5c3da00818c24a66967fbcc4a3dbe8bb"
+        },
+        "suba/tests/k0/fw_cfg.vt": {
+          "lines": 48,
+          "bytes": 1812,
+          "sha256": "607ad68e260adf0b0c638ecdf4389de51c2f8a615088349399d64f7f24c7ddc6"
+        }
+      }
+    },
+    "suba_verification": {
+      "lines": 285,
+      "bytes": 14076,
+      "files": {
+        "suba/tools/check_abi.py": {
+          "lines": 102,
+          "bytes": 4804,
+          "sha256": "14f827249962af5d9811c10f16c42c143c1418292e27db74cdf6d059f98da665"
+        },
+        "suba/tools/check_kernel_entry.py": {
+          "lines": 154,
+          "bytes": 7949,
+          "sha256": "72b5d97ecce06d3e9862e3d482aea80c2c7599db435a25edecc962d78835a4b9"
+        },
+        "suba/tools/check_kernel_observer.py": {
+          "lines": 29,
+          "bytes": 1323,
+          "sha256": "bc737c9cb175c6cc55a50755fc297a6f89dd755a2122765e768d7c12d14c70c6"
+        }
+      }
+    },
+    "q_k0_fixtures": {
+      "lines": 416,
+      "bytes": 9765,
+      "files": {
+        "biomiya/tests/compiler/k0-host-probe.vt": {
+          "lines": 12,
+          "bytes": 267,
+          "sha256": "bb2385739304355f196ad915f93f549bcc5ce8f74c2bad7229f7f7d1befaecb5"
+        },
+        "biomiya/tests/compiler/k0-host-replacement.vt": {
+          "lines": 43,
+          "bytes": 1272,
+          "sha256": "830b2490b60fc290cb915bebabbea4d68c2d3877054ddff27c888d3841a897b6"
+        },
+        "biomiya/tests/compiler/k0-host-trap.s0": {
+          "lines": 8,
+          "bytes": 260,
+          "sha256": "72dccf887fa0d68b6400c3d363e48c80f72ddd44e0e555e7ad5f4fe8063168ff"
+        },
+        "biomiya/tests/compiler/k0-profile-machine.s0": {
+          "lines": 33,
+          "bytes": 723,
+          "sha256": "b824a673203e3116fa0d421206a19ec21a41299163b9fe7261f2aac7adc0a6f6"
+        },
+        "biomiya/tests/compiler/k0-profile-machine.vt": {
+          "lines": 43,
+          "bytes": 1107,
+          "sha256": "12a15f929b29a757aee3d2fb13358511613f727114f6efc7620c84c00f6b0ee9"
+        },
+        "biomiya/tests/compiler/k0-profile-user.vt": {
+          "lines": 8,
+          "bytes": 187,
+          "sha256": "ca3f54a02e076dfcf2de1a22f0daee50a09912418e06ee581906d883a4e979b5"
+        },
+        "biomiya/tests/compiler/k0-s0-encoding.s0": {
+          "lines": 81,
+          "bytes": 1460,
+          "sha256": "2b63d6d8dc1e54b8a93fe12ff4c8043d05e0152ca5bbfe84ba72b20970372c9a"
+        },
+        "biomiya/tests/compiler/k0-s0-invalid.json": {
+          "lines": 162,
+          "bytes": 3872,
+          "sha256": "fd40b43f420e28a672da8f5b60da42fd06fe7c190f21babab6c56c9a83b30efd"
+        },
+        "biomiya/tests/compiler/k0-s0-run.s0": {
+          "lines": 18,
+          "bytes": 449,
+          "sha256": "c952b809b7c376e6ad411fc6c7562f41adbbb47e679284189b8cf9956e542fdd"
+        },
+        "biomiya/tests/compiler/k0-s0-run.vt": {
+          "lines": 8,
+          "bytes": 168,
+          "sha256": "aa705e52cab6d21b71c5d316bb9c43ed7fa5e5efdc7bf27587ca356572b876d7"
+        }
+      }
+    },
+    "q_k0_verification": {
+      "lines": 469,
+      "bytes": 24082,
+      "files": {
+        "biomiya/tools/check_q_host.py": {
+          "lines": 89,
+          "bytes": 4153,
+          "sha256": "ee0b544a80db81cc2af1ee20ff7860b756040cbf8ba43528744b9a04e8e274ab"
+        },
+        "biomiya/tools/check_q_profiles.py": {
+          "lines": 187,
+          "bytes": 10647,
+          "sha256": "ff731877bbe556af752cfe470b95544a8ac7bec7630b87197f345c576feac637"
+        },
+        "biomiya/tools/check_q_s0_system.py": {
+          "lines": 193,
+          "bytes": 9282,
+          "sha256": "e776949aafc51721fdeb57a975338778b7299014d5fc1b45ce483f0cad04d796"
+        }
+      }
+    }
+  },
+  "compiler": {
+    "elf_bytes": 1036432,
+    "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "rw_bytes": 55135836,
+    "image_span_bytes": 56168028,
+    "statistics": {
+      "sources": 18,
+      "imports": 57,
+      "assembly_files": 1,
+      "source": 351556,
+      "assembly": 345,
+      "names": 4347,
+      "name_bytes": 87489,
+      "decls": 843,
+      "types": 435,
+      "fields": 383,
+      "params": 651,
+      "max_ast": 1173,
+      "max_ir": 1429,
+      "max_frame": 25808,
+      "max_bindings": 18,
+      "max_defers": 0,
+      "max_loops": 3,
+      "max_slots": 1033,
+      "max_args": 185,
+      "max_params": 5,
+      "text": 1027200,
+      "data": 2236,
+      "objects": 589,
+      "symbols": 13204,
+      "fixups": 28755,
+      "relocations": 6,
+      "elf": 1036432
+    }
+  },
+  "suba_images": {
+    "kernel": {
+      "elf_bytes": 20481,
+      "sha256": "3f3611393d6bcdfa494203ff15fb23251afcda20d7fdef1b3dbbf479508c22f5",
+      "rw_bytes": 131088,
+      "image_span_bytes": 147472,
+      "compiler_statistics": "S-next-0.1 sources=3 imports=2 assembly_files=1 source=14072 assembly=2348 names=536 name_bytes=10166 decls=201 types=19 fields=2 params=20 max_ast=381 max_ir=286 max_frame=1200 max_bindings=6 max_defers=0 max_loops=1 max_slots=167 max_args=39 max_params=3 text=9764 data=59 objects=4 symbols=197 fixups=292 relocations=0 elf=20481"
+    },
+    "boot": {
+      "elf_bytes": 20481,
+      "sha256": "78cef018222f6eb8d99e419bb34b45c5c4f82d9fe566314df04697311dac9aed",
+      "rw_bytes": 197136,
+      "image_span_bytes": 213520,
+      "compiler_statistics": "S-next-0.1 sources=5 imports=5 assembly_files=1 source=15325 assembly=2348 names=572 name_bytes=10603 decls=208 types=22 fields=2 params=20 max_ast=324 max_ir=274 max_frame=1424 max_bindings=5 max_defers=0 max_loops=1 max_slots=187 max_args=44 max_params=3 text=12248 data=49 objects=5 symbols=235 fixups=385 relocations=0 elf=20481"
+    }
+  },
+  "capacity": "compiler 18 VT + 1 S0; kernel 3 VT + 1 S0; boot fixture 5 VT + 1 S0. Limits remain 32 VT / 8 S0. Each machine image reserves a 128 KiB stack included in RW."
+}

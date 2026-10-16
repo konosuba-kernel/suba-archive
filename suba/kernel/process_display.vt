@@ -1,0 +1,125 @@
+// Boot-only desktop grant. Prepared mapping is tracked for explicit failure rollback;
+// publishing protection is separate from ROOTS diagnostics and cannot be inherited.
+module kernel::process;
+import suba::windows;
+enum Desktop { Empty, Preparing(Id), Trusted(Id) }
+static mut DESKTOP: Desktop = zero;
+static mut DISPLAY_PAGES: usize = 0;
+static mut DISPLAY_CHARGED: bool = false;
+
+pub unsafe fn prepare_display(id: Id) -> bool {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Prepared) { return false; }
+        match DESKTOP {
+            Desktop::Empty => {},
+            Desktop::Preparing(value) => { return false; },
+            Desktop::Trusted(value) => { return false; }
+        }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return false; },
+            AddressSpace::Owned(address_space) => {
+                if !space::charge(address_space, windows::SCREEN_PAGES) { return false; }
+            }
+        }
+        DESKTOP = Desktop::Preparing(id);
+        DISPLAY_PAGES = 0;
+        DISPLAY_CHARGED = true;
+    }
+    return true;
+}
+
+pub unsafe fn prepare_display_step(id: Id) -> space::Progress {
+    unsafe {
+        if !valid(id) || state_code(RECORDS[id.slot].state) != state_code(State::Prepared) { return space::Progress::Invalid; }
+        match DESKTOP {
+            Desktop::Preparing(value) => {
+                if value.slot != id.slot || value.generation != id.generation { return space::Progress::Invalid; }
+            },
+            Desktop::Empty => { return space::Progress::Invalid; },
+            Desktop::Trusted(value) => { return space::Progress::Invalid; }
+        }
+        if DISPLAY_PAGES == windows::SCREEN_PAGES { return space::Progress::Done; }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return space::Progress::Invalid; },
+            AddressSpace::Owned(address_space) => {
+                match space::map_display_page(address_space, DISPLAY_PAGES) {
+                    space::MappingResult::Invalid => { return space::Progress::Invalid; },
+                    space::MappingResult::NoMemory => { return space::Progress::Invalid; },
+                    space::MappingResult::Ready(value) => { DISPLAY_PAGES = DISPLAY_PAGES + 1_usize; }
+                }
+            }
+        }
+        if DISPLAY_PAGES == windows::SCREEN_PAGES { return space::Progress::Done; }
+    }
+    return space::Progress::More;
+}
+
+pub unsafe fn grant_desktop(id: Id) -> bool {
+    unsafe {
+        match DESKTOP {
+            Desktop::Preparing(value) => {
+                if value.slot != id.slot || value.generation != id.generation ||
+                    DISPLAY_PAGES != windows::SCREEN_PAGES { return false; }
+                DESKTOP = Desktop::Trusted(id);
+                return true;
+            },
+            Desktop::Empty => {}, Desktop::Trusted(value) => {}
+        }
+    }
+    return false;
+}
+
+pub unsafe fn trusted_desktop(id: Id) -> bool {
+    unsafe {
+        match DESKTOP {
+            Desktop::Trusted(value) => {
+                return value.slot == id.slot && value.generation == id.generation;
+            },
+            Desktop::Empty => {}, Desktop::Preparing(value) => {}
+        }
+    }
+    return false;
+}
+
+// Roll back borrowed leaves before normal process page reap; <=one leaf per call.
+pub unsafe fn abort_display_step(id: Id) -> space::Progress {
+    unsafe {
+        if !valid(id) { return space::Progress::Invalid; }
+        match DESKTOP {
+            Desktop::Preparing(value) => {
+                if value.slot != id.slot || value.generation != id.generation { return space::Progress::Invalid; }
+            },
+            Desktop::Empty => { return space::Progress::Done; },
+            Desktop::Trusted(value) => { return space::Progress::Invalid; }
+        }
+        match RECORDS[id.slot].space {
+            AddressSpace::Empty => { return space::Progress::Invalid; },
+            AddressSpace::Owned(address_space) => {
+                if DISPLAY_PAGES != 0_usize {
+                    if !space::unmap_display_page(address_space, DISPLAY_PAGES - 1_usize) { return space::Progress::Invalid; }
+                    DISPLAY_PAGES = DISPLAY_PAGES - 1_usize;
+                    return space::Progress::More;
+                }
+                if DISPLAY_CHARGED {
+                    if !space::uncharge(address_space, windows::SCREEN_PAGES) { return space::Progress::Invalid; }
+                    DISPLAY_CHARGED = false;
+                }
+            }
+        }
+        DESKTOP = Desktop::Empty;
+    }
+    return space::Progress::Done;
+}
+
+pub unsafe fn desktop_prepared(id: Id) -> bool {
+    unsafe {
+        match DESKTOP {
+            Desktop::Preparing(value) => {
+                return value.slot == id.slot && value.generation == id.generation &&
+                    DISPLAY_PAGES == windows::SCREEN_PAGES;
+            },
+            Desktop::Empty => {}, Desktop::Trusted(value) => {}
+        }
+    }
+    return false;
+}

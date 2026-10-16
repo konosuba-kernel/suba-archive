@@ -1,0 +1,91 @@
+// Static RV64 ELF decoder. No allocation, address dereference or partial publication.
+module suba::image;
+import suba::abi;
+// Permission bits are an image-plan contract; kernel space uses the same RV64 R/W/X bits.
+pub const READ: usize = 2;
+pub const WRITE: usize = 4;
+pub const EXECUTE: usize = 8;
+pub struct Segment {
+    pub address: usize, pub offset: usize, pub file_bytes: usize,
+    pub memory_bytes: usize, pub permissions: usize
+}
+pub struct Plan { pub entry: usize, pub count: usize, pub segments: [8]Segment }
+pub enum Inspect { Ready(Plan), Invalid }
+
+pub unsafe fn word(data: []const u8, at: usize, width: usize) -> usize {
+    // SAFETY: caller has checked at/width; explicit little-endian boundary reads.
+    unsafe {
+        var value: usize = 0;
+        var i: usize = 0;
+        while i < width {
+            value = value | ((data[at + i] as usize) << (i * 8_usize));
+            i = i + 1_usize;
+        }
+        return value;
+    }
+}
+
+// Header view must include all program headers; total is full immutable file size.
+// Caller keeps that immutable header readable throughout this bounded decode.
+// This permits the future filesystem caller to supply a bounded header read.
+pub unsafe fn inspect(header: []const u8, total: usize, kernel: bool) -> Inspect {
+    if header.len < 64_usize || total < header.len || total > abi::IMAGE_BYTES_MAX { return Inspect::Invalid; }
+    // SAFETY: fixed header checked above; the table extent is checked before entry reads.
+    unsafe {
+        if word(header, 0, 8) != 0x10102464c457f_usize || word(header, 8, 8) != 0_usize {
+            return Inspect::Invalid;
+        }
+        if word(header, 16, 2) != 2_usize || word(header, 18, 2) != 243_usize ||
+            word(header, 20, 4) != 1_usize || word(header, 48, 4) != 0_usize ||
+            word(header, 52, 2) != 64_usize || word(header, 54, 2) != 56_usize {
+            return Inspect::Invalid;
+        }
+        let table: usize = word(header, 32, 8);
+        let count: usize = word(header, 56, 2);
+        if count == 0_usize || count > 8_usize || table < 64_usize || table > header.len ||
+            count * 56_usize > header.len - table { return Inspect::Invalid; }
+        var base: usize = abi::USER_BASE;
+        if kernel { base = abi::KERNEL_BASE; }
+        var plan: Plan = zero;
+        plan.entry = word(header, 24, 8);
+        plan.count = count;
+        var previous_end: usize = base;
+        var executable: bool = false;
+        var index: usize = 0;
+        while index < count {
+            let at: usize = table + index * 56_usize;
+            let flags: usize = word(header, at + 4_usize, 4);
+            let offset: usize = word(header, at + 8_usize, 8);
+            let address: usize = word(header, at + 16_usize, 8);
+            let file_bytes: usize = word(header, at + 32_usize, 8);
+            let memory_bytes: usize = word(header, at + 40_usize, 8);
+            if word(header, at, 4) != 1_usize || word(header, at + 24_usize, 8) != address ||
+                word(header, at + 48_usize, 8) != abi::PAGE_BYTES { return Inspect::Invalid; }
+            if flags != 4_usize && flags != 5_usize && flags != 6_usize { return Inspect::Invalid; }
+            if address < previous_end || address - base >= abi::IMAGE_BYTES_MAX ||
+                address % abi::PAGE_BYTES != 0_usize || offset % abi::PAGE_BYTES != 0_usize {
+                return Inspect::Invalid;
+            }
+            if memory_bytes == 0_usize || memory_bytes > abi::IMAGE_BYTES_MAX - (address - base) ||
+                file_bytes > memory_bytes || offset > total || file_bytes > total - offset {
+                return Inspect::Invalid;
+            }
+            let pages: usize = (memory_bytes + 4095_usize) / abi::PAGE_BYTES;
+            previous_end = address + pages * abi::PAGE_BYTES;
+            var permissions: usize = READ;
+            if flags == 5_usize {
+                permissions = permissions | EXECUTE;
+                if plan.entry >= address && plan.entry - address < file_bytes { executable = true; }
+            }
+            if flags == 6_usize { permissions = permissions | WRITE; }
+            plan.segments[index] = make Segment { address: address, offset: offset,
+                file_bytes: file_bytes, memory_bytes: memory_bytes, permissions: permissions };
+            index = index + 1_usize;
+        }
+        if !executable || plan.entry % 4_usize != 0_usize || plan.segments[0_usize].address != base {
+            return Inspect::Invalid;
+        }
+        if kernel && plan.entry != base { return Inspect::Invalid; }
+        return Inspect::Ready(plan);
+    }
+}

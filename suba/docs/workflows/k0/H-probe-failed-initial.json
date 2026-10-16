@@ -1,0 +1,33 @@
+{
+  "input_sha256": {
+    "model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "legacy.vt": "d3f90f15c19bfc51c97c903db696b5ca4313e2126ff0d5ca6c5e0b5e83de2caf",
+    "host.vt": "830b2490b60fc290cb915bebabbea4d68c2d3877054ddff27c888d3841a897b6",
+    "probe.vt": "bb2385739304355f196ad915f93f549bcc5ce8f74c2bad7229f7f7d1befaecb5",
+    "trap.s0": "484d5685c54eb6bf66ff8936dc32b45e530bdd130db5b312900d739dd9068521",
+    "compiler.elf": "8051f3599704a6bf180496b14632691c3463f1239946893641f65aae21969904",
+    "tool.py": "d570ee5213186f39b369de4f6b042f941714e0aa7c4b6d848a59794976b77672"
+  },
+  "cases": [
+    {
+      "name": "capture",
+      "expected_exit": 77,
+      "passed": false,
+      "build": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe/compiler.elf",
+          "build",
+          "probe.build"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "E_PARSE file=4 byte=189\n"
+      }
+    }
+  ],
+  "passed": false,
+  "error": "capture: build failed"
+}

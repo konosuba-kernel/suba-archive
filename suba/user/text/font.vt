@@ -1,0 +1,57 @@
+// SUBAFNT1: fixed BMP index, 8/16-pixel width, 16 rows, two bytes per row (MSB first).
+module user::text::font;
+pub const GLYPH_COUNT: usize = 65536;
+pub const HEADER_BYTES: usize = 16;
+pub const BITMAP_OFFSET: usize = HEADER_BYTES + GLYPH_COUNT;
+pub const FILE_BYTES: usize = BITMAP_OFFSET + GLYPH_COUNT * 32_usize;
+pub struct Font { bytes: []const u8 }
+pub enum Open { Ready(Font), Invalid }
+pub struct Glyph { pub width: usize, pub missing: bool, bitmap: []const u8 }
+static BOX: [32]u8 = [0_u8,0_u8,127_u8,254_u8,64_u8,2_u8,64_u8,2_u8,
+    64_u8,2_u8,64_u8,2_u8,64_u8,2_u8,64_u8,2_u8,64_u8,2_u8,64_u8,2_u8,
+    64_u8,2_u8,64_u8,2_u8,64_u8,2_u8,64_u8,2_u8,127_u8,254_u8,0_u8,0_u8];
+
+// Caller keeps the complete blob live and immutable for Font and all borrowed Glyph values.
+pub unsafe fn open(bytes: []const u8) -> Open {
+    if bytes.len != FILE_BYTES { return Open::Invalid; }
+    let header: []const u8 = "SUBAFNT1\0\0\x01\0\x10\0\0\0";
+    // SAFETY: exact length was checked; all offsets are within the fixed wire layout.
+    unsafe {
+        var i: usize = 0;
+        while i < HEADER_BYTES {
+            if bytes[i] != header[i] { return Open::Invalid; }
+            i = i + 1_usize;
+        }
+        i = 0;
+        while i < GLYPH_COUNT {
+            let width: u8 = bytes[HEADER_BYTES + i];
+            if width != 0_u8 && width != 8_u8 && width != 16_u8 { return Open::Invalid; }
+            if i >= 0xd800_usize && i <= 0xdfff_usize && width != 0_u8 { return Open::Invalid; }
+            i = i + 1_usize;
+        }
+    }
+    return Open::Ready(make Font { bytes: bytes });
+}
+
+pub unsafe fn glyph(font: Font, scalar: u32) -> Glyph {
+    // SAFETY: caller retains immutable validated Font backing; index checked before table access.
+    unsafe {
+        if scalar < GLYPH_COUNT as u32 {
+            let index: usize = scalar as usize;
+            let width: usize = font.bytes[HEADER_BYTES + index] as usize;
+            if width != 0_usize {
+                return make Glyph { width: width, missing: false,
+                    bitmap: core::slice_from_raw_parts(core::ptr_add(font.bytes.data,
+                        BITMAP_OFFSET + index * 32_usize), 32) };
+            }
+        }
+        return make Glyph { width: 16, missing: true, bitmap: core::slice_of(BOX) };
+    }
+}
+
+pub unsafe fn pixel(glyph: Glyph, x: usize, y: usize) -> bool {
+    if x >= glyph.width || x >= 16_usize || y >= 16_usize { return false; }
+    // SAFETY: Glyph only comes from glyph(); bitmap is a live 32-byte view, x<16 and y<16.
+    unsafe { return (glyph.bitmap[y * 2_usize + x / 8_usize] &
+        (128_u8 >> ((x % 8_usize) as u8))) != 0_u8; }
+}

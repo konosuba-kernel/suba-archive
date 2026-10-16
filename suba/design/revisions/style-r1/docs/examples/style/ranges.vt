@@ -1,0 +1,27 @@
+module style::ranges;
+
+// A successfully checked half-open byte range; fields remain module-private.
+pub struct ByteRange {
+    offset: usize,
+    length: usize
+}
+
+pub enum RangeResult {
+    Value(ByteRange),
+    Outside
+}
+
+pub fn checked_range(offset: usize, length: usize, total: usize) -> RangeResult {
+    if offset > total {
+        return RangeResult::Outside;
+    }
+    if length > total - offset {
+        return RangeResult::Outside;
+    }
+    return RangeResult::Value(make ByteRange { offset: offset, length: length });
+}
+
+pub fn end(range: ByteRange) -> usize {
+    // Construction proved that this addition cannot exceed total or wrap.
+    return range.offset + range.length;
+}

@@ -1,0 +1,46 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+static mut BLOCK: [4096]u8 = zero;
+unsafe fn run_pair(pair: services::StreamPair) -> u32 {
+    unsafe {
+        // Fill before spawning, so the child's first write must remain pending.
+        var count: usize = 0;
+        while count < 65536_usize {
+            let sent: syscall::Reply = services::write(pair.write, core::slice_of(BLOCK), false);
+            if sent.status != abi::OK || sent.value == 0_usize { return 111; }
+            count = count + sent.value;
+        }
+        let child: syscall::Reply = common::spawn("blocked-writer", pair.write, 0, 0);
+        if child.status != abi::OK { return 112; }
+        let closed: syscall::Reply = syscall::close(pair.write);
+        if closed.status != abi::OK { return 113; }
+        let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+        let pause: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, now.value + 100000_usize, 0, 0, 0);
+        if pause.status != abi::OK { return 114; }
+        let killed: syscall::Reply = syscall::kill_child(child.value);
+        if killed.status != abi::OK || !common::collect(child.value, abi::CANCELLED) { return 115; }
+        count = 0;
+        loop {
+            let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(BLOCK), false);
+            if read.status != abi::OK { return 116; }
+            if read.value == 0_usize { break; }
+            var i: usize = 0;
+            while i < read.value { if BLOCK[i] != 0_u8 { return 117; } i = i + 1_usize; }
+            count = count + read.value;
+        }
+        if count != 65536_usize { return 118; }
+        let end: syscall::Reply = syscall::close(pair.read);
+        if end.status != abi::OK { return 119; }
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    match services::streams() {
+        services::Streams::Failed(status) => { return 110; },
+        services::Streams::Ready(pair) => { unsafe { return run_pair(pair); } }
+    }
+}

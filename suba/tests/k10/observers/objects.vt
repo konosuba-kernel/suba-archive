@@ -1,0 +1,16 @@
+// TEST ONLY: serialized read of this owner's private tables; at most64 slots.
+pub unsafe fn k10_handles(slot: usize) -> usize {
+    unsafe {
+        if slot >= PROCESS_CAPACITY { return 0; }
+        var count: usize = 0; var i: usize = 0;
+        while i < 64_usize {
+            if SLOTS[slot * 64_usize + i].live { count = count + 1_usize; }
+            i = i + 1_usize;
+        }
+        return count;
+    }
+}
+pub unsafe fn k10_attached(slot: usize) -> usize {
+    unsafe { if slot < PROCESS_CAPACITY && OWNERS[slot] != 0_usize { return 1; } }
+    return 0;
+}

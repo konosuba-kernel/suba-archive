@@ -1,0 +1,33 @@
+module test::manifest;
+import user::build::manifest;
+import test::transport;
+static mut INPUT: [16385]u8 = zero;
+static mut OUTPUT: [16384]u8 = zero;
+pub fn run() -> u32 {
+    var plan: manifest::Plan = manifest::begin();
+    unsafe {
+        let size: usize = transport::read(core::slice_of_mut(INPUT));
+        if size > 16384_usize { return 80; }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, size);
+        match manifest::prepare(core::addr_of_mut(plan), data, core::slice_of_mut(OUTPUT)) {
+            manifest::Outcome::Ready => {},
+            manifest::Outcome::Invalid(at) => { return 1; },
+            manifest::Outcome::Limit => { return 2; },
+        }
+        let count: usize = manifest::count(core::addr_of(plan));
+        let length: usize = manifest::rewritten_bytes(core::addr_of(plan));
+        if !transport::word(count) || !transport::word(length) { return 81; }
+        if !transport::write(core::slice_from_raw_parts(core::slice_of(OUTPUT).data, length)) { return 82; }
+        var i: usize = 0;
+        while i < count {
+            let entry: manifest::File = manifest::file(core::addr_of(plan), i);
+            var assembly: usize = 0;
+            if entry.assembly { assembly = 1; }
+            if !transport::word(assembly) || !transport::word(entry.path.len) || !transport::write(entry.path) { return 83; }
+            i = i + 1_usize;
+        }
+        let path: []const u8 = manifest::output_path(core::addr_of(plan));
+        if !transport::write(path) { return 84; }
+    }
+    return 0;
+}

@@ -1,0 +1,29 @@
+module test::context;
+import user::build::manifest;
+static mut OUTPUT: [16384]u8 = zero;
+unsafe fn check(source: []const u8, original: []const u8, policy: []const u8, expected: bool) -> bool {
+    var plan: manifest::Plan = manifest::begin();
+    unsafe {
+        match manifest::prepare(core::addr_of_mut(plan), source, core::slice_of_mut(OUTPUT)) {
+            manifest::Outcome::Ready => {},
+            manifest::Outcome::Invalid(at) => { return false; },
+            manifest::Outcome::Limit => { return false; }
+        }
+        return manifest::context(core::addr_of(plan), original, policy) == expected;
+    }
+}
+pub fn run() -> u32 {
+    let input: []const u8 = "source app.vt\noutput result.elf\n";
+    unsafe {
+        if !check(input, "project.build", "", true) { return 1; }
+        if !check(input, "project.build", "blocking.policy", true) { return 2; }
+        if !check(input, "result.elf", "", false) { return 3; }
+        if !check(input, "app.vt", "", false) { return 4; }
+        if !check(input, "project.build", "app.vt", false) { return 5; }
+        if !check(input, "project.build", "project.build/child", false) { return 6; }
+        if !check(input, "project.build", "program.build", false) { return 7; }
+        if !check(input, "project.build", "result.elf", false) { return 8; }
+        if !check(input, "project.build", "app.vt/policy", false) { return 9; }
+    }
+    return 0;
+}

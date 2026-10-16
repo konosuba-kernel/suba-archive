@@ -1,0 +1,86 @@
+// Build worker drains both compiler pipes. Blocking here suspends only this U
+// process; the editor independently reads its output and keeps handling windows.
+module user::build::compiler_streams;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::arguments;
+pub struct Completion { pub error: usize, pub exit: services::Exit }
+struct Drain { error: usize, eof: bool, progress: bool }
+
+pub unsafe fn emit(bytes: []const u8) -> usize {
+    unsafe {
+        var used: usize = 0;
+        let output: usize = arguments::output(false);
+        while used < bytes.len {
+            var count: usize = bytes.len - used;
+            if count > abi::IO_BYTES_MAX { count = abi::IO_BYTES_MAX; }
+            let part: []const u8 = core::slice_from_raw_parts(core::ptr_add(bytes.data, used), count);
+            let wrote: syscall::Reply = services::write(output, part, false);
+            if wrote.status != abi::OK { return wrote.status; }
+            if wrote.value == 0_usize || wrote.value > count { return abi::IO; }
+            used = used + wrote.value;
+        }
+    }
+    return abi::OK;
+}
+unsafe fn drain(handle: usize, scratch: []u8) -> Drain {
+    unsafe {
+        let read: syscall::Reply = services::read(handle, scratch, true);
+        if read.status == abi::WOULD_BLOCK {
+            return make Drain { error: abi::OK, eof: false, progress: false };
+        }
+        if read.status != abi::OK { return make Drain { error: read.status, eof: false, progress: false }; }
+        if read.value > scratch.len { return make Drain { error: abi::IO, eof: false, progress: false }; }
+        if read.value == 0_usize { return make Drain { error: abi::OK, eof: true, progress: true }; }
+        let status: usize = emit(core::slice_from_raw_parts(scratch.data, read.value));
+        return make Drain { error: status, eof: false, progress: true };
+    }
+}
+
+// Owns neither child nor pipe handles. On success collect consumes child; on
+// failure caller ends the Job and closes the still-owned resources.
+pub unsafe fn collect(child: usize, output: usize, error: usize, scratch: []u8) -> Completion {
+    var eof_out: bool = false;
+    var eof_err: bool = false;
+    var failed: Completion = zero;
+    unsafe {
+        while !eof_out || !eof_err {
+            var progress: bool = false;
+            if !eof_out {
+                let step: Drain = drain(output, scratch);
+                if step.error != abi::OK { failed.error = step.error; return failed; }
+                eof_out = step.eof;
+                progress = step.progress;
+            }
+            if !eof_err {
+                let step: Drain = drain(error, scratch);
+                if step.error != abi::OK { failed.error = step.error; return failed; }
+                eof_err = step.eof;
+                progress = progress || step.progress;
+            }
+            if progress { continue; }
+            var watches: [2]services::Watch = zero;
+            var count: usize = 0;
+            if !eof_out {
+                watches[count] = make services::Watch { handle: output, events: syscalls::READABLE };
+                count = count + 1_usize;
+            }
+            if !eof_err {
+                watches[count] = make services::Watch { handle: error, events: syscalls::READABLE };
+                count = count + 1_usize;
+            }
+            let active: []const services::Watch = core::slice_from_raw_parts(core::slice_of(watches).data, count);
+            let waited: syscall::Reply = services::wait(active, 0, false);
+            if waited.status != abi::OK { failed.error = waited.status; return failed; }
+        }
+        let watches: [1]services::Watch = [make services::Watch { handle: child, events: syscalls::EXITED }];
+        let waited: syscall::Reply = services::wait(core::slice_of(watches), 0, false);
+        if waited.status != abi::OK { failed.error = waited.status; return failed; }
+        match services::collect(child) {
+            services::Collected::Failed(status) => { failed.error = status; return failed; },
+            services::Collected::Ready(exit) => { return make Completion { error: abi::OK, exit: exit }; }
+        }
+    }
+}

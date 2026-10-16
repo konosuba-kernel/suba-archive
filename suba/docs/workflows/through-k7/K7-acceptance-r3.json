@@ -1,0 +1,125 @@
+{
+  "stage": "K7",
+  "revision": 3,
+  "decision": "通过",
+  "status": "accepted",
+  "passed": true,
+  "reviewer": "/root/k4_review",
+  "implementation_contributor": false,
+  "candidate": {
+    "path": "docs/workflows/through-k7/K7-candidate-r3.json",
+    "sha256": "884a5e0b097db49b1d668603da696bb13c271fdb692998f83705b1ce56ece890",
+    "owned": 89,
+    "inputs": 102
+  },
+  "production_kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+  "system": "build/k7-system-r6",
+  "independent_commands": [
+    "python3 build/k7-independent-r3/audit.py",
+    "python3 build/k7-independent-r3/notifications.py",
+    "python3 build/k7-independent-r3/faults.py",
+    "python3 build/k7-independent-r3/restart.py",
+    "python3 build/k7-independent-r3/regress.py",
+    "python3 build/k7-independent-r3/finalize.py"
+  ],
+  "evidence": {
+    "gui": {
+      "passed": true,
+      "report_sha256": "4a5665420ae43f0de77130377f2eb93ef1329050ac700aabe836abb7af86abad",
+      "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+      "users_unchanged_from_r2": true,
+      "persisted_source_and_elf_equal_host_oracle": true,
+      "same_disk_reboot": true,
+      "no_jobs": true,
+      "latencies": [
+        {
+          "name": "first-build",
+          "seconds": 141.30704234299992
+        },
+        {
+          "name": "other-window-edit-save",
+          "seconds": 34.38836157900005
+        }
+      ]
+    },
+    "dma": {
+      "passed": true,
+      "snapshot_transformation_reconstructed": true,
+      "positive_rounds": 100,
+      "negative_rounds": 1,
+      "only_compiled_difference": [
+        "kernel/trap.s0"
+      ],
+      "users_equal": true,
+      "negative_expected_panic": 73,
+      "production_equivalence": "block/virtio unchanged; scheduling/observability snapshot explicitly separate"
+    },
+    "independent_reports": {
+      "build/k7-independent-r3/integrity.json": "28079a7fc863bbd8319a0b7864031f09e6ad4b021916058189eafbc9aeba3937",
+      "build/k7-independent-r3/notifications/verification.json": "d92dcc6fec943cece060458a7646f2ba1b5a679ed50260dac1c8ef8af25a106b",
+      "build/k7-independent-r3/faults/verification.json": "4bb2af76050db4e42e8c06a46ef9bbe8b03d1350440229ea7f297747bd739908",
+      "build/k7-independent-r3/restart/verification.json": "bf8ea762593d78719ce10b977f2a2635fe409954ab7903173e00788007ae3d71",
+      "build/k7-independent-r3/restart/ledger.json": "2692a1e07a54b34f937b48768c8a2eb8ca42f60e10e6229b3dd45df8f5d56235",
+      "build/k7-independent-r3/regress-job/verification.json": "2038023dcfc7c761194fc79d4a2ca177b037e4d07110731e402ac71c8abfec21",
+      "build/k7-independent-r3/regress-images/verification.json": "27abf3c37e15d5a9b724a87b46a905dca0215128bd4c7eaf269061cfa957db98",
+      "build/k7-independent-r3/regress-death/verification.json": "6bc257df6caf2725f5dea9828ef522f5a14a2e3020d459f3aae00854b159a79b"
+    },
+    "author_reports": {
+      "build/k7-panic-production-r2/verification.json": {
+        "sha256": "db7a163e28ca42bd653565e65fd0e2e8ecfa49763311f71845935d9929917594",
+        "passed": true
+      },
+      "build/k7-block-notification-r3/verification.json": {
+        "sha256": "f06865e5a5d9d60121ebc56a786ceb65c7f16b544c21a3233a7b6801de24623f",
+        "passed": true
+      },
+      "build/k7-block-failure-r5/verification.json": {
+        "sha256": "2a521122ca510426af9a71ea307cee2da06a040c8e1a1fd81f694cbc3e484245",
+        "passed": true
+      },
+      "build/k7-panic-recovered-r3/verification.json": {
+        "sha256": "4b1c7b4e5c3153151d688ba75f353859228ba93182fe1a23fa6099be49bcdd15",
+        "passed": true
+      },
+      "build/k7-panic-historical-r1/verification.json": {
+        "sha256": "cff02b5b31501cb526e940ff4e4eba8b8189f060c25f81933e91f1dfaa99dd28",
+        "passed": true
+      },
+      "build/k7-panic-load-cancel-r1/verification.json": {
+        "sha256": "b376920b70fe6df1a9eff490344bac49698f112337c5c0a0091b38406931bcee",
+        "passed": true
+      },
+      "build/k7-panic-load-noirq-r1/verification.json": {
+        "sha256": "562e4973e61d04a7ab3dfadebfea866e0d087b03cdb3824a5a8993d186c9299d",
+        "passed": false
+      },
+      "build/k7-panic-irq-comparison-r1.json": {
+        "sha256": "92f19b05ff815990c5aa25feb97add559e6cda16e9e9a541dedb584d7c083dba",
+        "passed": true
+      }
+    },
+    "passed": true
+  },
+  "final_verification_sha256": "34133fbb478bcfdae0621a58bdf0bfa0617dd59040e915a1c3e35c91dc29b02f",
+  "report_sha256": "3651a83b000274656e4f6066d6db6dff2230065593da5135e696d9650469257a",
+  "closure_basis": [
+    "confirmed legal empty/late notification state-machine defect old-fail/new-pass",
+    "unchanged watchdog with real FLUSH timeout/EIO diagnostic classification",
+    "final production GUI/save/build/run/reboot and affected regression",
+    "real submitted DMA positive/negative observer comparison"
+  ],
+  "historical_unknowns": [
+    "k7-kernel-remount-r1/reboot2 panic70 remains unclassified, not attributed to spurious notification",
+    "k7-kernel-job-dma-r1 round61 code100 remains unexplained"
+  ],
+  "pending_required_checks": [],
+  "out_of_scope": [
+    "K8 native compiler fixed point",
+    "K9 native kernel rebuild",
+    "K10 latency/stability/final teaching delivery"
+  ],
+  "prior_decisions_preserved": {
+    "r1": "rejected",
+    "r2": "indeterminate"
+  }
+}

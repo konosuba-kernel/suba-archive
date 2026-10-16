@@ -1,0 +1,213 @@
+// Stable filesystem image sources. One owned reader and ticket per process slot;
+// each returned buffer is borrowed only until the next call for that source.
+// Serialized dispatch drives poll; fs owns DMA and never retains this RAM view.
+module kernel::image_reads;
+import suba::abi;
+import suba::files;
+import suba::argument_wire;
+import kernel::fs;
+import kernel::objects;
+const CAPACITY: usize = 16;
+enum Phase { Empty, Opening, Stat, Header, Ready, Reading }
+struct Source {
+    generation: usize, client: fs::Client, phase: Phase,
+    file: objects::Identity, ticket: objects::Identity, total: usize,
+    offset: usize, bytes: usize,
+}
+static mut SOURCES: [CAPACITY]Source = zero;
+static mut BUFFERS: [CAPACITY * 4096]u8 = zero;
+pub struct Header { pub bytes: []const u8, pub total: usize }
+pub enum Begun { Ready(objects::Identity), Failed(fs::Error) }
+pub enum Inspected { Wait, Ready(Header), Failed(fs::Error), Invalid }
+pub enum Read { Wait, Ready([]const u8), Failed(fs::Error), Invalid }
+enum Poll { Wait, Done(fs::Outcome), Invalid }
+
+unsafe fn valid(id: objects::Identity) -> bool {
+    unsafe {
+        if id.slot >= CAPACITY || id.generation == 0_usize ||
+            SOURCES[id.slot].generation != id.generation { return false; }
+        match SOURCES[id.slot].phase {
+            Phase::Empty => { return false; }, Phase::Opening => {}, Phase::Stat => {},
+            Phase::Header => {}, Phase::Ready => {}, Phase::Reading => {}
+        }
+        return true;
+    }
+}
+unsafe fn buffer(slot: usize, bytes: usize) -> []const u8 {
+    // SAFETY: internal callers use a checked source slot and a <=4096 byte span.
+    unsafe {
+        return core::slice_from_raw_parts(core::ptr_add(core::slice_of(BUFFERS).data,
+            slot * 4096_usize), bytes);
+    }
+}
+
+pub unsafe fn begin(client: fs::Client, path: []const u8) -> Begun {
+    // SAFETY: caller keeps path readable for enqueue's bounded copy only.
+    unsafe {
+        if client.slot >= CAPACITY || client.generation == 0_usize { return Begun::Failed(fs::Error::Invalid); }
+        match SOURCES[client.slot].phase {
+            Phase::Empty => {}, Phase::Opening => { return Begun::Failed(fs::Error::Busy); },
+            Phase::Stat => { return Begun::Failed(fs::Error::Busy); }, Phase::Header => { return Begun::Failed(fs::Error::Busy); },
+            Phase::Ready => { return Begun::Failed(fs::Error::Busy); }, Phase::Reading => { return Begun::Failed(fs::Error::Busy); }
+        }
+        if SOURCES[client.slot].generation == 0xffffffffffffffff_usize { return Begun::Failed(fs::Error::Limit); }
+        match fs::enqueue(client, fs::Command::Open(files::READ), path, "") {
+            fs::Queued::Failed(error) => { return Begun::Failed(error); },
+            fs::Queued::Ready(ticket) => {
+                var source: Source = zero;
+                source.generation = SOURCES[client.slot].generation + 1_usize;
+                source.client = client;
+                source.phase = Phase::Opening;
+                source.ticket = ticket;
+                SOURCES[client.slot] = source;
+                return Begun::Ready(make objects::Identity { slot: client.slot, generation: source.generation });
+            }
+        }
+    }
+}
+
+unsafe fn poll(id: objects::Identity) -> Poll {
+    unsafe {
+        let ticket: objects::Identity = SOURCES[id.slot].ticket;
+        match fs::action(ticket) {
+            fs::Action::Invalid => { return Poll::Invalid; },
+            fs::Action::Wait => { return Poll::Wait; },
+            fs::Action::Input(copy) => { return Poll::Invalid; },
+            fs::Action::Output(copy) => {
+                if copy.offset > 4096_usize || copy.bytes.len > 4096_usize - copy.offset { return Poll::Invalid; }
+                var i: usize = 0;
+                while i < copy.bytes.len {
+                    BUFFERS[id.slot * 4096_usize + copy.offset + i] = copy.bytes[i];
+                    i = i + 1_usize;
+                }
+                if !fs::copied(ticket) { return Poll::Invalid; }
+                return Poll::Wait;
+            },
+            fs::Action::Done(result) => {
+                if !fs::take(ticket) { return Poll::Invalid; }
+                SOURCES[id.slot].ticket.generation = 0;
+                return Poll::Done(result);
+            }
+        }
+    }
+}
+
+unsafe fn queue_read(id: objects::Identity, offset: usize, bytes: usize) -> fs::Queued {
+    unsafe {
+        let access: fs::Access = make fs::Access { file: SOURCES[id.slot].file, offset: offset, bytes: bytes };
+        let queued: fs::Queued = fs::enqueue(SOURCES[id.slot].client, fs::Command::Read(access), "", "");
+        match queued {
+            fs::Queued::Ready(ticket) => {
+                SOURCES[id.slot].ticket = ticket;
+                SOURCES[id.slot].offset = offset;
+                SOURCES[id.slot].bytes = bytes;
+            },
+            fs::Queued::Failed(error) => {}
+        }
+        return queued;
+    }
+}
+
+// Wait does not spin: the outer scheduler advances fs and returns on a later slice.
+// Any Failed result still owns the source; caller must close it on that path.
+pub unsafe fn header(id: objects::Identity) -> Inspected {
+    unsafe {
+        if !valid(id) { return Inspected::Invalid; }
+        match SOURCES[id.slot].phase {
+            Phase::Ready => { return Inspected::Ready(make Header {
+                bytes: buffer(id.slot, SOURCES[id.slot].bytes), total: SOURCES[id.slot].total }); },
+            Phase::Reading => { return Inspected::Invalid; }, Phase::Empty => { return Inspected::Invalid; },
+            Phase::Opening => {}, Phase::Stat => {}, Phase::Header => {}
+        }
+        var result: fs::Outcome = fs::Outcome::Value(0);
+        match poll(id) {
+            Poll::Wait => { return Inspected::Wait; }, Poll::Invalid => { return Inspected::Invalid; },
+            Poll::Done(value) => { result = value; }
+        }
+        match result {
+            fs::Outcome::Failed(error) => { return Inspected::Failed(error); },
+            fs::Outcome::Directory(node) => { return Inspected::Invalid; },
+            fs::Outcome::File(file) => {
+                SOURCES[id.slot].file = file;
+                match fs::enqueue(SOURCES[id.slot].client, fs::Command::Stat(file), "", "") {
+                    fs::Queued::Failed(error) => { return Inspected::Failed(error); },
+                    fs::Queued::Ready(ticket) => {
+                        SOURCES[id.slot].ticket = ticket;
+                        SOURCES[id.slot].phase = Phase::Stat;
+                        return Inspected::Wait;
+                    }
+                }
+            },
+            fs::Outcome::Value(count) => {
+                match SOURCES[id.slot].phase {
+                    Phase::Header => {
+                        if count != SOURCES[id.slot].bytes { return Inspected::Failed(fs::Error::Invalid); }
+                        SOURCES[id.slot].phase = Phase::Ready;
+                        return Inspected::Ready(make Header { bytes: buffer(id.slot, count), total: SOURCES[id.slot].total });
+                    },
+                    Phase::Stat => {
+                        let stat: []const u8 = buffer(id.slot, files::STAT_BYTES);
+                        if count != files::STAT_BYTES || argument_wire::word(stat, files::STAT_KIND, 4) != abi::NODE_FILE as usize ||
+                            argument_wire::word(stat, files::STAT_FLAGS, 4) != 0_usize { return Inspected::Failed(fs::Error::Invalid); }
+                        let total: usize = argument_wire::word(stat, files::STAT_FILE_BYTES, 8);
+                        if total < 64_usize || total > abi::IMAGE_BYTES_MAX { return Inspected::Failed(fs::Error::Invalid); }
+                        SOURCES[id.slot].total = total;
+                        var bytes: usize = total;
+                        if bytes > 4096_usize { bytes = 4096; }
+                        match queue_read(id, 0, bytes) {
+                            fs::Queued::Failed(error) => { return Inspected::Failed(error); },
+                            fs::Queued::Ready(ticket) => { SOURCES[id.slot].phase = Phase::Header; return Inspected::Wait; }
+                        }
+                    },
+                    Phase::Empty => {}, Phase::Opening => {}, Phase::Ready => {}, Phase::Reading => {}
+                }
+            }
+        }
+        return Inspected::Invalid;
+    }
+}
+
+pub unsafe fn read(id: objects::Identity, offset: usize, bytes: usize) -> Read {
+    unsafe {
+        if !valid(id) || bytes > 4096_usize || offset > SOURCES[id.slot].total ||
+            bytes > SOURCES[id.slot].total - offset { return Read::Invalid; }
+        match SOURCES[id.slot].phase {
+            Phase::Ready => {
+                if bytes == 0_usize { return Read::Ready(buffer(id.slot, 0)); }
+                match queue_read(id, offset, bytes) {
+                    fs::Queued::Failed(error) => { return Read::Failed(error); },
+                    fs::Queued::Ready(ticket) => { SOURCES[id.slot].phase = Phase::Reading; return Read::Wait; }
+                }
+            },
+            Phase::Reading => {}, Phase::Empty => { return Read::Invalid; },
+            Phase::Opening => { return Read::Invalid; }, Phase::Stat => { return Read::Invalid; }, Phase::Header => { return Read::Invalid; }
+        }
+        if offset != SOURCES[id.slot].offset || bytes != SOURCES[id.slot].bytes { return Read::Invalid; }
+        match poll(id) {
+            Poll::Invalid => { return Read::Invalid; }, Poll::Wait => { return Read::Wait; },
+            Poll::Done(result) => {
+                match result {
+                    fs::Outcome::Value(count) => {
+                        if count != bytes { return Read::Failed(fs::Error::Invalid); }
+                        SOURCES[id.slot].phase = Phase::Ready;
+                        return Read::Ready(buffer(id.slot, count));
+                    },
+                    fs::Outcome::Failed(error) => { return Read::Failed(error); },
+                    fs::Outcome::File(file) => { return Read::Invalid; }, fs::Outcome::Directory(node) => { return Read::Invalid; }
+                }
+            }
+        }
+    }
+}
+
+// Cancels delivery before releasing the reader. An active FS request retains its
+// own pin until DMA drains; process Tail still waits for fs::settled(client).
+pub unsafe fn close(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) { return false; }
+        if SOURCES[id.slot].ticket.generation != 0_usize && !fs::cancel(SOURCES[id.slot].ticket) { return false; }
+        if SOURCES[id.slot].file.generation != 0_usize && !fs::release_file(SOURCES[id.slot].file) { return false; }
+        SOURCES[id.slot].phase = Phase::Empty;
+        return true;
+    }
+}

@@ -1,0 +1,238 @@
+// Host driver: immutable inputs, one function arena at a time, direct ELF output.
+module bootstrap::main;
+import bootstrap::model;
+import bootstrap::input;
+import bootstrap::types;
+import bootstrap::init;
+import bootstrap::check;
+import bootstrap::ir;
+import bootstrap::parse;
+import bootstrap::image;
+import bootstrap::rv64;
+import bootstrap::s0;
+import bootstrap::blocking;
+import bootstrap::target;
+import runtime::host;
+import runtime::bytes;
+fn text(value: []const u8) -> () {
+    // SAFETY: diagnostic views remain readable through this synchronous call.
+    unsafe { host::diagnostic(value); }
+    return ();
+}
+
+fn number(value:usize) -> () {
+    var digits:[20]u8 = [0;20];
+    var n:usize = value;
+    var at:usize = 20;
+    loop {
+        at = at-1_usize;
+        unsafe {
+            digits[at] = ((n%10_usize) as u8)+48_u8;
+        }
+        n = n/10_usize;
+        if n == 0_usize {
+            break;
+        }
+    }
+    unsafe {
+        text(bytes::view(core::slice_of(digits), at, 20));
+    }
+    return ();
+}
+
+fn metric(key:[]const u8, value:usize) -> () {
+    text(" ");
+    text(key);
+    text("=");
+    number(value);
+    return ();
+}
+
+fn argument(index:usize) -> []const u8 {
+    match host::argument(index) {
+        host::BytesResult::Value(value) => {
+            return value;
+        },
+        host::BytesResult::Failed(error) => {
+            model::fail(model::ERROR_PARSE, 0, 0);
+            return "";
+        },
+    }
+}
+
+fn named_function(name: []const u8) -> u32 {
+    var id: u32 = 1;
+    while id <= model::decl_count() {
+        let decl: model::Decl = model::get_decl(id);
+        if decl.kind == model::DECL_FUNCTION {
+            let module_name: []const u8 = model::get_name(decl.module_id).bytes;
+            let local: []const u8 = model::get_name(decl.name).bytes;
+            var matches: bool = model::equal(name, local) && module_name.len == 0_usize;
+            if name.len == module_name.len + 2_usize + local.len {
+                // SAFETY: length above bounds both separators and all views.
+                unsafe {
+                    matches = model::equal(bytes::view(name, 0, module_name.len), module_name) &&
+                        name[module_name.len] == 58_u8 && name[module_name.len + 1_usize] == 58_u8 &&
+                        model::equal(bytes::view(name, module_name.len + 2_usize, name.len), local);
+                }
+            }
+            if matches { return id; }
+        }
+        id = id + 1_u32;
+    }
+    model::fail(model::ERROR_NAME, 0, 0);
+    return 0;
+}
+
+fn signature(id: u32, count: u32, argument: model::TypeId, result: model::TypeId) -> () {
+    let decl: model::Decl = model::get_decl(id);
+    if decl.count != count || !model::same_type(decl.ty, result) ||
+        (decl.flags & model::FLAG_UNSAFE) != 0_u32 {
+        model::fail(model::ERROR_TYPE, decl.file, decl.start as usize);
+    }
+    var at: u32 = 0;
+    while at < count {
+        if !model::same_type(model::get_param(decl.first + at).ty, argument) {
+            model::fail(model::ERROR_TYPE, decl.file, decl.start as usize);
+        }
+        at = at + 1_u32;
+    }
+    return ();
+}
+
+fn selected_entry() -> u32 {
+    let entry: u32 = named_function(input::entry_name());
+    signature(entry, target::entry_parameters(), model::usize_type(), model::u32_type());
+    return entry;
+}
+
+fn selected_panic() -> u32 {
+    if !target::machine() {
+        if input::panic_name().len != 0_usize || input::trap_name().len != 0_usize {
+            model::fail(model::ERROR_UNSUPPORTED, 0, 0);
+        }
+        return 0;
+    }
+    let id: u32 = named_function(input::panic_name());
+    signature(id, 1, model::u32_type(), model::u32_type());
+    return model::get_decl(id).symbol;
+}
+
+fn selected_trap() -> u32 {
+    match target::layout().profile {
+        target::Profile::SubaKernel => {
+            let id: u32 = named_function(input::trap_name());
+            signature(id, 1, model::usize_type(), model::usize_type());
+            return model::get_decl(id).symbol;
+        },
+        target::Profile::SubaBoot => {
+            if input::trap_name().len != 0_usize { model::fail(model::ERROR_UNSUPPORTED, 0, 0); }
+        },
+        target::Profile::LinuxUser => {},
+        target::Profile::SubaUser => {},
+    }
+    return 0;
+}
+
+pub fn run() -> u32 {
+    if host::argc() != 3_usize && host::argc() != 5_usize {
+        text("usage: bmc build|check MANIFEST [--blocking POLICY]\n");
+        return 2;
+    }
+    let mode:[]const u8 = argument(1);
+    let build:bool = model::equal(mode, "build");
+    if !build && !model::equal(mode, "check") {
+        text("usage: bmc build|check MANIFEST [--blocking POLICY]\n");
+        return 2;
+    }
+    let analyze:bool = host::argc() == 5_usize;
+    if analyze && !model::equal(argument(3), "--blocking") {
+        text("usage: bmc build|check MANIFEST [--blocking POLICY]\n");
+        return 2;
+    }
+    model::reset_all();
+    image::begin_compile();
+    input::load(argument(2));
+    types::collect();
+    init::collect();
+    let entry:u32 = selected_entry();
+    let panic: u32 = selected_panic();
+    let trap: u32 = selected_trap();
+    if analyze && !blocking::load(argument(4)) {
+        return 1;
+    }
+    image::begin_text();
+    unsafe {
+        let start:u32 = rv64::start_bound(model::get_decl(entry).symbol, panic, trap);
+        var id:u32 = 1;
+        var max_slots:usize = 0;
+        var max_args:usize = 0;
+        var max_params:usize = 0;
+        while id <= model::decl_count() {
+            if model::get_decl(id).kind == model::DECL_FUNCTION {
+                let body:parse::NodeId = check::begin_function(id);
+                check::check_body(body);
+                rv64::verify_function(id);
+                if analyze {
+                    blocking::capture(id);
+                }
+                rv64::emit_function(id);
+                if (ir::slot_count() as usize) > max_slots {
+                    max_slots = ir::slot_count() as usize;
+                }
+                if (ir::arg_count() as usize) > max_args {
+                    max_args = ir::arg_count() as usize;
+                }
+                if (ir::parameter_slot_count() as usize) > max_params {
+                    max_params = ir::parameter_slot_count() as usize;
+                }
+                check::end_function();
+            }
+            id = id+1_u32;
+        }
+        // End the source-function phase before assembly: discard the last
+        // semantic arena and function identity, preserving global symbols/data.
+        id = 1;
+        while id <= input::assembly_count() {
+            s0::parse(input::source_count()+id, input::assembly(id).bytes);
+            id = id+1_u32;
+        }
+        let elf:[]const u8 = image::finish(start);
+        if analyze && !blocking::finish() {
+            return 1;
+        }
+        if build {
+            input::save(elf);
+        }
+        text("S-next-0.1");
+        metric("sources", input::source_count() as usize);
+        metric("imports", input::import_count() as usize);
+        metric("assembly_files", input::assembly_count() as usize);
+        metric("source", input::source_size());
+        metric("assembly", input::assembly_size());
+        metric("names", model::name_count() as usize);
+        metric("name_bytes", model::name_size());
+        metric("decls", model::decl_count() as usize);
+        metric("types", model::type_count() as usize);
+        metric("fields", model::field_count() as usize);
+        metric("params", model::param_count() as usize);
+        metric("max_ast", model::max_ast);
+        metric("max_ir", model::max_ir);
+        metric("max_frame", model::max_frame);
+        metric("max_bindings", check::max_bindings);
+        metric("max_defers", check::max_defers);
+        metric("max_loops", check::max_loops);
+        metric("max_slots", max_slots);
+        metric("max_args", max_args);
+        metric("max_params", max_params);
+        metric("text", image::text_position());
+        metric("data", image::data_size());
+        metric("objects", image::data_count() as usize);
+        metric("symbols", image::symbol_count() as usize);
+        metric("fixups", image::fixup_count() as usize);
+        metric("relocations", image::relocation_count() as usize);
+        metric("elf", elf.len);
+        text("\n");
+    }
+    return 0;
+}

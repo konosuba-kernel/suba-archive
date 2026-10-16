@@ -1,0 +1,78 @@
+// K3 assertions migrated into a current FS-loaded ordinary process.
+// K10 adds arithmetic-overflow and wrong-rights kill probes before consuming data.
+module test::k10_streams;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+static mut INPUT: [65536]u8 = zero;
+static mut OUTPUT: [4096]u8 = zero;
+unsafe fn verify(pair: services::StreamPair) -> u32 {
+    unsafe {
+        var at: usize = 0;
+        while at < 65536_usize { INPUT[at] = (at % 251_usize) as u8; at = at + 1_usize; }
+        var done: usize = 0;
+        while done < 65536_usize {
+            let bytes: []const u8 = core::slice_from_raw_parts(core::ptr_add(core::slice_of(INPUT).data, done), 65536_usize - done);
+            let result: syscall::Reply = services::write(pair.write, bytes, false);
+            if result.status != abi::OK || result.value == 0_usize || result.value > 4096_usize { return 20; }
+            done = done + result.value;
+        }
+        let blocked: syscall::Reply = services::write(pair.write, "x", true);
+        if blocked.status != abi::WOULD_BLOCK { return 21; }
+        // Range validation must precede stream consumption even if an initial prefix is valid.
+        let pages: syscall::Reply = services::allocate_pages(1);
+        if pages.status != abi::OK { return 22; }
+        let bad: syscall::Reply = syscall::invoke(abi::SYS_STREAM_READ, pair.read, pages.value + 4090_usize, 20, 1, 0, 0);
+        if bad.status != abi::INVALID { return 23; }
+        let ro: syscall::Reply = syscall::invoke(abi::SYS_STREAM_READ, pair.read, abi::ARGUMENT_BASE, 1, 1, 0, 0);
+        if ro.status != abi::INVALID { return 24; }
+        if syscall::invoke(abi::SYS_STREAM_READ, pair.read, 0xffffffffffffffff, 2, 1, 0, 0).status != abi::INVALID { return 38; }
+        if syscall::kill_child(pair.write).status != abi::DENIED { return 39; }
+        if syscall::invoke(abi::SYS_EVENT_WAIT, 0, 17, 0, 0, 0, 0).status != abi::LIMIT { return 40; }
+        let wrong: syscall::Reply = services::write(pair.read, "x", true);
+        if wrong.status != abi::DENIED { return 25; }
+        done = 0;
+        while done < 65536_usize {
+            let result: syscall::Reply = services::read(pair.read, core::slice_of_mut(OUTPUT), false);
+            if result.status != abi::OK || result.value == 0_usize { return 26; }
+            var i: usize = 0;
+            while i < result.value {
+                if OUTPUT[i] != ((done + i) % 251_usize) as u8 { return 27; }
+                i = i + 1_usize;
+            }
+            done = done + result.value;
+        }
+        let empty: syscall::Reply = services::read(pair.read, core::slice_of_mut(OUTPUT), true);
+        if empty.status != abi::WOULD_BLOCK { return 28; }
+        let released: syscall::Reply = services::free_pages(pages.value, 1);
+        if released.status != abi::OK { return 29; }
+        let cross: syscall::Reply = services::allocate_pages(2);
+        if cross.status != abi::OK { return 34; }
+        let pointer: *u8 = core::ptr::<u8>(cross.value + 4090_usize);
+        var index: usize = 0;
+        while index < 20_usize { *core::ptr_add(pointer, index) = (index + 1_usize) as u8; index = index + 1_usize; }
+        let sent: syscall::Reply = services::write(pair.write, core::slice_from_raw_parts(pointer, 20), false);
+        let received: syscall::Reply = services::read(pair.read, core::slice_from_raw_parts_mut(pointer, 20), false);
+        if sent.status != abi::OK || sent.value != 20_usize || received.status != abi::OK || received.value != 20_usize { return 35; }
+        index = 0;
+        while index < 20_usize { if *core::ptr_add(pointer, index) != (index + 1_usize) as u8 { return 36; } index = index + 1_usize; }
+        let release_cross: syscall::Reply = services::free_pages(cross.value, 2);
+        if release_cross.status != abi::OK { return 37; }
+        let closed: syscall::Reply = syscall::close(pair.read);
+        if closed.status != abi::OK { return 30; }
+        let broken: syscall::Reply = services::write(pair.write, "x", false);
+        if broken.status != abi::BROKEN_STREAM { return 31; }
+        let writer_closed: syscall::Reply = syscall::close(pair.write);
+        if writer_closed.status != abi::OK { return 32; }
+        let stale: syscall::Reply = services::write(pair.write, "x", true);
+        if stale.status != abi::BAD_HANDLE { return 33; }
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    match services::streams() {
+        services::Streams::Failed(status) => { return 19; },
+        services::Streams::Ready(pair) => { unsafe { return verify(pair); } }
+    }
+}

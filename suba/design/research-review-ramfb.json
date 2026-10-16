@@ -1,0 +1,189 @@
+{
+  "command": [
+    "qemu-system-riscv64",
+    "-machine",
+    "virt,aclint=off,aia=none,acpi=off,iommu-sys=off",
+    "-accel",
+    "tcg",
+    "-cpu",
+    "rv64",
+    "-smp",
+    "1",
+    "-m",
+    "512M",
+    "-bios",
+    "default",
+    "-S",
+    "-global",
+    "virtio-mmio.force-legacy=false",
+    "-drive",
+    "file=/tmp/suba-ramfb-qsgp44pp/disk.raw,format=raw,if=none,id=subadisk,cache=writeback",
+    "-device",
+    "virtio-blk-device,drive=subadisk,bus=virtio-mmio-bus.0",
+    "-device",
+    "virtio-keyboard-device,bus=virtio-mmio-bus.2",
+    "-device",
+    "virtio-tablet-device,bus=virtio-mmio-bus.3",
+    "-device",
+    "ramfb",
+    "-display",
+    "none",
+    "-serial",
+    "none",
+    "-monitor",
+    "none",
+    "-qtest",
+    "stdio",
+    "-qtest-log",
+    "/dev/null",
+    "-qmp",
+    "unix:/tmp/suba-ramfb-qsgp44pp/qmp.sock,server=on,wait=off"
+  ],
+  "qmp_banner": {
+    "QMP": {
+      "version": {
+        "qemu": {
+          "micro": 1,
+          "minor": 1,
+          "major": 11
+        },
+        "package": ""
+      },
+      "capabilities": [
+        "oob"
+      ]
+    }
+  },
+  "log": [
+    {
+      "qmp": {
+        "execute": "qmp_capabilities"
+      },
+      "result": {
+        "return": {}
+      }
+    },
+    {
+      "qtest": "writew 0x10100008 0x1900",
+      "result": "OK"
+    },
+    {
+      "fw_cfg_directory": [
+        {
+          "name": "bios-geometry",
+          "size": 0,
+          "selector": 32
+        },
+        {
+          "name": "bootorder",
+          "size": 0,
+          "selector": 33
+        },
+        {
+          "name": "etc/boot-fail-wait",
+          "size": 4,
+          "selector": 34
+        },
+        {
+          "name": "etc/ramfb",
+          "size": 28,
+          "selector": 35
+        },
+        {
+          "name": "etc/smbios/smbios-anchor",
+          "size": 24,
+          "selector": 36
+        },
+        {
+          "name": "etc/smbios/smbios-tables",
+          "size": 287,
+          "selector": 37
+        }
+      ]
+    },
+    {
+      "qtest": "write 0x81000000 28 0x00000000900000003432525800000000000000400000002000000100",
+      "result": "OK"
+    },
+    {
+      "qtest": "write 0x81000100 16 0x002300180000001c0000000081000000",
+      "result": "OK"
+    },
+    {
+      "framebuffer_write": {
+        "address": "0x90000000",
+        "bytes": 8192,
+        "pixel": "B=0,G=0,R=255,X=0"
+      }
+    },
+    {
+      "qtest": "writeq 0x10100010 0x1008100000000",
+      "result": "OK"
+    },
+    {
+      "qtest": "readl 0x81000100",
+      "result": "OK 0x0000000000000000"
+    },
+    {
+      "qmp": {
+        "execute": "screendump",
+        "arguments": {
+          "filename": "/tmp/suba-ramfb-qsgp44pp/screen.ppm"
+        }
+      },
+      "result": {
+        "return": {}
+      }
+    },
+    {
+      "assertion": "64x32 XRGB8888 red framebuffer rendered to exact RGB pixels",
+      "pass": true
+    },
+    {
+      "qtest": "write 0x90000000 4 0x00ff0000",
+      "result": "OK"
+    },
+    {
+      "qmp": {
+        "execute": "screendump",
+        "arguments": {
+          "filename": "/tmp/suba-ramfb-qsgp44pp/screen.ppm"
+        }
+      },
+      "result": {
+        "return": {}
+      }
+    },
+    {
+      "assertion": "direct framebuffer change visible without GPU transfer/flush or reconfiguration",
+      "pass": true
+    },
+    {
+      "qmp": {
+        "execute": "human-monitor-command",
+        "arguments": {
+          "command-line": "info qtree"
+        }
+      },
+      "result": {
+        "return": "bus: main-system-bus\r\n  type System\r\n  dev: ramfb, id \"\"\r\n    x-migrate = true\r\n    use-legacy-x86-rom = false\r\n  dev: cfi.pflash01, id \"\"\r\n    drive = \"\"\r\n    num-blocks = 128 (0x80)\r\n    sector-length = 262144 (0x40000)\r\n    width = 4 (0x4)\r\n    device-width = 2 (0x2)\r\n    max-device-width = 2 (0x2)\r\n    big-endian = false\r\n    secure = false\r\n    id0 = 137 (0x89)\r\n    id1 = 24 (0x18)\r\n    id2 = 0 (0x0)\r\n    id3 = 0 (0x0)\r\n    name = \"virt.flash1\"\r\n    mmio ffffffffffffffff/0000000002000000\r\n  dev: cfi.pflash01, id \"\"\r\n    drive = \"\"\r\n    num-blocks = 128 (0x80)\r\n    sector-length = 262144 (0x40000)\r\n    width = 4 (0x4)\r\n    device-width = 2 (0x2)\r\n    max-device-width = 2 (0x2)\r\n    big-endian = false\r\n    secure = false\r\n    id0 = 137 (0x89)\r\n    id1 = 24 (0x18)\r\n    id2 = 0 (0x0)\r\n    id3 = 0 (0x0)\r\n    name = \"virt.flash0\"\r\n    mmio ffffffffffffffff/0000000002000000\r\n  dev: goldfish_rtc, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    big-endian = false\r\n    mmio 0000000000101000/0000000000000024\r\n  dev: serial-mm, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    regshift = 0 (0x0)\r\n    endianness = 2 (0x2)\r\n    mmio ffffffffffffffff/0000000000000008\r\n  dev: platform-bus-device, id \"platform-bus-device\"\r\n    gpio-out \"sysbus-irq\" 32\r\n    num_irqs = 32 (0x20)\r\n    mmio_size = 33554432 (0x2000000)\r\n    mmio ffffffffffffffff/0000000002000000\r\n  dev: gpex-pcihost, id \"\"\r\n    gpio-out \"sysbus-irq\" 4\r\n    allow-unmapped-accesses = true\r\n    x-ecam-base = 805306368 (0x30000000)\r\n    x-ecam-size = 268435456 (256 MiB)\r\n    x-pio-base = 50331648 (0x3000000)\r\n    x-pio-size = 65536 (64 KiB)\r\n    x-below-4g-mmio-base = 1073741824 (0x40000000)\r\n    x-below-4g-mmio-size = 1073741824 (1 GiB)\r\n    x-above-4g-mmio-base = 17179869184 (0x400000000)\r\n    x-above-4g-mmio-size = 17179869184 (16 GiB)\r\n    num-irqs = 4 (0x4)\r\n    x-config-reg-migration-enabled = true\r\n    bypass-iommu = false\r\n    mmio ffffffffffffffff/0000000010000000\r\n    mmio ffffffffffffffff/ffffffffffffffff\r\n    mmio 0000000003000000/0000000000010000\r\n    bus: pcie.0\r\n      type PCIE\r\n      dev: gpex-root, id \"\"\r\n        addr = 00.0\r\n        romfile = \"\"\r\n        romsize = 4294967295 (0xffffffff)\r\n        rombar = -1 (0xffffffffffffffff)\r\n        multifunction = false\r\n        x-pcie-lnksta-dllla = true\r\n        failover_pair_id = \"\"\r\n        acpi-index = 0 (0x0)\r\n        x-pcie-err-unc-mask = true\r\n        x-pcie-ari-nextfn-1 = false\r\n        x-max-bounce-buffer-size = 4096 (4 KiB)\r\n        sriov-pf = \"\"\r\n        x-pcie-ext-tag = true\r\n        busnr = 0 (0x0)\r\n        class Host bridge, addr 00:00.0, pci id 1b36:0008 (sub 1af4:1100)\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010008000/0000000000000200\r\n    bus: virtio-mmio-bus.7\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010007000/0000000000000200\r\n    bus: virtio-mmio-bus.6\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010006000/0000000000000200\r\n    bus: virtio-mmio-bus.5\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010005000/0000000000000200\r\n    bus: virtio-mmio-bus.4\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010004000/0000000000000200\r\n    bus: virtio-mmio-bus.3\r\n      type virtio-mmio-bus\r\n      dev: virtio-tablet-device, id \"\"\r\n        display = \"\"\r\n        head = 0 (0x0)\r\n        serial = \"\"\r\n        indirect_desc = true\r\n        event_idx = true\r\n        notify_on_empty = true\r\n        any_layout = true\r\n        iommu_platform = false\r\n        packed = false\r\n        queue_reset = true\r\n        in_order = false\r\n        use-started = true\r\n        use-disabled-flag = true\r\n        x-disable-legacy-check = false\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010003000/0000000000000200\r\n    bus: virtio-mmio-bus.2\r\n      type virtio-mmio-bus\r\n      dev: virtio-keyboard-device, id \"\"\r\n        display = \"\"\r\n        head = 0 (0x0)\r\n        serial = \"\"\r\n        indirect_desc = true\r\n        event_idx = true\r\n        notify_on_empty = true\r\n        any_layout = true\r\n        iommu_platform = false\r\n        packed = false\r\n        queue_reset = true\r\n        in_order = false\r\n        use-started = true\r\n        use-disabled-flag = true\r\n        x-disable-legacy-check = false\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010002000/0000000000000200\r\n    bus: virtio-mmio-bus.1\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010001000/0000000000000200\r\n    bus: virtio-mmio-bus.0\r\n      type virtio-mmio-bus\r\n      dev: virtio-blk-device, id \"\"\r\n        drive = \"subadisk\"\r\n        backend_defaults = \"auto\"\r\n        logical_block_size = 512 (512 B)\r\n        physical_block_size = 512 (512 B)\r\n        min_io_size = 0 (0 B)\r\n        opt_io_size = 0 (0 B)\r\n        discard_granularity = 4294967295 (4 GiB)\r\n        write-cache = \"auto\"\r\n        share-rw = false\r\n        account-invalid = \"auto\"\r\n        account-failed = \"auto\"\r\n        stats-intervals = <null>\r\n        rerror = \"auto\"\r\n        werror = \"auto\"\r\n        cyls = 2080 (0x820)\r\n        heads = 16 (0x10)\r\n        secs = 63 (0x3f)\r\n        lcyls = 0 (0x0)\r\n        lheads = 0 (0x0)\r\n        lsecs = 0 (0x0)\r\n        serial = \"\"\r\n        config-wce = true\r\n        request-merging = true\r\n        num-queues = 1 (0x1)\r\n        queue-size = 256 (0x100)\r\n        seg-max-adjust = true\r\n        iothread = \"\"\r\n        iothread-vq-mapping = <null>\r\n        discard = true\r\n        report-discard-granularity = true\r\n        write-zeroes = true\r\n        max-discard-sectors = 4194303 (0x3fffff)\r\n        max-write-zeroes-sectors = 4194303 (0x3fffff)\r\n        x-enable-wce-if-config-wce = true\r\n        indirect_desc = true\r\n        event_idx = true\r\n        notify_on_empty = true\r\n        any_layout = true\r\n        iommu_platform = false\r\n        packed = false\r\n        queue_reset = true\r\n        in_order = false\r\n        use-started = true\r\n        use-disabled-flag = true\r\n        x-disable-legacy-check = false\r\n  dev: riscv.sifive.test, id \"\"\r\n    mmio 0000000000100000/0000000000001000\r\n  dev: fw_cfg_mem, id \"\"\r\n    data_width = 8 (0x8)\r\n    dma_enabled = true\r\n    x-file-slots = 32 (0x20)\r\n    acpi-mr-restore = true\r\n    mmio 0000000010100008/0000000000000002\r\n    mmio 0000000010100000/0000000000000008\r\n    mmio 0000000010100010/0000000000000008\r\n  dev: riscv.sifive.plic, id \"\"\r\n    gpio-in \"\" 96\r\n    gpio-out \"\" 2\r\n    hart-config = \"MS\"\r\n    hartid-base = 0 (0x0)\r\n    num-sources = 96 (0x60)\r\n    num-priorities = 7 (0x7)\r\n    priority-base = 0 (0x0)\r\n    pending-base = 4096 (0x1000)\r\n    enable-base = 8192 (0x2000)\r\n    enable-stride = 128 (0x80)\r\n    context-base = 2097152 (0x200000)\r\n    context-stride = 4096 (0x1000)\r\n    aperture-size = 6291456 (0x600000)\r\n    mmio 000000000c000000/0000000000600000\r\n  dev: riscv.aclint.mtimer, id \"\"\r\n    gpio-out \"\" 1\r\n    hartid-base = 0 (0x0)\r\n    num-harts = 1 (0x1)\r\n    timecmp-base = 0 (0x0)\r\n    time-base = 32760 (0x7ff8)\r\n    aperture-size = 32768 (0x8000)\r\n    timebase-freq = 10000000 (0x989680)\r\n    mmio 0000000002004000/0000000000008000\r\n  dev: riscv.aclint.swi, id \"\"\r\n    gpio-out \"\" 1\r\n    hartid-base = 0 (0x0)\r\n    num-harts = 1 (0x1)\r\n    sswi = 0 (0x0)\r\n    mmio 0000000002000000/0000000000004000\r\n  dev: riscv.hart_array, id \"\"\r\n    num-harts = 1 (0x1)\r\n    hartid-base = 0 (0x0)\r\n    cpu-type = \"rv64-riscv-cpu\"\r\n    resetvec = 4096 (0x1000)\r\n    rnmi-interrupt-vector = <null>\r\n    rnmi-exception-vector = <null>\r\n"
+      }
+    },
+    {
+      "qtree": {
+        "return": "bus: main-system-bus\r\n  type System\r\n  dev: ramfb, id \"\"\r\n    x-migrate = true\r\n    use-legacy-x86-rom = false\r\n  dev: cfi.pflash01, id \"\"\r\n    drive = \"\"\r\n    num-blocks = 128 (0x80)\r\n    sector-length = 262144 (0x40000)\r\n    width = 4 (0x4)\r\n    device-width = 2 (0x2)\r\n    max-device-width = 2 (0x2)\r\n    big-endian = false\r\n    secure = false\r\n    id0 = 137 (0x89)\r\n    id1 = 24 (0x18)\r\n    id2 = 0 (0x0)\r\n    id3 = 0 (0x0)\r\n    name = \"virt.flash1\"\r\n    mmio ffffffffffffffff/0000000002000000\r\n  dev: cfi.pflash01, id \"\"\r\n    drive = \"\"\r\n    num-blocks = 128 (0x80)\r\n    sector-length = 262144 (0x40000)\r\n    width = 4 (0x4)\r\n    device-width = 2 (0x2)\r\n    max-device-width = 2 (0x2)\r\n    big-endian = false\r\n    secure = false\r\n    id0 = 137 (0x89)\r\n    id1 = 24 (0x18)\r\n    id2 = 0 (0x0)\r\n    id3 = 0 (0x0)\r\n    name = \"virt.flash0\"\r\n    mmio ffffffffffffffff/0000000002000000\r\n  dev: goldfish_rtc, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    big-endian = false\r\n    mmio 0000000000101000/0000000000000024\r\n  dev: serial-mm, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    regshift = 0 (0x0)\r\n    endianness = 2 (0x2)\r\n    mmio ffffffffffffffff/0000000000000008\r\n  dev: platform-bus-device, id \"platform-bus-device\"\r\n    gpio-out \"sysbus-irq\" 32\r\n    num_irqs = 32 (0x20)\r\n    mmio_size = 33554432 (0x2000000)\r\n    mmio ffffffffffffffff/0000000002000000\r\n  dev: gpex-pcihost, id \"\"\r\n    gpio-out \"sysbus-irq\" 4\r\n    allow-unmapped-accesses = true\r\n    x-ecam-base = 805306368 (0x30000000)\r\n    x-ecam-size = 268435456 (256 MiB)\r\n    x-pio-base = 50331648 (0x3000000)\r\n    x-pio-size = 65536 (64 KiB)\r\n    x-below-4g-mmio-base = 1073741824 (0x40000000)\r\n    x-below-4g-mmio-size = 1073741824 (1 GiB)\r\n    x-above-4g-mmio-base = 17179869184 (0x400000000)\r\n    x-above-4g-mmio-size = 17179869184 (16 GiB)\r\n    num-irqs = 4 (0x4)\r\n    x-config-reg-migration-enabled = true\r\n    bypass-iommu = false\r\n    mmio ffffffffffffffff/0000000010000000\r\n    mmio ffffffffffffffff/ffffffffffffffff\r\n    mmio 0000000003000000/0000000000010000\r\n    bus: pcie.0\r\n      type PCIE\r\n      dev: gpex-root, id \"\"\r\n        addr = 00.0\r\n        romfile = \"\"\r\n        romsize = 4294967295 (0xffffffff)\r\n        rombar = -1 (0xffffffffffffffff)\r\n        multifunction = false\r\n        x-pcie-lnksta-dllla = true\r\n        failover_pair_id = \"\"\r\n        acpi-index = 0 (0x0)\r\n        x-pcie-err-unc-mask = true\r\n        x-pcie-ari-nextfn-1 = false\r\n        x-max-bounce-buffer-size = 4096 (4 KiB)\r\n        sriov-pf = \"\"\r\n        x-pcie-ext-tag = true\r\n        busnr = 0 (0x0)\r\n        class Host bridge, addr 00:00.0, pci id 1b36:0008 (sub 1af4:1100)\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010008000/0000000000000200\r\n    bus: virtio-mmio-bus.7\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010007000/0000000000000200\r\n    bus: virtio-mmio-bus.6\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010006000/0000000000000200\r\n    bus: virtio-mmio-bus.5\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010005000/0000000000000200\r\n    bus: virtio-mmio-bus.4\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010004000/0000000000000200\r\n    bus: virtio-mmio-bus.3\r\n      type virtio-mmio-bus\r\n      dev: virtio-tablet-device, id \"\"\r\n        display = \"\"\r\n        head = 0 (0x0)\r\n        serial = \"\"\r\n        indirect_desc = true\r\n        event_idx = true\r\n        notify_on_empty = true\r\n        any_layout = true\r\n        iommu_platform = false\r\n        packed = false\r\n        queue_reset = true\r\n        in_order = false\r\n        use-started = true\r\n        use-disabled-flag = true\r\n        x-disable-legacy-check = false\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010003000/0000000000000200\r\n    bus: virtio-mmio-bus.2\r\n      type virtio-mmio-bus\r\n      dev: virtio-keyboard-device, id \"\"\r\n        display = \"\"\r\n        head = 0 (0x0)\r\n        serial = \"\"\r\n        indirect_desc = true\r\n        event_idx = true\r\n        notify_on_empty = true\r\n        any_layout = true\r\n        iommu_platform = false\r\n        packed = false\r\n        queue_reset = true\r\n        in_order = false\r\n        use-started = true\r\n        use-disabled-flag = true\r\n        x-disable-legacy-check = false\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010002000/0000000000000200\r\n    bus: virtio-mmio-bus.1\r\n      type virtio-mmio-bus\r\n  dev: virtio-mmio, id \"\"\r\n    gpio-out \"sysbus-irq\" 1\r\n    force-legacy = false\r\n    ioeventfd = true\r\n    x-override-queue-size = 0 (0x0)\r\n    mmio 0000000010001000/0000000000000200\r\n    bus: virtio-mmio-bus.0\r\n      type virtio-mmio-bus\r\n      dev: virtio-blk-device, id \"\"\r\n        drive = \"subadisk\"\r\n        backend_defaults = \"auto\"\r\n        logical_block_size = 512 (512 B)\r\n        physical_block_size = 512 (512 B)\r\n        min_io_size = 0 (0 B)\r\n        opt_io_size = 0 (0 B)\r\n        discard_granularity = 4294967295 (4 GiB)\r\n        write-cache = \"auto\"\r\n        share-rw = false\r\n        account-invalid = \"auto\"\r\n        account-failed = \"auto\"\r\n        stats-intervals = <null>\r\n        rerror = \"auto\"\r\n        werror = \"auto\"\r\n        cyls = 2080 (0x820)\r\n        heads = 16 (0x10)\r\n        secs = 63 (0x3f)\r\n        lcyls = 0 (0x0)\r\n        lheads = 0 (0x0)\r\n        lsecs = 0 (0x0)\r\n        serial = \"\"\r\n        config-wce = true\r\n        request-merging = true\r\n        num-queues = 1 (0x1)\r\n        queue-size = 256 (0x100)\r\n        seg-max-adjust = true\r\n        iothread = \"\"\r\n        iothread-vq-mapping = <null>\r\n        discard = true\r\n        report-discard-granularity = true\r\n        write-zeroes = true\r\n        max-discard-sectors = 4194303 (0x3fffff)\r\n        max-write-zeroes-sectors = 4194303 (0x3fffff)\r\n        x-enable-wce-if-config-wce = true\r\n        indirect_desc = true\r\n        event_idx = true\r\n        notify_on_empty = true\r\n        any_layout = true\r\n        iommu_platform = false\r\n        packed = false\r\n        queue_reset = true\r\n        in_order = false\r\n        use-started = true\r\n        use-disabled-flag = true\r\n        x-disable-legacy-check = false\r\n  dev: riscv.sifive.test, id \"\"\r\n    mmio 0000000000100000/0000000000001000\r\n  dev: fw_cfg_mem, id \"\"\r\n    data_width = 8 (0x8)\r\n    dma_enabled = true\r\n    x-file-slots = 32 (0x20)\r\n    acpi-mr-restore = true\r\n    mmio 0000000010100008/0000000000000002\r\n    mmio 0000000010100000/0000000000000008\r\n    mmio 0000000010100010/0000000000000008\r\n  dev: riscv.sifive.plic, id \"\"\r\n    gpio-in \"\" 96\r\n    gpio-out \"\" 2\r\n    hart-config = \"MS\"\r\n    hartid-base = 0 (0x0)\r\n    num-sources = 96 (0x60)\r\n    num-priorities = 7 (0x7)\r\n    priority-base = 0 (0x0)\r\n    pending-base = 4096 (0x1000)\r\n    enable-base = 8192 (0x2000)\r\n    enable-stride = 128 (0x80)\r\n    context-base = 2097152 (0x200000)\r\n    context-stride = 4096 (0x1000)\r\n    aperture-size = 6291456 (0x600000)\r\n    mmio 000000000c000000/0000000000600000\r\n  dev: riscv.aclint.mtimer, id \"\"\r\n    gpio-out \"\" 1\r\n    hartid-base = 0 (0x0)\r\n    num-harts = 1 (0x1)\r\n    timecmp-base = 0 (0x0)\r\n    time-base = 32760 (0x7ff8)\r\n    aperture-size = 32768 (0x8000)\r\n    timebase-freq = 10000000 (0x989680)\r\n    mmio 0000000002004000/0000000000008000\r\n  dev: riscv.aclint.swi, id \"\"\r\n    gpio-out \"\" 1\r\n    hartid-base = 0 (0x0)\r\n    num-harts = 1 (0x1)\r\n    sswi = 0 (0x0)\r\n    mmio 0000000002000000/0000000000004000\r\n  dev: riscv.hart_array, id \"\"\r\n    num-harts = 1 (0x1)\r\n    hartid-base = 0 (0x0)\r\n    cpu-type = \"rv64-riscv-cpu\"\r\n    resetvec = 4096 (0x1000)\r\n    rnmi-interrupt-vector = <null>\r\n    rnmi-exception-vector = <null>\r\n"
+      }
+    },
+    {
+      "qmp": {
+        "execute": "quit"
+      },
+      "result": {
+        "return": {}
+      }
+    }
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "independent_reviewer": "/root"
+}

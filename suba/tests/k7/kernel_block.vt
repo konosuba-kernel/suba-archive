@@ -1,0 +1,166 @@
+// Real block read/IRQ, followed by controlled notification replay or corruption.
+// Replay calls the driver boundary; it does not fabricate a completed descriptor.
+module test::block;
+import kernel::machine;
+import kernel::device::io;
+import kernel::device::virtio;
+import kernel::device::block;
+import test::config;
+extern abi(C) fn draft_shutdown() -> ();
+pub fn panic(code: u32) -> u32 {
+    unsafe {
+        let digits: []const u8 = "0123456789abcdef";
+        let data: [2]u8 = [digits[((code >> 4_u32) & 15_u32) as usize], digits[(code & 15_u32) as usize]];
+        machine::text("block probe FAIL "); machine::text(core::slice_of(data)); machine::text("\n");
+    }
+    machine::halt(); return code;
+}
+pub fn trap(cause: usize) -> usize { panic(99); return cause; }
+fn check(value: bool, code: u32) -> () { if !value { panic(code); } return (); }
+unsafe fn exercise(device: virtio::Device) -> () {
+    unsafe {
+        check(block::initialize(device), 3);
+        let irq: u32 = virtio::irq(device);
+        io::write32(0xc000000_usize + (irq as usize) * 4_usize, 1);
+        io::write32(0xc002080, 1_u32 << irq); io::write32(0xc201000, 0);
+        let base: usize = core::addr(block::buffer().data) - 16384_usize;
+        check(block::submit(block::Command::Read(0)), 4);
+        let began: usize = io::time();
+        loop {
+            let source: u32 = io::read32(0xc201004);
+            if source != 0_u32 {
+                check(source == irq, 5);
+                if config::MODE == 1_usize { io::write32(base + 8192_usize + 8_usize, 9); }
+                if config::MODE == 2_usize { io::write32(base + 8192_usize + 4_usize, 63); }
+                if config::MODE == 3_usize { io::write8(base + 12288_usize + 16_usize, 1); }
+                let accepted: bool = block::interrupt();
+                io::write32(0xc201004, source);
+                if config::MODE != 0_usize {
+                    check(!accepted, 6);
+                    machine::text("block probe rejects malformed completion PASS\n");
+                    draft_shutdown();
+                }
+                check(accepted, 7);
+                break;
+            }
+            check(io::time() - began < 10000000_usize, 8);
+        }
+        check(block::completions() == 1_usize, 9);
+        // Two delayed notifications after the same real completion, first before
+        // and then after release. Neither is a second completion or a new request.
+        check(block::interrupt(), 10);
+        check(block::completions() == 1_usize, 11);
+        check(block::finish(), 12);
+        check(block::interrupt(), 13);
+        check(block::completions() == 1_usize, 14);
+        machine::text("block probe late notification PASS\n");
+        draft_shutdown();
+    }
+    return ();
+}
+// RAM MMIO separates notification semantics from the real-device cases above.
+unsafe fn fake_device() -> usize {
+    unsafe {
+        let mmio: usize = 0x81000000;
+        var i: usize = 0;
+        while i < 512_usize { *core::ptr::<u8>(mmio + i) = 0; i = i + 1_usize; }
+        io::write32(mmio, 0x74726976); io::write32(mmio + 4_usize, 2);
+        io::write32(mmio + 8_usize, 2); io::write32(mmio + 0x10_usize, 0x201);
+        io::write32(mmio + 0x34_usize, 64); io::write32(mmio + 0x100_usize, 524288);
+        match virtio::probe(mmio, 8) {
+            virtio::DeviceRead::Ready(device) => { check(block::initialize(device), 20); },
+            virtio::DeviceRead::Missing => { panic(21); }, virtio::DeviceRead::Invalid => { panic(22); }
+        }
+        return mmio;
+    }
+}
+unsafe fn state_code() -> usize {
+    unsafe {
+        match block::state() {
+            block::State::Idle => { return 1; }, block::State::Submitted => { return 2; },
+            block::State::Completed => { return 3; }, block::State::Failed => { return 4; },
+            block::State::Offline => { return 0; }
+        }
+    }
+}
+unsafe fn empty_pair(mmio: usize, state: usize, count: usize) -> () {
+    unsafe {
+        var bits: u32 = 0;
+        while bits < 2_u32 {
+            io::write32(mmio + 0x60_usize, bits);
+            check(block::interrupt(), 31);
+            check(state_code() == state, 32);
+            check(block::completions() == count, 33);
+            bits = bits + 1_u32;
+        }
+    }
+    return ();
+}
+unsafe fn notification_states() -> () {
+    unsafe {
+        let mmio: usize = fake_device();
+        let base: usize = core::addr(block::buffer().data) - 16384_usize;
+        empty_pair(mmio, 1, 0);
+        var round: usize = 0;
+        while round < 2_usize {
+            check(block::submit(block::Command::Read(0)), 34);
+            empty_pair(mmio, 2, round);
+            // Only this RAM fixture fabricates completions. A second command
+            // proves empty notifications did not consume/recycle its queue head.
+            let entry: usize = base + 8192_usize + 4_usize + round * 8_usize;
+            io::write32(entry, 0); io::write32(entry + 4_usize, 4097);
+            io::write8(base + 12288_usize + 16_usize, 0);
+            io::write16(base + 8192_usize + 2_usize, (round + 1_usize) as u32);
+            io::write32(mmio + 0x60_usize, 1);
+            check(block::interrupt(), 35);
+            check(state_code() == 3_usize, 36);
+            empty_pair(mmio, 3, round + 1_usize);
+            check(block::finish(), 37);
+            empty_pair(mmio, 1, round + 1_usize);
+            round = round + 1_usize;
+        }
+        machine::text("block probe all notification states PASS\n");
+        draft_shutdown();
+    }
+    return ();
+}
+// Repeated notifications must not reset the original one-second watchdog.
+unsafe fn empty_notifications() -> () {
+    unsafe {
+        let mmio: usize = fake_device();
+        check(block::submit(block::Command::Read(0)), 23);
+        let began: usize = io::time();
+        loop {
+            io::write32(mmio + 0x60_usize, 1);
+            check(block::interrupt(), 24);
+            check(block::completions() == 0_usize, 25);
+            match block::state() {
+                block::State::Failed => { break; }, block::State::Submitted => {},
+                block::State::Offline => { panic(26); }, block::State::Idle => { panic(27); },
+                block::State::Completed => { panic(28); }
+            }
+            check(io::time() - began < 15000000_usize, 29);
+        }
+        check(io::time() - began >= 9900000_usize, 30);
+        machine::text("block probe empty notifications preserve deadline PASS\n");
+        draft_shutdown();
+    }
+    return ();
+}
+pub fn start(info: usize) -> u32 {
+    machine::initialize();
+    unsafe {
+        if config::MODE == 4_usize { empty_notifications(); }
+        if config::MODE == 5_usize { notification_states(); }
+        var slot: usize = 1;
+        while slot <= 8_usize {
+            match virtio::probe(0x10000000_usize + slot * 4096_usize, slot) {
+                virtio::DeviceRead::Ready(device) => {
+                    if virtio::id(device) == 2_u32 { exercise(device); }
+                }, virtio::DeviceRead::Missing => {}, virtio::DeviceRead::Invalid => { return panic(1); }
+            }
+            slot = slot + 1_usize;
+        }
+    }
+    return panic(2);
+}

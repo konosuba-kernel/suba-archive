@@ -1,0 +1,153 @@
+// Per-process handle ownership. Serialized kernel context; never waits or calls owners.
+// Closing revokes the handle before returning its object for the dispatcher to release.
+module kernel::objects;
+import suba::abi;
+
+const PROCESS_CAPACITY: usize = 16;
+const ENTRY_CAPACITY: usize = 1024;
+pub const READ: u32 = 1;
+pub const WRITE: u32 = 2;
+pub const KILL: u32 = 4;
+pub const COLLECT: u32 = 8;
+pub const PREPARE: u32 = 16;
+pub struct Owner { slot: usize, generation: usize }
+pub struct Identity { pub slot: usize, pub generation: usize }
+pub enum Object {
+    Empty, File(Identity), StreamRead(Identity), StreamWrite(Identity),
+    Child(Identity), Job(Identity), Window(Identity), Desktop(Identity)
+}
+pub struct Borrow { pub object: Object, pub rights: u32 }
+pub enum OwnerResult { Ready(Owner), Invalid }
+pub enum InsertResult { Ready(usize), Invalid, Limit }
+pub enum LookupResult { Ready(Borrow), BadHandle, Denied }
+pub enum CloseResult { Closed(Object), BadHandle }
+pub enum DrainResult { Closed(Object), Empty, Invalid }
+struct Slot { live: bool, generation: usize, rights: u32, object: Object }
+static mut OWNERS: [PROCESS_CAPACITY]usize = zero;
+static mut SLOTS: [ENTRY_CAPACITY]Slot = zero;
+
+unsafe fn owner_valid(owner: Owner) -> bool {
+    if owner.slot >= PROCESS_CAPACITY || owner.generation == 0_usize { return false; }
+    // SAFETY: slot checked; all operations are serialized by dispatch.
+    unsafe { return OWNERS[owner.slot] == owner.generation; }
+}
+
+// Caller supplies the real live process slot/generation; no user can attach owners.
+// Rebinding requires the former owner to have been drained and detached first.
+pub unsafe fn attach(slot: usize, generation: usize) -> OwnerResult {
+    if slot >= PROCESS_CAPACITY || generation == 0_usize { return OwnerResult::Invalid; }
+    // SAFETY: bounded private owner table, serialized process creation.
+    unsafe {
+        if OWNERS[slot] != 0_usize { return OwnerResult::Invalid; }
+        OWNERS[slot] = generation;
+    }
+    return OwnerResult::Ready(make Owner { slot: slot, generation: generation });
+}
+
+// On failure the caller still owns object; on Ready this table owns its reference.
+pub unsafe fn insert(owner: Owner, object: Object, rights: u32) -> InsertResult {
+    // SAFETY: caller owns object reference, table operations serialized; loop <=64.
+    unsafe {
+        if !owner_valid(owner) { return InsertResult::Invalid; }
+        match object {
+            Object::Empty => { return InsertResult::Invalid; },
+            Object::File(value) => {}, Object::StreamRead(value) => {},
+            Object::StreamWrite(value) => {}, Object::Child(value) => {},
+            Object::Job(value) => {}, Object::Window(value) => {}, Object::Desktop(value) => {},
+        }
+        var i: usize = 0;
+        while i < abi::HANDLE_SLOTS {
+            let at: usize = owner.slot * abi::HANDLE_SLOTS + i;
+            if !SLOTS[at].live && SLOTS[at].generation < abi::HANDLE_GENERATION_MAX {
+                SLOTS[at].generation = SLOTS[at].generation + 1_usize;
+                SLOTS[at].object = object;
+                SLOTS[at].rights = rights;
+                SLOTS[at].live = true;
+                return InsertResult::Ready((SLOTS[at].generation << abi::HANDLE_SLOT_BITS) | (i + 1_usize));
+            }
+            i = i + 1_usize;
+        }
+    }
+    return InsertResult::Limit;
+}
+
+unsafe fn slot_for(owner: Owner, token: usize) -> usize {
+    // SAFETY: no indexing until owner, slot and generation are checked.
+    unsafe {
+        if !owner_valid(owner) { return ENTRY_CAPACITY; }
+        let low: usize = token & abi::HANDLE_SLOT_MASK;
+        if low == 0_usize || low > abi::HANDLE_SLOTS { return ENTRY_CAPACITY; }
+        let at: usize = owner.slot * abi::HANDLE_SLOTS + low - 1_usize;
+        if !SLOTS[at].live || SLOTS[at].generation != token >> abi::HANDLE_SLOT_BITS {
+            return ENTRY_CAPACITY;
+        }
+        return at;
+    }
+}
+
+// Borrowed metadata only; object owner must still validate its own identity/type.
+pub unsafe fn lookup(owner: Owner, token: usize, rights: u32) -> LookupResult {
+    // SAFETY: table lookup validates identity before reading metadata.
+    unsafe {
+        let at: usize = slot_for(owner, token);
+        if at == ENTRY_CAPACITY { return LookupResult::BadHandle; }
+        if SLOTS[at].rights & rights != rights { return LookupResult::Denied; }
+        return LookupResult::Ready(make Borrow { object: SLOTS[at].object, rights: SLOTS[at].rights });
+    }
+}
+
+pub unsafe fn close(owner: Owner, token: usize) -> CloseResult {
+    // SAFETY: caller dispatches the returned owned reference exactly once.
+    unsafe {
+        let at: usize = slot_for(owner, token);
+        if at == ENTRY_CAPACITY { return CloseResult::BadHandle; }
+        SLOTS[at].live = false;
+        return CloseResult::Closed(SLOTS[at].object);
+    }
+}
+
+// Reaping takes one reference per step, so downstream close work cannot accumulate.
+pub unsafe fn drain_one(owner: Owner) -> DrainResult {
+    // SAFETY: loop is bounded to64; returned object reference transfers out atomically.
+    unsafe {
+        if !owner_valid(owner) { return DrainResult::Invalid; }
+        var i: usize = 0;
+        while i < abi::HANDLE_SLOTS {
+            let at: usize = owner.slot * abi::HANDLE_SLOTS + i;
+            if SLOTS[at].live {
+                SLOTS[at].live = false;
+                return DrainResult::Closed(SLOTS[at].object);
+            }
+            i = i + 1_usize;
+        }
+    }
+    return DrainResult::Empty;
+}
+
+pub unsafe fn detach(owner: Owner) -> bool {
+    // SAFETY: detach cannot discard live references; generations remain across reuse.
+    unsafe {
+        if !owner_valid(owner) { return false; }
+        var i: usize = 0;
+        while i < abi::HANDLE_SLOTS {
+            if SLOTS[owner.slot * abi::HANDLE_SLOTS + i].live { return false; }
+            i = i + 1_usize;
+        }
+        OWNERS[owner.slot] = 0;
+    }
+    return true;
+}
+
+// Single-threaded owner cannot consume this slot while its admitted request blocks.
+pub unsafe fn available(owner: Owner) -> bool {
+    unsafe {
+        if !owner_valid(owner) { return false; }
+        var i: usize = 0;
+        while i < abi::HANDLE_SLOTS {
+            let at: usize = owner.slot * abi::HANDLE_SLOTS + i;
+            if !SLOTS[at].live && SLOTS[at].generation < abi::HANDLE_GENERATION_MAX { return true; }
+            i = i + 1_usize;
+        }
+        return false;
+    }
+}

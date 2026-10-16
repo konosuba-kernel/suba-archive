@@ -1,0 +1,7 @@
+module test::program;
+import suba::abi;
+import libsuba::syscall;
+pub fn run() -> u32 {
+    let result: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, 0, 0, 0, 0);
+    return 111;
+}

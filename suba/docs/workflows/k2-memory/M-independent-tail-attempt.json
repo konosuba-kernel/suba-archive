@@ -1,0 +1,5 @@
+{
+  "passed": false,
+  "reason": "Copied lifecycle directory retained probe.elf; compiler correctly refused overwrite with E_IO errno=17. No runtime claim.",
+  "repair": "Remove only copied generated probe.elf, then compile mutated source."
+}

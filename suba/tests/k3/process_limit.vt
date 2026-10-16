@@ -1,0 +1,35 @@
+module test::program;
+import suba::abi;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+pub fn run() -> u32 {
+    var handles: [15]usize = zero;
+    unsafe {
+        var i: usize = 0;
+        while i < 15_usize {
+            let child: syscall::Reply = common::spawn("sleep", 0, 0, 0);
+            if child.status != abi::OK { return 131; }
+            handles[i] = child.value;
+            i = i + 1_usize;
+        }
+        let full: syscall::Reply = common::spawn("sleep", 0, 0, 0);
+        if full.status != abi::LIMIT { return 132; }
+        i = 0;
+        while i < 15_usize {
+            let killed: syscall::Reply = syscall::kill_child(handles[i]);
+            if killed.status != abi::OK { return 133; }
+            i = i + 1_usize;
+        }
+        i = 0;
+        while i < 15_usize {
+            if !common::collect(handles[i], abi::CANCELLED) { return 134; }
+            i = i + 1_usize;
+        }
+        let next: syscall::Reply = common::spawn("sleep", 0, 0, 0);
+        if next.status != abi::OK || next.value == handles[0_usize] { return 135; }
+        let stopped: syscall::Reply = syscall::kill_child(next.value);
+        if stopped.status != abi::OK || !common::collect(next.value, abi::CANCELLED) { return 136; }
+        return 0;
+    }
+}

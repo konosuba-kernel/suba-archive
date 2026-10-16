@@ -1,0 +1,236 @@
+// Child objects reserve exit storage before process creation. Exited children keep
+// a small record, never a zombie address space. Only dispatch grants Child handles.
+module kernel::children;
+import kernel::objects;
+import kernel::process;
+import kernel::jobs;
+pub const CAPACITY: usize = 64;
+enum Parent { Empty, Live(process::Id) }
+enum Child { Reserved, Live(process::Id), Exited(process::ExitRecord) }
+struct Record { active: bool, generation: usize, parent: Parent, child: Child, held: bool, job: objects::Identity }
+static mut RECORDS: [CAPACITY]Record = zero;
+pub enum Reserve { Ready(objects::Identity), Invalid, Limit }
+pub enum Collect { Ready(process::ExitRecord), Pending, Invalid }
+pub enum Target { Ready(process::Id), Finished, Invalid }
+
+unsafe fn valid(id: objects::Identity) -> bool {
+    if id.slot >= CAPACITY || id.generation == 0_usize { return false; }
+    unsafe { return RECORDS[id.slot].active && RECORDS[id.slot].generation == id.generation; }
+}
+
+pub unsafe fn reserve(parent: process::Id) -> Reserve {
+    unsafe {
+        if !process::valid(parent) { return Reserve::Invalid; }
+        var i: usize = 0;
+        while i < CAPACITY {
+            if !RECORDS[i].active && RECORDS[i].generation != 0xffffffffffffffff_usize {
+                RECORDS[i].generation = RECORDS[i].generation + 1_usize;
+                RECORDS[i].active = true;
+                RECORDS[i].parent = Parent::Live(parent);
+                RECORDS[i].child = Child::Reserved;
+                RECORDS[i].held = true;
+                RECORDS[i].job = zero;
+                return Reserve::Ready(make objects::Identity { slot: i,
+                    generation: RECORDS[i].generation });
+            }
+            i = i + 1_usize;
+        }
+    }
+    return Reserve::Limit;
+}
+
+pub unsafe fn bind(id: objects::Identity, child: process::Id, job: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || !process::valid(child) { return false; }
+        match RECORDS[id.slot].child {
+            Child::Reserved => { RECORDS[id.slot].child = Child::Live(child); RECORDS[id.slot].job = job; return true; },
+            Child::Live(value) => {}, Child::Exited(value) => {},
+        }
+    }
+    return false;
+}
+
+// Used only while rolling back a create that never published a live process.
+pub unsafe fn abort(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) { return false; }
+        match RECORDS[id.slot].child {
+            Child::Reserved => { RECORDS[id.slot].active = false; return true; },
+            Child::Live(value) => {}, Child::Exited(value) => {},
+        }
+    }
+    return false;
+}
+
+pub unsafe fn target(id: objects::Identity) -> Target {
+    unsafe {
+        if !valid(id) { return Target::Invalid; }
+        match RECORDS[id.slot].child {
+            Child::Reserved => { return Target::Invalid; },
+            Child::Exited(value) => { return Target::Finished; },
+            Child::Live(value) => {
+                if !process::valid(value) { return Target::Invalid; }
+                return Target::Ready(value);
+            },
+        }
+    }
+}
+
+// One table slot per dispatch work step. collect only succeeds after process reap,
+// so all userspace pages have gone before a process slot can be reused.
+pub unsafe fn poll(slot: usize) -> bool {
+    if slot >= CAPACITY { return false; }
+    // SAFETY: one serialized slot; only this Child owner collects its live process.
+    unsafe {
+        if !RECORDS[slot].active { return true; }
+        match RECORDS[slot].child {
+            Child::Reserved => {}, Child::Exited(value) => {},
+            Child::Live(id) => {
+                match process::collect(id) {
+                    process::Collected::Pending => {},
+                    process::Collected::Invalid => { return false; },
+                    process::Collected::Ready(value) => {
+                        if RECORDS[slot].job.generation != 0_usize && !jobs::leave(RECORDS[slot].job) { return false; }
+                        RECORDS[slot].job = zero;
+                        RECORDS[slot].child = Child::Exited(value);
+                        if !RECORDS[slot].held { RECORDS[slot].active = false; }
+                    },
+                }
+            },
+        }
+    }
+    return true;
+}
+
+pub unsafe fn collect(id: objects::Identity) -> Collect {
+    unsafe {
+        if !valid(id) || !RECORDS[id.slot].held { return Collect::Invalid; }
+        match RECORDS[id.slot].child {
+            Child::Reserved => { return Collect::Pending; },
+            Child::Live(value) => { return Collect::Pending; },
+            Child::Exited(value) => { return Collect::Ready(value); },
+        }
+    }
+}
+
+// A Child handle is not duplicated/inherited. Closing drops its exit-record claim;
+// a running child remains linked to the parent until normal exit or parent cancellation.
+pub unsafe fn release(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || !RECORDS[id.slot].held { return false; }
+        RECORDS[id.slot].held = false;
+        match RECORDS[id.slot].child {
+            Child::Reserved => { RECORDS[id.slot].active = false; },
+            Child::Exited(value) => { RECORDS[id.slot].active = false; },
+            Child::Live(value) => {},
+        }
+    }
+    return true;
+}
+
+unsafe fn owned_by(slot: usize, parent_slot: usize) -> bool {
+    unsafe {
+        if !RECORDS[slot].active { return false; }
+        match RECORDS[slot].parent {
+            Parent::Empty => { return false; },
+            Parent::Live(owner) => { return process::slot(owner) == parent_slot; },
+        }
+    }
+}
+
+unsafe fn cancel_one(slot: usize) -> bool {
+    unsafe {
+        match RECORDS[slot].child {
+            Child::Reserved => { return true; }, Child::Exited(value) => { return true; },
+            Child::Live(child) => {
+                match process::state(child) {
+                    process::State::Dying => { return true; }, process::State::Exited => { return true; },
+                    process::State::Vacant => { return false; },
+                    process::State::Loading => {}, process::State::Prepared => {}, process::State::Ready => {},
+                    process::State::Running => {}, process::State::Blocked => {}
+                }
+                return process::terminate(child, 13);
+            }
+        }
+    }
+}
+
+// Call before collecting parent identity. Descendant propagation uses subsequent
+// dispatch reap steps, never recursive kernel calls. Scan bounded to64 records.
+pub unsafe fn cancel_parent(parent: process::Id) -> bool {
+    unsafe {
+        let parent_slot: usize = process::slot(parent);
+        if parent_slot == process::CAPACITY { return false; }
+        var i: usize = 0;
+        while i < CAPACITY {
+            if owned_by(i, parent_slot) && !cancel_one(i) { return false; }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+
+pub unsafe fn cancel_job(job: objects::Identity) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            if RECORDS[i].active && RECORDS[i].job.slot == job.slot &&
+                RECORDS[i].job.generation == job.generation { if !cancel_one(i) { return false; } }
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+pub unsafe fn live_count() -> usize {
+    unsafe {
+        var count: usize = 0;
+        var i: usize = 0;
+        while i < CAPACITY { if RECORDS[i].active { count = count + 1_usize; } i = i + 1_usize; }
+        return count;
+    }
+}
+
+static mut CURSOR: usize = 0;
+pub unsafe fn poll_next() -> bool {
+    unsafe {
+        var scan: usize = 0;
+        while scan < CAPACITY {
+            let slot: usize = CURSOR;
+            CURSOR = (CURSOR + 1_usize) % CAPACITY;
+            scan = scan + 1_usize;
+            if RECORDS[slot].active {
+                match RECORDS[slot].child {
+                    Child::Reserved => {}, Child::Exited(value) => {},
+                    Child::Live(id) => {
+                        match process::state(id) {
+                            process::State::Exited => { return poll(slot); },
+                            process::State::Vacant => { return false; },
+                            process::State::Loading => {}, process::State::Prepared => {}, process::State::Ready => {},
+                            process::State::Running => {}, process::State::Blocked => {}, process::State::Dying => {}
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}
+// Parent identity remains stable until every direct child has published and been
+// collected here. Descendants repeat the same gate, so a Job finishes bottom-up.
+pub unsafe fn settled(parent: process::Id) -> bool {
+    unsafe {
+        let slot: usize = process::slot(parent);
+        if slot == process::CAPACITY { return false; }
+        var i: usize = 0;
+        while i < CAPACITY {
+            if owned_by(i, slot) {
+                match RECORDS[i].child {
+                    Child::Reserved => { return false; }, Child::Live(value) => { return false; },
+                    Child::Exited(value) => {}
+                }
+            }
+            i = i + 1_usize;
+        }
+        return true;
+    }
+}

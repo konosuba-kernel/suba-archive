@@ -1,0 +1,833 @@
+{
+  "stage": "K3",
+  "revision": "r1",
+  "reviewer": "/root/ram_acceptance",
+  "implementation_contributor": false,
+  "decision": "pass-functional",
+  "functional_blockers": [],
+  "candidate": {
+    "path": "docs/workflows/through-k7/K3-candidate-r1.json",
+    "sha256": "49c0d6c1639e5782bccef6b283018fceb3c724c8ac0e2eb0e9f401d5725f4a44"
+  },
+  "identity": {
+    "owned_matched": 51,
+    "static_inputs_matched": 19,
+    "mutable_delivery_current_sha256": "1bf6f3a986b3d705548cf46b623b2431b2737349d819667eeacfd8ffa7703101",
+    "delivery_frozen_path": "build/k3-coordinator-inputs/DELIVERY-frozen.md",
+    "delivery_frozen_sha256": "2b5188e7b4a27285f09c8ec80c0f4269dbbf1ca285854958241b7dc250959f41",
+    "delivery_difference": "K3 dispatch/status row and frozen candidate summary only; original requirements unchanged",
+    "compiler": {
+      "path": "../biomiya/build/layout-p4-r1/e3.elf",
+      "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+      "frozen_input_repository_commit": "d2c6e98a7cbe95c267cb554eb5c0c07ab33c6624",
+      "subsequent_C64_not_consumed": true
+    },
+    "production_elf": {
+      "path": "build/k3-production-r2/build/kernel.elf",
+      "sha256": "d186379f2df7717d0a42628df03fcd001f8168a211f07dc5c9f07a290e70a80c"
+    }
+  },
+  "author_evidence": {
+    "index": "docs/workflows/through-k7/K3-evidence-r1.json",
+    "sha256": "edf872c5fbc32da0d7e741f41d8f648ea949ba9ec2bd593a4874caee505180ad",
+    "historical_records_checked": 51,
+    "mismatches": [],
+    "all_history_rerun": false
+  },
+  "independent": {
+    "suite_command": [
+      "python3",
+      "build/k3-independent-r1/run_suite.py"
+    ],
+    "suite_sha256": "74f7d7799b546d4e97388016b13a8ba1ddc0776f8dd00b25e051cc623ca9b4dc",
+    "functional_cases": 16,
+    "negative_controls": 3,
+    "records": [
+      {
+        "path": "build/k3-independent-r1/smoke-none/verification.json",
+        "sha256": "0a3aa7a773887f6fb3a5a3128b191ba0c069a3480a5917812fed6e17c4e4f59f",
+        "serial_sha256": "77bd9f5ba75e5b7792ff1874e9d2d70c8b41b7b62b0a9dc5c5acbbc580aa5733",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/smoke-none",
+          "--case",
+          "smoke",
+          "--mutation",
+          "none"
+        ],
+        "case": "smoke",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 36170,
+          "max_dispatch_kind": 107,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/memory-none/verification.json",
+        "sha256": "dda909c2c8886f96a9e47ef813ec56e93046f24be9130296d190cc20f5a567d7",
+        "serial_sha256": "415035fbbd0ed40c28d7eea273c929f50db29ffb2d2b71555eeca23952453150",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/memory-none",
+          "--case",
+          "memory",
+          "--mutation",
+          "none"
+        ],
+        "case": "memory",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 32755,
+          "max_dispatch_kind": 107,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/streams-none/verification.json",
+        "sha256": "eb014990f7082e6d4fc0b734c1aa2a425994f49e02f3a038c7a2bcd90b820afa",
+        "serial_sha256": "72312d3a005c93102e35b50f1a9ea4a9a8ff3fafa91f1f583a8ea850e288b3b7",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/streams-none",
+          "--case",
+          "streams",
+          "--mutation",
+          "none"
+        ],
+        "case": "streams",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 45145,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/spawn-none/verification.json",
+        "sha256": "d6a8a1e701597447e9bd348ec6b42ae2df61c33bdc6b551abe928c9136ab3340",
+        "serial_sha256": "08cff014864705431e3863ff1cc37cab43b7b8df352b725266a4ec3bf44ff728",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/spawn-none",
+          "--case",
+          "spawn",
+          "--mutation",
+          "none"
+        ],
+        "case": "spawn",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 44998,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/spawn_invalid-none/verification.json",
+        "sha256": "c103dd82b9adff863df908ef33a277d46bfb87c1349a102053ad77c83acb8215",
+        "serial_sha256": "b3e2634a1e9749896b114ca53e5a602deab44dcccd6e883b890487a269cc4640",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/spawn_invalid-none",
+          "--case",
+          "spawn_invalid",
+          "--mutation",
+          "none"
+        ],
+        "case": "spawn_invalid",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 45062,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/handles-none/verification.json",
+        "sha256": "891e5b5437eb453492a953721b14e3f17f65157fc370e1d98315dd7c27dd8285",
+        "serial_sha256": "e1bb1186a9eb51e557e1062612ab0d6be20aa46fd4ab8caa65e60417254cf891",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/handles-none",
+          "--case",
+          "handles",
+          "--mutation",
+          "none"
+        ],
+        "case": "handles",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 51778,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": false,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/waits-late-token/verification.json",
+        "sha256": "bac2076883a9564024d98fe335f5b7cdfa519e76437f0ee47260a064b6a2d3ed",
+        "serial_sha256": "6b65b35494ece596ff48d26360c765acc6728264f96c8fb214089bab482ed21d",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/waits-late-token",
+          "--case",
+          "waits",
+          "--mutation",
+          "late-token"
+        ],
+        "case": "waits",
+        "mutation": "late-token",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "74e964837f27e66b0edcf90c8b120e33e65ae50a7d64b90e9bd429c95156cff3",
+        "production_differences": [
+          "kernel/dispatch_call.vt",
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 45883,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/tree-none/verification.json",
+        "sha256": "d02879d512b10bb562bf6f29de88333ae66ab3f257ac12dd54102226315e05c5",
+        "serial_sha256": "2c80aa0c48377c507fdc7c4124c063ee07198c2ee498703245b3325ff3269b75",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/tree-none",
+          "--case",
+          "tree",
+          "--mutation",
+          "none"
+        ],
+        "case": "tree",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 46047,
+          "max_dispatch_kind": 110,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/orphan_tree-none/verification.json",
+        "sha256": "6a8fca103ac98269ded6bd7aff09ab0ed38dcc82c01bb5c866f39d6dd6a68416",
+        "serial_sha256": "7381f954542a7202a59ddc7458fcaeef84eedc7ce0f93f2f184df667e6fd7452",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/orphan_tree-none",
+          "--case",
+          "orphan_tree",
+          "--mutation",
+          "none"
+        ],
+        "case": "orphan_tree",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 45591,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/rollback-none/verification.json",
+        "sha256": "9dfb77d518acc0d4bee4db08bb95d93af06a65c72ee278a8e7c1417073a5026e",
+        "serial_sha256": "9a1d0562783fea27f406b5153f5b093966425f9e97a4af5f0b5bc2732fd9954e",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/rollback-none",
+          "--case",
+          "rollback",
+          "--mutation",
+          "none"
+        ],
+        "case": "rollback",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 32755,
+          "max_dispatch_kind": 107,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/process_limit-none/verification.json",
+        "sha256": "85aa81fa1bea6315eeb294ae09403e1ac1f87f5f1facab966c4b7698bbbea603",
+        "serial_sha256": "a377c52d5ddf026aef1f1b088946586a2b452a59ead78c3ee135300964f16e40",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/process_limit-none",
+          "--case",
+          "process_limit",
+          "--mutation",
+          "none"
+        ],
+        "case": "process_limit",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 46392,
+          "max_dispatch_kind": 2,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/blocked_writer-late-token/verification.json",
+        "sha256": "6c2209e241fefebc431800b8032707c8e1939c9d0eaf3861845548a9a1059a00",
+        "serial_sha256": "edfb5068da0ae2d494810b1381a92076c3c02a3a495c5b2bab121e0ed62b1ef7",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/blocked_writer-late-token",
+          "--case",
+          "blocked_writer",
+          "--mutation",
+          "late-token"
+        ],
+        "case": "blocked_writer",
+        "mutation": "late-token",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "74e964837f27e66b0edcf90c8b120e33e65ae50a7d64b90e9bd429c95156cff3",
+        "production_differences": [
+          "kernel/dispatch_call.vt",
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 45771,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/allocation_failure-allocation-1/verification.json",
+        "sha256": "6ef3b2f5de8f74ad6b924ef870b706239c6ba6ed27a11abdbcf358ec46599a50",
+        "serial_sha256": "591d52049522671da84b0973d2c45113e118ea1edef1d68c5abd35e5c0fdded1",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/allocation_failure-allocation-1",
+          "--case",
+          "allocation_failure",
+          "--mutation",
+          "allocation-1"
+        ],
+        "case": "allocation_failure",
+        "mutation": "allocation-1",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "dd85711c1b47dc681847452e83e5ba0a86c7866fc2ee8f0df82a67677707f041",
+        "production_differences": [
+          "kernel/entry.vt",
+          "kernel/space.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 42445,
+          "max_dispatch_kind": 107,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/cancel_prepare-cancel-reservation/verification.json",
+        "sha256": "6e7d46e86a7a04f6b6b450093fcec529d7aea1fe8605c534172e7b308f13c318",
+        "serial_sha256": "e259452093d113c89bec63df76c40d6662c223d6045599db2a4189c0d5835206",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/cancel_prepare-cancel-reservation",
+          "--case",
+          "cancel_prepare",
+          "--mutation",
+          "cancel-reservation"
+        ],
+        "case": "cancel_prepare",
+        "mutation": "cancel-reservation",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "cb08e5d63fa2e9af271f0c06cfbc3142021139a1e6a34ebbb9f7f2a5abc6e206",
+        "production_differences": [
+          "kernel/dispatch_spawn.vt",
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 46148,
+          "max_dispatch_kind": 110,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/cancel_prepare-cancel-install/verification.json",
+        "sha256": "f564933133789ba557f28c5ba9f9b8ed40f407fe5eef544bd8dd857006b3ba92",
+        "serial_sha256": "84ad711fad684d191f40459eb88f1739f88f2bb662a826e88fd6d5528f33aa9e",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/cancel_prepare-cancel-install",
+          "--case",
+          "cancel_prepare",
+          "--mutation",
+          "cancel-install"
+        ],
+        "case": "cancel_prepare",
+        "mutation": "cancel-install",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "e3d709de4bbcc9c35c34623b3e86dc5603c93f7092d0b6f29f599412a258754a",
+        "production_differences": [
+          "kernel/dispatch_spawn.vt",
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 46089,
+          "max_dispatch_kind": 32,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/memory-omit-prune/verification.json",
+        "sha256": "0df93dd147678722f3bd3f502b776a3f5df9aba94695fc262635c25fcba4381c",
+        "serial_sha256": "2f363c60df030eb1b7ec7130343599472846be1436fe21d18ae091c7ce15ac88",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/memory-omit-prune",
+          "--case",
+          "memory",
+          "--mutation",
+          "omit-prune"
+        ],
+        "case": "memory",
+        "mutation": "omit-prune",
+        "expected": "suba K3: root exit 15",
+        "passed": true,
+        "kernel_sha256": "a763293164e4948eb9fcf9b7e5ea4f6595de80ee6b60f9dc38a4175347c2f438",
+        "production_differences": [
+          "kernel/entry.vt",
+          "kernel/space.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 34138,
+          "max_dispatch_kind": 107,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/waits-omit-token-revocation/verification.json",
+        "sha256": "8bff728e77741628595abe87c16059cea25fb45fc0db23c4f1f0cfcd631d9b44",
+        "serial_sha256": "675e8738b5c85313f2bacb23d510e8812ad7d21979712cdb9cea55c1d492e369",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/waits-omit-token-revocation",
+          "--case",
+          "waits",
+          "--mutation",
+          "omit-token-revocation"
+        ],
+        "case": "waits",
+        "mutation": "omit-token-revocation",
+        "expected": "suba kernel panic reason=23",
+        "passed": true,
+        "kernel_sha256": "c6d51373eb6e85e82b3f6e82a555edd1a3513a78932e05b45b73ca51492dbaa1",
+        "production_differences": [
+          "kernel/dispatch_call.vt",
+          "kernel/entry.vt",
+          "kernel/request.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": null,
+          "max_dispatch_kind": null,
+          "dispatch_target_met": null,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-r1/streams-prefix-only-usercopy/verification.json",
+        "sha256": "2f72fc974211fec3e1e9c136cb507c92fab72cfec5862e9f28d8aeba3d9f4f43",
+        "serial_sha256": "4589fc74c5057071c010d20a12670caefb1469c48025a4d15ef25cdd1cb47aeb",
+        "command": [
+          "python3",
+          "tools/check_k3.py",
+          "--compiler",
+          "../biomiya/build/layout-p4-r1/e3.elf",
+          "--out",
+          "/home/mii/code/konOSuba/suba/build/k3-independent-r1/streams-prefix-only-usercopy",
+          "--case",
+          "streams",
+          "--mutation",
+          "prefix-only-usercopy"
+        ],
+        "case": "streams",
+        "mutation": "prefix-only-usercopy",
+        "expected": "suba kernel panic reason=22",
+        "passed": true,
+        "kernel_sha256": "36b7bf7a0c8cc0b874f1996fd12b84ad51a416165109f4e0f58458e7d2314a76",
+        "production_differences": [
+          "kernel/entry.vt",
+          "kernel/usercopy.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": null,
+          "max_dispatch_kind": null,
+          "dispatch_target_met": null,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": false
+      },
+      {
+        "path": "build/k3-independent-extra-r1/domain/verification.json",
+        "sha256": "9933f40f6f964c7fe78967042660cd968f28933fa313fed3c5cfcf858558db4b",
+        "serial_sha256": "24b428749e406c5f4d0d58d2fc418302563e49044804d0912a2c3c8b76e8e93d",
+        "command": [
+          "python3",
+          "build/k3-independent-extra-r1/run.py",
+          "domain"
+        ],
+        "case": "domain",
+        "mutation": "none",
+        "expected": "suba K3: root exit 0",
+        "passed": true,
+        "kernel_sha256": "4a001a1c1120b04f4852c5f3af31bd1b0bb48785cde9f73f84b5b979248c5a6d",
+        "production_differences": [
+          "kernel/entry.vt"
+        ],
+        "timing": {
+          "timebase_hz": 10000000,
+          "target_ticks": 50000,
+          "max_dispatch_ticks": 45545,
+          "max_dispatch_kind": 110,
+          "dispatch_target_met": true,
+          "continuous_supervisor_residency_measured": false,
+          "irq_service_latency_measured": false,
+          "two_compiler_background_measured": false
+        },
+        "kernel_max_frame": 9344,
+        "independently_authored_fixture": true
+      }
+    ]
+  },
+  "archived_domain_probe": {
+    "files": {
+      "tests/k3/independent_domain.py": "782aa93572a637e2378d30f0da96ff8ba3b99306ad257e291cb68bf34cb44be4",
+      "tests/k3/independent_domain.vt": "de6216d2c88cce8ca209bd4abbb3f588c18137c2ad73ceff825f4af7fb31ab47"
+    },
+    "generated_domain_and_worker_identical_to_observed_run": true,
+    "packaged_driver_reexecuted": false,
+    "replay": [
+      "python3",
+      "tests/k3/independent_domain.py",
+      "--compiler",
+      "../biomiya/build/layout-p4-r1/e3.elf",
+      "--out",
+      "build/k3-independent-domain-replay"
+    ]
+  },
+  "cost": {
+    "candidate_sha256": "49c0d6c1639e5782bccef6b283018fceb3c724c8ac0e2eb0e9f401d5725f4a44",
+    "checked_files": 71,
+    "mismatches": [
+      "docs/workflows/through-k7/DELIVERY.md"
+    ],
+    "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+    "production_elf_sha256": "d186379f2df7717d0a42628df03fcd001f8168a211f07dc5c9f07a290e70a80c",
+    "elf_bytes": 696336,
+    "loads": [
+      {
+        "flags": 5,
+        "vaddr": 2151677952,
+        "filesz": 687844,
+        "memsz": 687844
+      },
+      {
+        "flags": 4,
+        "vaddr": 2152366080,
+        "filesz": 454,
+        "memsz": 454
+      },
+      {
+        "flags": 6,
+        "vaddr": 2152370176,
+        "filesz": 16,
+        "memsz": 11336192
+      }
+    ],
+    "memory_span": 12028416,
+    "bss": 11336176,
+    "source_cost": {
+      ".vt": {
+        "files": 30,
+        "bytes": 217442,
+        "lines": 4772
+      },
+      ".s0": {
+        "files": 2,
+        "bytes": 5181,
+        "lines": 261
+      }
+    }
+  },
+  "performance": {
+    "target_ticks": 50000,
+    "timebase_hz": 10000000,
+    "observed_min_dispatch_ticks": 32755,
+    "observed_max_dispatch_ticks": 51778,
+    "over_target_cases": [
+      "handles/none"
+    ],
+    "five_ms_target_fully_met": false,
+    "continuous_supervisor_residency_measured": false,
+    "irq_service_latency_measured": false,
+    "two_compiler_background_measured": false
+  },
+  "deferred": [
+    "K4 actual filesystem provider/IRQ service/DMA and FS cleanup tail",
+    "K4/K7 freeze_inputs and tree permissions",
+    "K7 editor/compiler workflow and loaded interaction measurements",
+    "Formal complete call-chain stack bound not established"
+  ],
+  "self_commit": false
+}

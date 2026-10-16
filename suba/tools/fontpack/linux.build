@@ -1,0 +1,8 @@
+format 1
+profile linux-user
+entry tool::fontpack_linux::run
+source user/text/font.vt
+source tools/fontpack/pack.vt
+source tools/fontpack/linux.vt
+assembly tools/fontpack/linux.s0
+output build/fontpack.elf

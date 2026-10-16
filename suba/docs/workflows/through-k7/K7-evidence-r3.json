@@ -1,0 +1,51 @@
+{
+  "author_complete": true,
+  "independent_acceptance": "K7-acceptance-r3.json",
+  "production_kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+  "owned_manifest": "build/k7-panic-owned-r1.json",
+  "owned_hashes_unchanged": true,
+  "notes": "docs/workflows/through-k7/K7-kernel-notes.md",
+  "notes_sha256": "778904646a4ad029680523323ff42b15ca2c3fdfcb28cb8de0cd1db4811937ff",
+  "reports": {
+    "build/k7-panic-production-r2/verification.json": {
+      "sha256": "db7a163e28ca42bd653565e65fd0e2e8ecfa49763311f71845935d9929917594",
+      "passed": true
+    },
+    "build/k7-block-notification-r3/verification.json": {
+      "sha256": "f06865e5a5d9d60121ebc56a786ceb65c7f16b544c21a3233a7b6801de24623f",
+      "passed": true
+    },
+    "build/k7-block-failure-r5/verification.json": {
+      "sha256": "2a521122ca510426af9a71ea307cee2da06a040c8e1a1fd81f694cbc3e484245",
+      "passed": true
+    },
+    "build/k7-panic-recovered-r3/verification.json": {
+      "sha256": "4b1c7b4e5c3153151d688ba75f353859228ba93182fe1a23fa6099be49bcdd15",
+      "passed": true
+    },
+    "build/k7-panic-historical-r1/verification.json": {
+      "sha256": "cff02b5b31501cb526e940ff4e4eba8b8189f060c25f81933e91f1dfaa99dd28",
+      "passed": true
+    },
+    "build/k7-panic-load-cancel-r1/verification.json": {
+      "sha256": "b376920b70fe6df1a9eff490344bac49698f112337c5c0a0091b38406931bcee",
+      "passed": true
+    },
+    "build/k7-panic-load-noirq-r1/verification.json": {
+      "sha256": "562e4973e61d04a7ab3dfadebfea866e0d087b03cdb3824a5a8993d186c9299d",
+      "passed": false
+    },
+    "build/k7-panic-irq-comparison-r1.json": {
+      "sha256": "92f19b05ff815990c5aa25feb97add559e6cda16e9e9a541dedb584d7c083dba",
+      "passed": true
+    },
+    "build/k7-desktop-r3/verification.json": {
+      "sha256": "4a5665420ae43f0de77130377f2eb93ef1329050ac700aabe836abb7af86abad",
+      "passed": true
+    }
+  },
+  "expected_negative": "build/k7-panic-load-noirq-r1/verification.json",
+  "historical_panic": "retained; cause unknown; not retroactively attributed to injected failure or confirmed protocol defect",
+  "candidate_sha256": "884a5e0b097db49b1d668603da696bb13c271fdb692998f83705b1ce56ece890",
+  "large_artifacts": "Original disks, ELF, logs and QEMU snapshots retained locally in ignored build; hashes recorded, not Git payloads."
+}

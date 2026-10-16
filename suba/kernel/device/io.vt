@@ -1,0 +1,19 @@
+// Device machine boundary. Callers supply aligned mapped MMIO or owned DMA memory.
+// Serialized S-mode only; every accessor fences device-visible memory. No waiting.
+module kernel::device::io;
+extern abi(C) fn __suba_io_read32(address: usize) -> u32;
+extern abi(C) fn __suba_io_write32(address: usize, value: u32) -> ();
+extern abi(C) fn __suba_io_write64(address: usize, value: usize) -> ();
+extern abi(C) fn __suba_io_barrier() -> ();
+extern abi(C) fn __suba_io_time() -> usize;
+pub unsafe fn read32(address: usize) -> u32 { unsafe { return __suba_io_read32(address); } }
+pub unsafe fn write32(address: usize, value: u32) -> () { unsafe { __suba_io_write32(address, value); } return (); }
+pub unsafe fn write64(address: usize, value: usize) -> () { unsafe { __suba_io_write64(address, value); } return (); }
+pub fn barrier() -> () { unsafe { __suba_io_barrier(); } return (); }
+pub fn time() -> usize { unsafe { return __suba_io_time(); } }
+extern abi(C) fn __suba_io_write16(address: usize, value: u32) -> ();
+extern abi(C) fn __suba_io_read8(address: usize) -> u32;
+extern abi(C) fn __suba_io_write8(address: usize, value: u32) -> ();
+pub unsafe fn write16(address: usize, value: u32) -> () { unsafe { __suba_io_write16(address, value); } return (); }
+pub unsafe fn read8(address: usize) -> u8 { unsafe { return __suba_io_read8(address) as u8; } }
+pub unsafe fn write8(address: usize, value: u8) -> () { unsafe { __suba_io_write8(address, value as u32); } return (); }

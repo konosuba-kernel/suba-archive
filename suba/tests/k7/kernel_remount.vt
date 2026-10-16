@@ -1,0 +1,104 @@
+// Durable lifecycle regression: retain an old reader across replace + SyncAll,
+// and leave a synced 65-block Transient file for bounded boot-time reclamation.
+module test::k7_kernel;
+unsafe fn large_file(name: []const u8, transient: bool) -> syscall::Reply {
+    unsafe {
+        var flags: usize = wire::WRITE | wire::CREATE_NEW;
+        if transient { flags = flags | wire::TRANSIENT; }
+        let file: syscall::Reply = files::open(name, flags);
+        if file.status != abi::OK { return file; }
+        var block: usize = 0;
+        while block < 65_usize {
+            BUFFER[0_usize] = block as u8;
+            let written: syscall::Reply = files::write_at(file.value, block * 4096_usize, core::slice_of(BUFFER));
+            if written.status != abi::OK || written.value != 4096_usize {
+                return make syscall::Reply { status: abi::INVALID, value: file.value };
+            }
+            block = block + 1_usize;
+        }
+        return file;
+    }
+}
+unsafe fn remount() -> u32 {
+    unsafe {
+        let old: syscall::Reply = files::open("target", wire::READ);
+        if old.status != abi::OK { return 130; }
+        if files::read_at(old.value, 0, core::slice_of_mut(BUFFER)).value != 3_usize { return 131; }
+        if BUFFER[0_usize] == 110_u8 {
+            if files::open("orphan", wire::READ).status != abi::NOT_FOUND ||
+                services::stats(wire::STATS_FS_DETACHED).value != 0_usize { return 132; }
+            let ledger: syscall::Reply = files::open("ledger", wire::READ);
+            if ledger.status != abi::OK || files::read_at(ledger.value, 0, core::slice_of_mut(BUFFER)).value != 16_usize { return 149; }
+            let values: []const u8 = core::slice_of(BUFFER);
+            if services::stats(wire::STATS_FS_FREE_NODES).value != argument_wire::word(values, 0, 8) ||
+                services::stats(wire::STATS_FS_FREE_BLOCKS).value != argument_wire::word(values, 8, 8) { return 150; }
+            if syscall::close(ledger.value).status != abi::OK ||
+                syscall::close(old.value).status != abi::OK || files::sync_all().status != abi::OK { return 133; }
+            return 0;
+        }
+        if BUFFER[0_usize] != 111_u8 { return 134; }
+        let nodes: usize = services::stats(wire::STATS_FS_FREE_NODES).value;
+        let blocks: usize = services::stats(wire::STATS_FS_FREE_BLOCKS).value;
+        let large: syscall::Reply = large_file("large", false);
+        if large.status != abi::OK || syscall::close(large.value).status != abi::OK ||
+            files::unlink("large").status != abi::OK || files::sync_all().status != abi::OK { return 135; }
+        if services::stats(wire::STATS_FS_FREE_NODES).value != nodes ||
+            services::stats(wire::STATS_FS_FREE_BLOCKS).value != blocks { return 136; }
+        if files::mkdir("parent").status != abi::OK { return 137; }
+        let held: syscall::Reply = create("parent/old", "old", false);
+        if held.status != abi::OK || syscall::close(held.value).status != abi::OK { return 138; }
+        let reader: syscall::Reply = files::open("parent/old", wire::READ);
+        if reader.status != abi::OK || files::unlink("parent/old").status != abi::OK ||
+            files::unlink("parent").status != abi::BUSY || files::sync_all().status != abi::OK { return 139; }
+        if syscall::close(reader.value).status != abi::OK { return 140; }
+        let deadline: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+        loop {
+            let removed: syscall::Reply = files::unlink("parent");
+            if removed.status == abi::OK { break; }
+            if removed.status != abi::BUSY || services::stats(syscalls::STATS_TIME_TICKS).value >= deadline { return 141; }
+        }
+        let temporary: syscall::Reply = create("temporary", "new", true);
+        if temporary.status != abi::OK || syscall::close(temporary.value).status != abi::OK ||
+            files::replace("temporary", "target").status != abi::OK { return 142; }
+        let combined: syscall::Reply = create("combined", "old", true);
+        if combined.status != abi::OK || syscall::close(combined.value).status != abi::OK { return 147; }
+        let hidden_reader: syscall::Reply = files::open("combined", wire::READ);
+        if hidden_reader.status != abi::OK || files::unlink("combined").status != abi::OK { return 148; }
+        argument_wire::put(core::slice_of_mut(BUFFER), 0, nodes - 1_usize, 8);
+        argument_wire::put(core::slice_of_mut(BUFFER), 8, blocks - 1_usize, 8);
+        let ledger: syscall::Reply = create("ledger", core::slice_from_raw_parts(core::slice_of(BUFFER).data, 16), false);
+        if ledger.status != abi::OK || syscall::close(ledger.value).status != abi::OK { return 151; }
+        let orphan: syscall::Reply = large_file("orphan", true);
+        if orphan.status != abi::OK || syscall::close(orphan.value).status != abi::OK ||
+            files::sync_all().status != abi::OK { return 143; }
+        // The detached old reader stays open until the host stops this boot.
+        if files::read_at(old.value, 0, core::slice_of_mut(BUFFER)).value != 3_usize || BUFFER[0_usize] != 111_u8 { return 144; }
+    }
+    return 0;
+}
+unsafe fn recovered() -> u32 {
+    unsafe {
+        let source: syscall::Reply = files::open("hello.vt", wire::READ);
+        if source.status != abi::OK || services::stats(wire::STATS_FS_DETACHED).value != 0_usize { return 145; }
+        if syscall::close(source.value).status != abi::OK || files::sync_all().status != abi::OK { return 146; }
+    }
+    return 0;
+}
+pub fn remount_gate() -> u32 { return gate(7); }
+pub fn recovered_gate() -> u32 { return gate(8); }
+
+// The retained K06 input predates the /work/ledger fixture. Verify its published
+// target and reclaimed names explicitly; host checks all file hashes/allocations.
+unsafe fn historical() -> u32 {
+    unsafe {
+        let file: syscall::Reply = files::open("target", wire::READ);
+        if file.status != abi::OK ||
+            files::read_at(file.value, 0, core::slice_of_mut(BUFFER)).value != 3_usize { return 152; }
+        if BUFFER[0_usize] != 110_u8 || BUFFER[1_usize] != 101_u8 || BUFFER[2_usize] != 119_u8 { return 153; }
+        if files::open("orphan", wire::READ).status != abi::NOT_FOUND ||
+            services::stats(wire::STATS_FS_DETACHED).value != 0_usize { return 154; }
+        if syscall::close(file.value).status != abi::OK || files::sync_all().status != abi::OK { return 155; }
+    }
+    return 0;
+}
+pub fn historical_gate() -> u32 { return gate(9); }

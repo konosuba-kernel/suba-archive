@@ -1,0 +1,13 @@
+// Fixed RAM launch descriptor v1, separate from unchanged BootInfo ABI v1.
+// Little-endian; host loads original ELF bytes without patching/repacking.
+module suba::ram_start;
+pub const ADDRESS: usize = 0x803f0000;
+pub const BYTES: usize = 256;
+pub const MAGIC: usize = 0x3154524154534253;
+pub const VERSION: usize = 1;
+pub const KERNEL_SOURCE: usize = 16;
+pub const KERNEL_BYTES: usize = 24;
+pub const IMAGE_COUNT: usize = 32;
+pub const IMAGES: usize = 64;
+pub const ENTRY_BYTES: usize = 16;
+pub const IMAGE_CAPACITY: usize = 8;

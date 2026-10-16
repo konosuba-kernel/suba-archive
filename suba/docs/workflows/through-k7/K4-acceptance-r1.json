@@ -1,0 +1,177 @@
+{
+  "stage": "K4",
+  "revision": "r1",
+  "decision": "pass",
+  "reviewer": "/root/k4_review",
+  "production_contributor": false,
+  "date": "2026-10-16",
+  "candidate": {
+    "path": "docs/workflows/through-k7/K4-candidate-r1.json",
+    "sha256": "767ff03e757cb707b7ae81ff05fb3b5afe652af7595db760901e80c9491d4105"
+  },
+  "identity": {
+    "owned_matched": 84,
+    "inputs_matched": 37,
+    "checked_before_and_after": true,
+    "administrative_exclusion": "DELIVERY.md remains mutable coordination only; K5/K7 sources are excluded. Acceptance report is produced after this freeze.",
+    "compiler": {
+      "path": "/home/mii/code/konOSuba/biomiya/build/source-cap64-p4-r3/e3.elf",
+      "sha256": "22d2c81fd0dbfc6de6b3b13fb2f485b1c64913849d9e59eeabe8c2757d27ebf4",
+      "repository_commit": "bd7305505030dbebd92eb238af21abe8d9bdd2ca"
+    }
+  },
+  "author_evidence": {
+    "index": "docs/workflows/through-k7/K4-filesystem-evidence.json",
+    "sha256": "0db4f3c72034456c405b872825ad2f16ce836f5a98972e7b2183b3a1607e8df8",
+    "records_checked": 13,
+    "report_compiled_inputs_elf_boot_logs_matched": true
+  },
+  "independent": {
+    "records": {
+      "build/k4-independent-memory-r1/verification.json": "0f2121f4d0c74ade868147518b4cd909765635445460b5b5e0ee0f2ccbe14249",
+      "build/k4-independent-streams-r1/verification.json": "580394c1f4b3992594d4b26e66d00a97f19524e11c46d81e4c81e0876cfaf303",
+      "build/k4-independent-spawn_invalid-r1/verification.json": "41078d142a7ea6849f10d2f34cc71932e54c63b620c4baca280693fe40f69152",
+      "build/k4-independent-tree-r1/verification.json": "7e936c171b5ea2aca071c77857ee8781193002b663b53259a6af776a24b2789e",
+      "build/k4-independent-orphan_tree-r1/verification.json": "73ae28d0d9325cccd6fb6819132b0db131da54eed89f448e0a56242b36c3c7c2",
+      "build/k4-independent-blocked_writer-r1/verification.json": "059e47a72026c12ba1b2f8d255da75b85f595406ad335e046caf055ce838bafe",
+      "build/k4-independent-protection-r1/verification.json": "1a6da48096cf740477a7e60baf80f5d77469ff416be625d1d8f070d144f0ea30",
+      "build/k4-independent-file-capacity-r1/verification.json": "8ad99a306814630a600a82a739f922dc4ba440c42fa08db96f4c00163787da42",
+      "build/k4-review-filesystem-r1/verification.json": "4d62b1789ac1af9640b2a69a9e880be16756bf95df8c0f281391433ab3e88bdb",
+      "build/k4-review-cancel_dma-r1/verification.json": "725bbfd3a79be9aaa40b23f134a76c703468da2a74f9b3011786f1c3fb011fac",
+      "build/k4-review-cancel_no_irq-r1/verification.json": "943247e4f1498b37bf4635222c9b637c2eb8d50e835389ca0b1decb9d44e0e49",
+      "build/k4-review-transient_owner-r1/verification.json": "30ee253568fc43897de7bc3d6c45d6e0a7f624f4798499125d542bb22a617ee5",
+      "build/k4-review-cwd_identity-r1/verification.json": "9638a985f2e274b37574ae5ff1d73c74b5603b38bb3076dcf854f9e004568682",
+      "build/k4-review-unlink_reader-r1/verification.json": "b4f843239a5ce673f36e5ef75e85581d6d5e19f183367a5b3d8072b78f10e967",
+      "build/k4-review-disk_partial-r1/verification.json": "e665f1c6248a526804b5a34765486b497a554e56dbcba5c6dfb103302e47904b",
+      "build/k4-review-faults-r1/verification.json": "1da832cbec284ecb6664c887367b413de4c868c8f705a470df444787b5527f17"
+    },
+    "regression_cases": 8,
+    "stage_cases": 7,
+    "actual_corruption_io_cases": 11,
+    "clean_kernel_rebuilt": true,
+    "clean_kernel_full_byte_equal": true,
+    "kernel_sha256": "87451fecfd59ed3df7f64f2a6e15e19448b1990ec7ed2274eb724ca14e405127",
+    "dma_rounds_per_boot": [
+      100,
+      100
+    ],
+    "dma_user_irq_traps": [
+      397,
+      398
+    ],
+    "seie_off_negative": "original block deadline panic73 after first targeted cancellation",
+    "additional_tests": "tests/k4/independent_fs",
+    "auxiliary_reports": {
+      "build/k4-review-preparation/environment-r1.json": "3b414b41c9e5ba92472b99e9f6f294af945def9174d7102c0a473488d7a4b2d4",
+      "build/k4-review-preparation/stack-r1.json": "1c6a3478b2b283bfb5933ed2fe7e8da23945cd1112b9b0ff03275a934119f1db",
+      "build/k4-review-preparation/independent-regressions-r1.json": "0cd114de7350c8fd12d32353d40b3c39aa1941c9855851a9d9154ba125b171f7",
+      "build/k4-review-preparation/final-reproduction-r1.json": "f362cbaaf663cd4587e7aa687713fefd7781c812e6a0d44c570ed98bb6c58596",
+      "build/k4-review-preparation/fault-readonly-r2.json": "44050b66be76cc968fd7f5420209716672dd1a48f377fe866e7e35cd73e037cc"
+    }
+  },
+  "transport": {
+    "candidate_sha256": "fd2845d4ef845db84e8188c9fd78cc5c468709e21597f954d3542027c43ea0ac",
+    "frozen_inputs_match": true,
+    "previous_independent_acceptance_retained": true,
+    "long_irq_test_repeated": false
+  },
+  "historical_evidence_decisions": {
+    "pre_reserve": "Four later changes only add Transient owner checks and default-cwd identity pin. Fixtures use owning client and explicit /work. Retain old evidence for unchanged reservation/copy/cancel path; do not label old ELF current.",
+    "old_timeout": "Retained with old snapshot identity only. Current SEIE-off DMA negative separately reaches unchanged deadline.",
+    "original_data_read_eio": "Driver Read only; separate no-write FileRead fixture on r5 supplies exact user operation evidence.",
+    "new_regression_script": "First seven cases ran before unrelated file_capacity branch was added; exact compiled source copies and ELFs remain verified."
+  },
+  "cost": {
+    "elf_bytes": 1220640,
+    "segments": [
+      {
+        "flags": 5,
+        "file_bytes": 1210836,
+        "memory_bytes": 1210836,
+        "bss_bytes": 0
+      },
+      {
+        "flags": 4,
+        "file_bytes": 558,
+        "memory_bytes": 558,
+        "bss_bytes": 0
+      },
+      {
+        "flags": 6,
+        "file_bytes": 32,
+        "memory_bytes": 12587488,
+        "bss_bytes": 12587456
+      }
+    ],
+    "vt_sources": 50,
+    "s0_sources": 3,
+    "max_frame": [
+      10368,
+      "kernel::dispatch::prepare_spawn"
+    ],
+    "kernel_chains": {
+      "kernel::entry::start": [
+        31680,
+        [
+          "kernel::entry::start",
+          "kernel::entry::schedule",
+          "kernel::dispatch::step",
+          "kernel::dispatch::step_inner",
+          "kernel::dispatch::advance",
+          "kernel::dispatch::prepare_spawn",
+          "kernel::dispatch::start_child",
+          "kernel::process::begin",
+          "kernel::space::create",
+          "kernel::space::allocate",
+          "kernel::memory::allocate",
+          "kernel::memory::clear_page"
+        ]
+      ],
+      "kernel::entry::handle_trap": [
+        31440,
+        [
+          "kernel::entry::handle_trap",
+          "kernel::entry::schedule",
+          "kernel::dispatch::step",
+          "kernel::dispatch::step_inner",
+          "kernel::dispatch::advance",
+          "kernel::dispatch::prepare_spawn",
+          "kernel::dispatch::start_child",
+          "kernel::process::begin",
+          "kernel::space::create",
+          "kernel::space::allocate",
+          "kernel::memory::allocate",
+          "kernel::memory::clear_page"
+        ]
+      ],
+      "kernel::entry::panic": [
+        1024,
+        [
+          "kernel::entry::panic",
+          "kernel::entry::reason_text",
+          "kernel::machine::text"
+        ]
+      ]
+    },
+    "includes_shutdown_test_observer": true
+  },
+  "resolved_findings": [
+    "Transient namespace deletion/replacement lacked owner checks",
+    "Default cwd incorrectly reparsed display spelling instead of inheriting directory identity"
+  ],
+  "nonblocking": [
+    "Failed create may conservatively advance source_epoch before File table exhaustion rollback",
+    "Some compressed multi-statement and exhaustive-match formatting remains for teaching cleanup"
+  ],
+  "functional_blockers": [],
+  "limitations": [
+    "No sudden power-loss recovery",
+    "Shutdown evidence is after process/storage drain, not a complete power UI/admission-control integration",
+    "RAM /boot/N loader remains until K7",
+    "No Job filesystem freeze or desktop/editor/compiler-loop acceptance",
+    "No 5ms/continuous S-residency/IRQ latency/two-compiler interaction guarantee",
+    "DMA test covers normal device drain; device faults stop system instead of claiming complete reclamation"
+  ],
+  "report_sha256": "39b1586f1598106f5208af9d634854e742d5885f5435df89593a371ac44fc81c",
+  "self_commit": false
+}

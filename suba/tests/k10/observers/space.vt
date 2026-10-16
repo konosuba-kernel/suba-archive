@@ -1,0 +1,44 @@
+// TEST ONLY: count actual tracked frames and validate memory identities plus the
+// physical reverse map. Reads up to the high-water extent, never page contents.
+pub unsafe fn k10_slot(id: Id) -> usize { unsafe { if live(id) { return id.slot; } } return CAPACITY; }
+pub unsafe fn k10_live(slot: usize) -> usize { unsafe { if RECORDS[slot].live { return 1; } } return 0; }
+pub unsafe fn k10_external(slot: usize) -> usize { unsafe { return RECORDS[slot].external; } }
+pub unsafe fn k10_pages(slot: usize) -> usize {
+    unsafe {
+        if slot >= CAPACITY || RECORDS[slot].high > QUOTA_PAGES { return 0xffffffffffffffff; }
+        var count: usize = 0; var i: usize = 0;
+        while i < RECORDS[slot].high {
+            let at: usize = slot * QUOTA_PAGES + i;
+            match PAGES[at] {
+                Owned::Empty => { return 0xffffffffffffffff; }, Owned::Hole(next) => {},
+                Owned::Page(frame) => {
+                    match memory::address(frame) {
+                        memory::AddressResult::Invalid => { return 0xffffffffffffffff; },
+                        memory::AddressResult::Value(address) => {
+                            if PAGE_INFO[(address - abi::RAM_BASE) / abi::PAGE_BYTES].slot != (at + 1_usize) as u32 { return 0xffffffffffffffff; }
+                        }
+                    }
+                    count = count + 1_usize;
+                }
+            }
+            i = i + 1_usize;
+        }
+        if count != RECORDS[slot].count { return 0xffffffffffffffff; }
+        return count;
+    }
+}
+pub unsafe fn k10_kernel_pages() -> usize {
+    unsafe {
+        var i: usize = 0;
+        while i < KERNEL_COUNT {
+            match KERNEL_PAGES[i] {
+                Owned::Empty => { return 0xffffffffffffffff; }, Owned::Hole(next) => { return 0xffffffffffffffff; },
+                Owned::Page(frame) => {
+                    match memory::address(frame) { memory::AddressResult::Invalid => { return 0xffffffffffffffff; }, memory::AddressResult::Value(address) => {} }
+                }
+            }
+            i = i + 1_usize;
+        }
+        return KERNEL_COUNT;
+    }
+}

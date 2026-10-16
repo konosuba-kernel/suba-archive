@@ -1,0 +1,47 @@
+{
+  "stage": "K2",
+  "revision": "r1",
+  "verdict": "accepted",
+  "author": "/root/memory_resume",
+  "reviewer": "/root",
+  "candidate_sha256": "f1ba4020b3086fe4156d85077308a25c4a7959a90ed11bf6ea91bb63be1d23c4",
+  "independent_runs": [
+    {
+      "path": "build/k2-root-basic-r1/verification.json",
+      "sha256": "6d8ec857c42f4c2c2dd19393d1b53d0b1b5096d5664d9a3e8f4e45eeb7e9dda7"
+    },
+    {
+      "path": "build/k2-root-registers-r1/verification.json",
+      "sha256": "8ac70eac54e6aa94339a769e0a92e120e029d0f550015a4bfd1e126397d78cf3"
+    },
+    {
+      "path": "build/k2-root-rollback-r1/verification.json",
+      "sha256": "48b62189f5cd92b3a45ddd2a3734e169e39b22a823a001f0cf9042e86f0b3eae"
+    },
+    {
+      "path": "build/k2-root-privileged-r1/verification.json",
+      "sha256": "8c8264b6b93c5b15bdeb6a5a57a396c703b15e32f753ce4ea956550e3e5aa5cd"
+    },
+    {
+      "path": "build/k2-root-s-guard-r1/verification.json",
+      "sha256": "f9201cfa7884bac65f2fd23c6ca61840e5468d73d4e94f7112faca7f8ebd9fd4"
+    },
+    {
+      "path": "build/k2-root-restore-negative-r1/verification.json",
+      "sha256": "a8eb2c88c143ea49cf771007e54686c5b7e6a812caaab529e208ee6c942b4c42"
+    },
+    {
+      "path": "build/k2-root-elf-r1/verification.json",
+      "sha256": "a48086e8f8b2778ae1cf65f7061878c09816172c8c829b783b7f4ece5e79fcc7"
+    },
+    {
+      "path": "build/k2-root-argument-r1/independent.json",
+      "sha256": "90006b894fdbabfdfb992d23a93bc6794cf1b3c24c52f8e86f05b3b85737cd29"
+    }
+  ],
+  "production_elf_sha256": "76d0452c54b9d3542eb5f0e5e94dfd9a1e63bc7fada1550abf4b50ed30c3de7c",
+  "stack_review": {
+    "path": "build/k2-root-basic-r1/cost-review.json",
+    "sha256": "b91d4d7fdf47e95068304b50d89efabd4e6e50633329b3d97ea4095429628554"
+  }
+}

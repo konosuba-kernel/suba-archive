@@ -1,0 +1,151 @@
+// Fixed RAM handoff. QEMU loads an unchanged kernel ELF plus its raw bytes.
+// The descriptor supplies sizes; this fixed binary validates them on every boot.
+// No disk deployment, source compiler or kernel-specific generated constants.
+module boot::ram;
+import suba::abi;
+import kernel::machine;
+import suba::ram_start;
+import suba::image;
+import boot::fw_cfg;
+static mut INFO: [512]u8 = zero;
+static mut DTB: [65536]u8 = zero;
+
+fn put(offset: usize, value: usize, width: usize) -> () {
+    var i: usize = 0;
+    // SAFETY: private INFO has fixed lifetime; all callers use fixed ABI offsets.
+    unsafe {
+        while i < width {
+            INFO[offset + i] = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+fn copy_dtb(address: usize) -> usize {
+    if address < abi::RAM_BASE || address - abi::RAM_BASE > abi::RAM_BYTES - 40_usize { return 0; }
+    // SAFETY: firmware-supplied DTB starts in readable platform RAM. Read the 40B
+    // header first, then validate the bounded payload before constructing its view.
+    unsafe {
+        let header: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)), 40);
+        if header[0_usize] != 208_u8 || header[1_usize] != 13_u8 || header[2_usize] != 254_u8 || header[3_usize] != 237_u8 { return 0; }
+        var count: usize = 0;
+        var i: usize = 4;
+        while i < 8_usize {
+            count = count * 256_usize + header[i] as usize;
+            i = i + 1_usize;
+        }
+        if count < 40_usize || count > 65536_usize || count > abi::RAM_BYTES - (address - abi::RAM_BASE) { return 0; }
+        let source: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)), count);
+        i = 0;
+        while i < count {
+            DTB[i] = source[i];
+            i = i + 1_usize;
+        }
+        return count;
+    }
+}
+
+struct Launch { valid: bool, entry: usize, end: usize, reservations: usize }
+
+// Validate the complete source range before constructing a borrowed byte view.
+fn source_valid(address: usize, count: usize, previous_end: usize) -> bool {
+    if address < previous_end || address % abi::PAGE_BYTES != 0_usize ||
+        count == 0_usize || count > abi::IMAGE_BYTES_MAX || address < abi::RAM_BASE ||
+        address - abi::RAM_BASE >= abi::RAM_BYTES { return false; }
+    return count <= abi::RAM_BYTES - (address - abi::RAM_BASE);
+}
+fn reserve(index: usize, address: usize, count: usize) -> () {
+    put(abi::BOOT_INFO_RESERVATIONS + index * 16_usize, address, 8);
+    put(abi::BOOT_INFO_RESERVATIONS + index * 16_usize + 8_usize,
+        (count + 4095_usize) / 4096_usize * 4096_usize, 8);
+    return ();
+}
+
+fn launch() -> Launch {
+    var rejected: Launch = zero;
+    // SAFETY: fixed 256B descriptor lies in permanent boot RAM. Every other raw
+    // view below follows validated aligned, ordered RAM extents from that record.
+    unsafe {
+        let record: []const u8 = core::slice_from_raw_parts(
+            core::ptr_const(core::ptr::<u8>(ram_start::ADDRESS)), ram_start::BYTES);
+        if image::word(record, 0, 8) != ram_start::MAGIC ||
+            image::word(record, 8, 4) != ram_start::VERSION ||
+            image::word(record, 12, 4) != ram_start::BYTES { return rejected; }
+        let address: usize = image::word(record, ram_start::KERNEL_SOURCE, 8);
+        let count: usize = image::word(record, ram_start::KERNEL_BYTES, 8);
+        let images: usize = image::word(record, ram_start::IMAGE_COUNT, 8);
+        if images == 0_usize || images > ram_start::IMAGE_CAPACITY ||
+            !source_valid(address, count, abi::KERNEL_BASE + abi::IMAGE_BYTES_MAX) { return rejected; }
+        let bytes: []const u8 = core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)), count);
+        var plan: Launch = zero;
+        match image::inspect(bytes, count, true) {
+            image::Inspect::Invalid => { return rejected; },
+            image::Inspect::Ready(elf) => {
+                let last: image::Segment = elf.segments[elf.count - 1_usize];
+                plan.entry = elf.entry;
+                plan.end = last.address + last.memory_bytes;
+            }
+        }
+        var i: usize = 40;
+        while i < ram_start::IMAGES {
+            if record[i] != 0_u8 { return rejected; }
+            i = i + 1_usize;
+        }
+        reserve(1, address, count);
+        var previous_end: usize = address + (count + 4095_usize) / 4096_usize * 4096_usize;
+        i = 0;
+        while i < images {
+            let at: usize = ram_start::IMAGES + i * ram_start::ENTRY_BYTES;
+            let source: usize = image::word(record, at, 8);
+            let size: usize = image::word(record, at + 8_usize, 8);
+            if !source_valid(source, size, previous_end) { return rejected; }
+            reserve(i + 2_usize, source, size);
+            previous_end = source + (size + 4095_usize) / 4096_usize * 4096_usize;
+            i = i + 1_usize;
+        }
+        i = ram_start::IMAGES + images * ram_start::ENTRY_BYTES;
+        while i < ram_start::BYTES {
+            if record[i] != 0_u8 { return rejected; }
+            i = i + 1_usize;
+        }
+        plan.reservations = images + 1_usize;
+        plan.valid = true;
+        return plan;
+    }
+}
+
+pub fn start(hart: usize, dtb: usize) -> u32 {
+    machine::initialize();
+    if !fw_cfg::verify() { return panic(4); }
+    if hart != 0_usize { return panic(1); }
+    let dtb_bytes: usize = copy_dtb(dtb);
+    if dtb_bytes == 0_usize { return panic(2); }
+    let plan: Launch = launch();
+    if !plan.valid { return panic(5); }
+    put(abi::BOOT_INFO_MAGIC, abi::BOOT_MAGIC, 8);
+    put(abi::BOOT_INFO_VERSION, abi::VERSION as usize, 4);
+    put(abi::BOOT_INFO_LENGTH, abi::BOOT_INFO_BYTES, 4);
+    put(abi::BOOT_INFO_RAM_BASE, abi::RAM_BASE, 8);
+    put(abi::BOOT_INFO_RAM_BYTES, abi::RAM_BYTES, 8);
+    put(abi::BOOT_INFO_KERNEL_BASE, abi::KERNEL_BASE, 8);
+    put(abi::BOOT_INFO_KERNEL_END, plan.end, 8);
+    put(abi::BOOT_INFO_DTB_BYTES, dtb_bytes, 8);
+    put(abi::BOOT_INFO_RESERVATION_COUNT, plan.reservations + 1_usize, 4);
+    put(abi::BOOT_INFO_RESERVATIONS, abi::BOOT_BASE, 8);
+    put(abi::BOOT_INFO_RESERVATIONS + 8_usize, abi::BOOT_BYTES, 8);
+    // SAFETY: kernel ELF is preloaded by the test harness. Both static records stay
+    // in the permanent boot window; destination entry creates its own private stack.
+    unsafe {
+        put(abi::BOOT_INFO_DTB_BASE, core::addr(core::slice_of(DTB).data), 8);
+        machine::text("suba RAM boot: entering kernel\n");
+        machine::enter(plan.entry, core::addr(core::slice_of(INFO).data));
+    }
+    return panic(3);
+}
+
+pub fn panic(reason: u32) -> u32 {
+    unsafe { machine::text("suba RAM boot panic\n"); }
+    machine::halt();
+    return reason;
+}

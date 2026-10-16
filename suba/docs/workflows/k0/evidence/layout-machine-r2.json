@@ -1,0 +1,4681 @@
+{
+  "schema": "q-machine-v1",
+  "independently_accepted": false,
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "compiler_memory": {
+    "rw_bytes": 55135836,
+    "image_span_bytes": 56168028
+  },
+  "qemu": "/usr/bin/qemu-riscv64",
+  "qemu_sha256": "f9937664b4107120a6b0a9727f27a2c215de3af57c467f7c575d1a13303b0bd2",
+  "guest_stack_bytes": 1048576,
+  "environment": {
+    "PATH": ""
+  },
+  "inputs": {
+    "tools/check_q_machine.py": "168b256bcf2a952a9bc5578dcac46dddcacc4b76c5d650e49a5bc87d13920e5f",
+    "tools/verify.py": "9066a9505d799daf7e3dce94f0042e6e5e1eade723baf7bc8ed029bb4e6ad112",
+    "bootstrap/frozen/core-s/tools/verify.py": "5ad1be0497e6918ec198f7fe7fac1a1bda223906ea8a95deddd9fc2fdf9f7b92",
+    "tools/q_machine_oracle.rs": "276f40c96735eb0c23d4fd06b9395c972f24c6fdd9f45f2c5e2cceb36a9d7558",
+    "bootstrap/frozen/core-s/src/machine.rs": "2e0b7c588091e703d65b83bda8c7b12c93075dd656f06e2f3064cca866e54395",
+    "bootstrap/frozen/core-s/src/encode.rs": "e07e4ec9ee72482e7aee01eda5c60fdae4d69c2af85e9295b82166533f958888",
+    "bootstrap/frozen/core-s/src/image.rs": "425e76681c53a5f2bbc6c908fc41b1539930a5623b96e6dba527dcaf40540460",
+    "bootstrap/frozen/core-s/src/s0.rs": "0d391b3f73431fc4ecb13c16c69bff8cb437cdcffdfab167af3c55b606d8fdf1",
+    "tests/compiler/machine-cases.json": "e56cd6d6ff731c2d342e5a032f5003edfd5f67bb4743d261aed00fca3c35d8da",
+    "tests/compiler/ast-cases.json": "14246f2bbd69cd1d0b97ddb0010a17f6bc6a9484a883306c2750ba86fc54b057",
+    "tests/compiler/owner-cases.json": "84b665c3f8d895e56f2bcb76baef5833909c87a03b6e4ea25ddf1e620bfedf14",
+    "tests/compiler/s0/constants-reference.s": "d53eacc652df3fdaaa71d5f9caf0fde2e39bce63984f80789f651ac1b385dc18",
+    "tests/compiler/s0/all.s0": "eaafbb65f846ba5669b4320451f839dddfb8136939cffe2c99bae1b40c35b1e9",
+    "tests/compiler/s0/all-reference.s": "fafddc5c17f8d444c502180a9b06f21167702d9e2d058776eff35dddea6ae1a0",
+    "tests/compiler/machine.build": "69c99435e3a51c68d792ff392acf1bdcb02c8c7473b4df8b59668bc3cbaf18cb",
+    "compiler/model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "compiler/rules.vt": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951",
+    "compiler/image.vt": "d47f5bfa9b5b7db906e733b637010095b1eb99f1d0e43e1e63164d2127ee9d06",
+    "tests/compiler/layout.vt": "6a85f4771d756c0830b9a5ab33d2c11dcb8a0cdbc6a58c586f0fa42972c8b624",
+    "compiler/ir.vt": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8",
+    "compiler/rv64.vt": "dff6ec62795132d11ff969b1310c6f5cae1402db4f67adfd735eefd9b87cb3c0",
+    "compiler/s0.vt": "3fbed647d066fb023dcccb60c441cad23a4f4905cbcdf13aafbc34acf74ee2fe",
+    "tests/compiler/machine.vt": "2256de5d7a5cb7a225f34e962b2df6d03a334e39a44df9e58b0774e33a9b84c1",
+    "compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a",
+    "compiler/target.vt": "a3f454b2b2535383a7a479d92f9670b56496b122cae0f09ea4f1f1f5368c3108",
+    "compiler/runtime/host_linux.vt": "48df4f0682a857f7f14fb87627d7573960f7014d895a7b7e0bff1baa5b1eee37",
+    "tests/compiler/pure-rules.build": "fd16d1ab3847307a8c1d1028691de5a2887412ce4afe6f3814998396d7363938",
+    "tests/compiler/pure-rules.vt": "cf618aafbe3b2739ae77585eea2d3dc0d895fab5cab4f45d51dd461287af610e",
+    "tests/compiler/machine-boundaries.build": "f393fafa859f21561451b2109386cf1c4b97e758dc8d4c7cb0614387c1d94f28",
+    "tests/compiler/machine-boundaries.vt": "8b5f9176c568d7257fffeb1ed4e9f5e0a21d498891d9482a87565409ccb0b98a",
+    "tests/compiler/machine-abi.build": "7db72e1bb72902659321d3dc0e902b7a9430855525dd4ad1829feb46b9b98a17",
+    "tests/compiler/machine-abi.vt": "50e4877e6ac3765d2afd594fef6bb478e0320f273bf24ac9f6526e6e36db88da",
+    "tests/compiler/ast-lifecycle.build": "88831a6cf6533abc47610ded43a07eeb9a46050d069e028edaa30c670bfa7363",
+    "compiler/input.vt": "042fd5b1ccfef978223692b525a0e6df2386fe6c53a328a23333b007fe2a3c00",
+    "compiler/lex.vt": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28",
+    "compiler/parse.vt": "d2cff4e7f2fcd7a66968a34eb8c116c815ee477bbb9d606d626a373793fa8b7c",
+    "compiler/types.vt": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3",
+    "compiler/init.vt": "f4987677b55d793df25f648881f34cfa7717f2affb0ee6915d967bdb1739a6b2",
+    "compiler/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5",
+    "tests/compiler/ast-lifecycle.vt": "cec11fa705582fa92b4b658fdd92ab05f02880337a440cc5f5286e6de75aa822",
+    "tests/compiler/ast-cross-id.build": "66e6dd85e80b579f973c1bf3425f4b226b56a62beb5414edd9dd735aafa51807",
+    "tests/compiler/ast-cross-id.vt": "39109354c98a7cd2fe8f597da4343248ced50c7f9992d9c9e1ebae6f177e780f",
+    "tests/compiler/ast-zero-id.build": "0fad7db0911f3c02f7a14ce5ec2fb8c6f820d87e3e694f21429abce3a7233ae9",
+    "tests/compiler/ast-zero-id.vt": "4170b8caa36079e5012f1302814b444d1d0e221d9b3095ef15080465429fa5ec",
+    "tests/compiler/owner.build": "bb9f92c4be91ffc3f5688ef2aba0c12042105615ada43592906e34e4283e40ac",
+    "tests/compiler/owner.vt": "be6b6bc2272718706ca7d4377145ac2df7059c14ed356924fbbb0fc2544dd632"
+  },
+  "builds": [
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/0/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "S-next-0.1 sources=11 imports=24 assembly_files=1 source=160591 assembly=345 names=2532 name_bytes=46862 decls=499 types=244 fields=216 params=372 max_ast=1041 max_ir=1429 max_frame=8288 max_bindings=28 max_defers=0 max_loops=2 max_slots=1033 max_args=221 max_params=6 text=480688 data=1533 objects=265 symbols=6129 fixups=13178 relocations=1 elf=491584\n",
+      "elapsed_seconds": 54.49419334099912,
+      "manifest": "tests/compiler/machine.build",
+      "normalized_manifest_sha256": "a73aea8a86d2e220aab018bb7530f025e72f94cd0f8ea13205873c7984ba81fe",
+      "elf": {
+        "sha256": "3006e85895bea8e0a79b68b7ae2a2d1d8b76c3ad5208b40d2470d1548e8b4b45",
+        "bytes": 491584,
+        "memory": {
+          "rw_bytes": 43834793,
+          "image_span_bytes": 44322217
+        },
+        "rw_file_bytes": 64,
+        "rw_memory_bytes": 43834793
+      }
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/1/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "S-next-0.1 sources=6 imports=6 assembly_files=1 source=42101 assembly=345 names=889 name_bytes=15934 decls=230 types=100 fields=118 params=121 max_ast=650 max_ir=902 max_frame=4176 max_bindings=8 max_defers=0 max_loops=2 max_slots=562 max_args=172 max_params=4 text=96016 data=192 objects=43 symbols=1479 fixups=2660 relocations=0 elf=106528\n",
+      "elapsed_seconds": 6.991527714999393,
+      "manifest": "tests/compiler/pure-rules.build",
+      "normalized_manifest_sha256": "fbb6f3980136b1767dc2238591206583e48d7d0ea89a0da6edce42f3b56132d3",
+      "elf": {
+        "sha256": "caf586d33581b3c934856448fba0a3676373a46fc9bade2b76528d5df4d8643d",
+        "bytes": 106528,
+        "memory": {
+          "rw_bytes": 5243200,
+          "image_span_bytes": 5345600
+        },
+        "rw_file_bytes": 32,
+        "rw_memory_bytes": 5243200
+      }
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/2/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "S-next-0.1 sources=11 imports=21 assembly_files=1 source=137383 assembly=345 names=2185 name_bytes=40500 decls=482 types=231 fields=216 params=347 max_ast=1039 max_ir=1429 max_frame=8288 max_bindings=15 max_defers=0 max_loops=2 max_slots=1033 max_args=160 max_params=5 text=390280 data=568 objects=162 symbols=5409 fixups=11044 relocations=1 elf=401472\n",
+      "elapsed_seconds": 38.311662297999646,
+      "manifest": "tests/compiler/machine-boundaries.build",
+      "normalized_manifest_sha256": "e12372e953e0c6fcad97640a0f3ec41b999f7e1b5686c96736ee6f343d5f8b58",
+      "elf": {
+        "sha256": "5d961c641d3264d3dd1f7f1c0569b5f4cea1c0510f43d8ede2cbeb1307611922",
+        "bytes": 401472,
+        "memory": {
+          "rw_bytes": 42786216,
+          "image_span_bytes": 43183528
+        },
+        "rw_file_bytes": 64,
+        "rw_memory_bytes": 42786216
+      }
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/3/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "S-next-0.1 sources=11 imports=22 assembly_files=1 source=136551 assembly=345 names=2214 name_bytes=41036 decls=480 types=239 fields=216 params=347 max_ast=1039 max_ir=1429 max_frame=8288 max_bindings=16 max_defers=0 max_loops=2 max_slots=1033 max_args=160 max_params=5 text=395472 data=476 objects=153 symbols=5390 fixups=11010 relocations=1 elf=405568\n",
+      "elapsed_seconds": 36.87257014900024,
+      "manifest": "tests/compiler/machine-abi.build",
+      "normalized_manifest_sha256": "fdfecf23afbcfbfccb6927414e0da793848be6486d42b585105317bb52d82935",
+      "elf": {
+        "sha256": "b29e48846f619e1d207f0c21e02ed275cbe90ca072f1af25d0d3bd789080cd68",
+        "bytes": 405568,
+        "memory": {
+          "rw_bytes": 42786216,
+          "image_span_bytes": 43187624
+        },
+        "rw_file_bytes": 64,
+        "rw_memory_bytes": 42786216
+      }
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/4/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "S-next-0.1 sources=13 imports=32 assembly_files=1 source=189094 assembly=345 names=2715 name_bytes=52556 decls=546 types=282 fields=257 params=387 max_ast=1085 max_ir=1424 max_frame=25808 max_bindings=15 max_defers=0 max_loops=3 max_slots=1033 max_args=107 max_params=5 text=570664 data=1178 objects=392 symbols=7581 fixups=15627 relocations=4 elf=581728\n",
+      "elapsed_seconds": 58.1903773640006,
+      "manifest": "tests/compiler/ast-lifecycle.build",
+      "normalized_manifest_sha256": "4a06f0e52a68cb0e948dbe443c3cbbd05aebff5cc494e574d070ca2cb265a2ee",
+      "elf": {
+        "sha256": "261ce0cc58d8129826ec7c91113f96ec4cb4be3d7afe63dfa51397c4aba9f526",
+        "bytes": 581728,
+        "memory": {
+          "rw_bytes": 49345656,
+          "image_span_bytes": 49923192
+        },
+        "rw_file_bytes": 96,
+        "rw_memory_bytes": 49345656
+      }
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/5/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 1,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "E_TYPE file=11 byte=97\n",
+      "elapsed_seconds": 54.352604214000166,
+      "manifest": "tests/compiler/ast-cross-id.build",
+      "normalized_manifest_sha256": "31243c8c9605650d6673286f8d17429878a064b04f80fbebcd9af911f4b0d342",
+      "output_absent": true
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/6/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 1,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "E_NAME file=11 byte=88\n",
+      "elapsed_seconds": 53.57915339699866,
+      "manifest": "tests/compiler/ast-zero-id.build",
+      "normalized_manifest_sha256": "4a458a34b51bed864673456b34f7d5a7eed861cb9657c76141ea796a985e1dbe",
+      "output_absent": true
+    },
+    {
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/compiler.elf",
+        "build",
+        "builds/7/probe.build"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": false,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "S-next-0.1 sources=9 imports=15 assembly_files=1 source=79948 assembly=345 names=1426 name_bytes=26123 decls=342 types=160 fields=124 params=214 max_ast=1018 max_ir=1405 max_frame=8288 max_bindings=15 max_defers=0 max_loops=2 max_slots=1033 max_args=103 max_params=5 text=237668 data=630 objects=136 symbols=3336 fixups=6486 relocations=4 elf=249952\n",
+      "elapsed_seconds": 15.380971238999336,
+      "manifest": "tests/compiler/owner.build",
+      "normalized_manifest_sha256": "3deead4d7402f91762a701e122208bf4ab611f4ac90816dc657d79ff13693363",
+      "elf": {
+        "sha256": "ba8c69f2b6692a7e7e087c6a8ea349bfb2dafd79510dd821f700e6ed756598ba",
+        "bytes": 249952,
+        "memory": {
+          "rw_bytes": 43184756,
+          "image_span_bytes": 43430516
+        },
+        "rw_file_bytes": 96,
+        "rw_memory_bytes": 43184756
+      }
+    }
+  ],
+  "cases": [
+    {
+      "case": {
+        "name": "ir-simple",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "simple"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "simple"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-simple",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.02191207399846462
+      },
+      "target_elf": {
+        "sha256": "7d7b14b05631de6de8a5581ca7a848cf3ebbe6614fddc9923f1a7bffeba3b37e",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-simple/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-simple",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.00486350100072741
+      }
+    },
+    {
+      "case": {
+        "name": "ir-aggregate",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "aggregate"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "aggregate"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-aggregate",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.030771383999308455
+      },
+      "target_elf": {
+        "sha256": "843e38816f5fff33fc30bdf48497b92b6e60909480eafc6ca4e96b147663d8c5",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-aggregate/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-aggregate",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.004231272001561592
+      }
+    },
+    {
+      "case": {
+        "name": "ir-operators",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "operators"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "operators"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-operators",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.040095869000651874
+      },
+      "target_elf": {
+        "sha256": "12dcb92ead75c3f1bf1503cd1442bca07494f5adee9221a8fc87e74999440bb6",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-operators/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-operators",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.005769727998995222
+      }
+    },
+    {
+      "case": {
+        "name": "ir-overflow",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "overflow"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 101,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "overflow"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-overflow",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.02240477700070187
+      },
+      "target_elf": {
+        "sha256": "df8e3701d8ce5ece5418409854b9ec1c7d11f5ade8f4003f072c289715a432f6",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-overflow/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-overflow",
+        "host_oracle_build": false,
+        "exit": 101,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.004143504000239773
+      }
+    },
+    {
+      "case": {
+        "name": "ir-wrap",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "wrap"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "wrap"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-wrap",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.022840050000013434
+      },
+      "target_elf": {
+        "sha256": "1efefdf72e656ab51c8d6afa144a37b4ff0dc5b413dc408cabe6c38b9c926dec",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-wrap/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-wrap",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.006017658999553532
+      }
+    },
+    {
+      "case": {
+        "name": "ir-divzero",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "divzero"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 101,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "divzero"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-divzero",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.024140389999956824
+      },
+      "target_elf": {
+        "sha256": "6d3f0d083479c1cf66523f93672a105a2043890261b98d0707fe4c9370860967",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-divzero/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-divzero",
+        "host_oracle_build": false,
+        "exit": 101,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.006017055999109289
+      }
+    },
+    {
+      "case": {
+        "name": "ir-shift",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "shift"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 101,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "shift"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-shift",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.02375370299887436
+      },
+      "target_elf": {
+        "sha256": "d4b1a4c6e4f6b444e2a97253a4c7f7e651390558c0a9a87587a1e9aed0ed2ade",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-shift/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-shift",
+        "host_oracle_build": false,
+        "exit": 101,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.00469452499964973
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_high",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_high"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_high"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_high",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.05460374600079376
+      },
+      "target_elf": {
+        "sha256": "2f3d32bc78f6c22d373133e53b5bb38051f0236d7ed8cd62cc2956805f806b8f",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_high/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_high",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.0046936889993958175
+      }
+    },
+    {
+      "case": {
+        "name": "ir-arguments_high",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "arguments_high"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "arguments_high"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-arguments_high",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.13729721900017466
+      },
+      "target_elf": {
+        "sha256": "7d7b14b05631de6de8a5581ca7a848cf3ebbe6614fddc9923f1a7bffeba3b37e",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-arguments_high/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-arguments_high",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.004221573000904755
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badir",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badir"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badir"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badir",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01565709200076526
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badpointer",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badpointer"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badpointer"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badpointer",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.017075060000934172
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badreturn",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badreturn"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badreturn"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badreturn",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01652902699970582
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badlabel",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badlabel"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badlabel"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badlabel",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01886195199949725
+      }
+    },
+    {
+      "case": {
+        "name": "ir-duplicatelabel",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "duplicatelabel"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "duplicatelabel"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-duplicatelabel",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01657272299962642
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badslot",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badslot"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badslot"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badslot",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.017217078999237856
+      }
+    },
+    {
+      "case": {
+        "name": "ir-afterterm",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "afterterm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "afterterm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-afterterm",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.016190390999327064
+      }
+    },
+    {
+      "case": {
+        "name": "ir-noverify",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "noverify"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "noverify"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-noverify",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.012048798000250827
+      }
+    },
+    {
+      "case": {
+        "name": "ir-sealed",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "sealed"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "sealed"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-sealed",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.013816017000863212
+      }
+    },
+    {
+      "case": {
+        "name": "ir-twice",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "twice"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "twice"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-twice",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01901400299902889
+      }
+    },
+    {
+      "case": {
+        "name": "ir-staleslot",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "staleslot"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "staleslot"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-staleslot",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01477486000112549
+      }
+    },
+    {
+      "case": {
+        "name": "ir-stalelabel",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "stalelabel"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "stalelabel"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-stalelabel",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.013691027999811922
+      }
+    },
+    {
+      "case": {
+        "name": "ir-stalerange",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "stalerange"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "stalerange"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-stalerange",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.012962351000169292
+      }
+    },
+    {
+      "case": {
+        "name": "ir-empty",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "empty"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "empty"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-empty",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01699144600024738
+      }
+    },
+    {
+      "case": {
+        "name": "ir-nolabel",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "nolabel"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "nolabel"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-nolabel",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.015982767999958014
+      }
+    },
+    {
+      "case": {
+        "name": "ir-callcount",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "callcount"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "callcount"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-callcount",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.016630731000986998
+      }
+    },
+    {
+      "case": {
+        "name": "ir-calltype",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "calltype"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "calltype"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-calltype",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.015622997998434585
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badcallee",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badcallee"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badcallee"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badcallee",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.017702211000141688
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_zero",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_zero"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_zero"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_zero",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.018391603998679784
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_missing",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_missing"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_missing"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_missing",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.03820988500046951
+      }
+    },
+    {
+      "case": {
+        "name": "ir-slot_alias",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "slot_alias"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "slot_alias"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-slot_alias",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.013052136999249342
+      }
+    },
+    {
+      "case": {
+        "name": "ir-unterminated",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "unterminated"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "unterminated"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-unterminated",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.01563399800033949
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_limit",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_limit"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_LIMIT",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_limit"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_limit",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "actual=65537 limit=65536 I_LIMIT file=0 byte=0\n",
+        "elapsed_seconds": 0.036858264000329655
+      }
+    },
+    {
+      "case": {
+        "name": "ir-frame_limit",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "frame_limit"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_LIMIT",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "frame_limit"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-frame_limit",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "actual=262173 limit=262144 I_LIMIT file=0 byte=0\n",
+        "elapsed_seconds": 0.01695199299865635
+      }
+    },
+    {
+      "case": {
+        "name": "ir-arguments_limit",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "arguments_limit"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_LIMIT",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "arguments_limit"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-arguments_limit",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "actual=65537 limit=65536 I_LIMIT file=0 byte=0\n",
+        "elapsed_seconds": 0.12716269600059604
+      }
+    },
+    {
+      "case": {
+        "name": "machine-abs64-bss",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "abs64"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 97,
+          "stdout": "",
+          "stderr": "",
+          "rw_file_bytes": 8,
+          "rw_memory_bytes": 12288
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "abs64"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-abs64-bss",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.03990523100037535
+      },
+      "target_elf": {
+        "sha256": "6839af91b2587f933de511d34a4efc22af2b5f6a447b549908e59e232b505920",
+        "bytes": 12296,
+        "memory": {
+          "rw_bytes": 12288,
+          "image_span_bytes": 20480
+        },
+        "rw_file_bytes": 8,
+        "rw_memory_bytes": 12288
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-abs64-bss/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-abs64-bss",
+        "host_oracle_build": false,
+        "exit": 97,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.006234053000298445
+      }
+    },
+    {
+      "case": {
+        "name": "machine-overlap-copy",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "copy_overlap"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 6,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "copy_overlap"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-overlap-copy",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.03253977800159191
+      },
+      "target_elf": {
+        "sha256": "61ba75009bf6bd613f305043bc09d2e4b7a56a1607d9874cbed20f4cf462a000",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-overlap-copy/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-overlap-copy",
+        "host_oracle_build": false,
+        "exit": 6,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.003814268000496668
+      }
+    },
+    {
+      "case": {
+        "name": "layout-selfpointer",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "selfpointer"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "selfpointer"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-selfpointer",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.02441710399943986
+      },
+      "target_elf": {
+        "sha256": "7d7b14b05631de6de8a5581ca7a848cf3ebbe6614fddc9923f1a7bffeba3b37e",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-selfpointer/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-selfpointer",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.0057989950000774115
+      }
+    },
+    {
+      "case": {
+        "name": "layout-selfslice",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "selfslice"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "selfslice"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-selfslice",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.023406768999848282
+      },
+      "target_elf": {
+        "sha256": "7d7b14b05631de6de8a5581ca7a848cf3ebbe6614fddc9923f1a7bffeba3b37e",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-selfslice/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-selfslice",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.003926467999917804
+      }
+    },
+    {
+      "case": {
+        "name": "layout-badcycle",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badcycle"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badcycle"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-badcycle",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.014292022000518045
+      }
+    },
+    {
+      "case": {
+        "name": "layout-badmutualcycle",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badmutualcycle"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badmutualcycle"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/layout-badmutualcycle",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.020195212000544416
+      }
+    },
+    {
+      "case": {
+        "name": "link-duplicate",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "duplicate"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "E_LINK",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "duplicate"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/link-duplicate",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.014147203999527846
+      }
+    },
+    {
+      "case": {
+        "name": "link-absout",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "absout"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "E_LINK",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "absout"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/link-absout",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.01066250500116439
+      }
+    },
+    {
+      "case": {
+        "name": "link-absunder",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "absunder"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "E_LINK",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "absunder"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/link-absunder",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.014465739999650395
+      }
+    },
+    {
+      "case": {
+        "name": "link-overlap",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "overlap"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "E_LINK",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "overlap"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/link-overlap",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.014395643000170821
+      }
+    },
+    {
+      "case": {
+        "name": "link-jumpdata",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "jumpdata"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "E_LINK",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "jumpdata"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/link-jumpdata",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.015288869000869454
+      }
+    },
+    {
+      "case": {
+        "name": "link-undefined",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "undefined"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "E_LINK",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "undefined"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/link-undefined",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.01393454900062352
+      }
+    },
+    {
+      "case": {
+        "name": "machine-constants",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "constants"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stderr": "",
+          "stdout_hex": "0000000000000000ff070000000000000008000000000000ff0f000000000000ff7f0000000000000080000000000000ffffff0f000000000000008000000000ffffffff00000000ffffffffffffff7f000000000000008000f8ffffffffffffffffffffffffffff"
+        },
+        "oracle": {
+          "kind": "execution",
+          "assembly": "tests/compiler/s0/constants-reference.s"
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "constants"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.01259537999976601
+      },
+      "target_elf": {
+        "sha256": "8b9cd106df5f2c96758b779f35424076229afb1c4dc8b1b8613aff5913f883d8",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0007\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u000f\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u007f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\u000f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\ufffd\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\u007f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0000\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd",
+        "stdout_hex": "0000000000000000ff070000000000000008000000000000ff0f000000000000ff7f0000000000000080000000000000ffffff0f000000000000008000000000ffffffff00000000ffffffffffffff7f000000000000008000f8ffffffffffffffffffffffffffff",
+        "stderr": "",
+        "elapsed_seconds": 0.00519018200066057
+      },
+      "oracle": {
+        "kind": "execution",
+        "tools": {
+          "/usr/bin/clang-23": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+          "/usr/bin/ld.lld": "57b6c64db534793f05918a6e935c900e9938bd64d0ac95933285930b568387ea"
+        },
+        "commands": [
+          {
+            "command": [
+              "/usr/bin/clang-23",
+              "--target=riscv64-unknown-elf",
+              "-march=rv64im_zicsr",
+              "-mabi=lp64",
+              "-mno-relax",
+              "-c",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/tests/compiler/s0/constants-reference.s",
+              "-o",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/reference.o"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "",
+            "stdout_hex": "",
+            "stderr": "",
+            "elapsed_seconds": 0.009569984000336262
+          },
+          {
+            "command": [
+              "/usr/bin/ld.lld",
+              "--no-relax",
+              "-Ttext=0x10000",
+              "-e",
+              "entry",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/reference.o",
+              "-o",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/reference.elf"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "",
+            "stdout_hex": "",
+            "stderr": "",
+            "elapsed_seconds": 0.006615369999053655
+          },
+          {
+            "command": [
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/rust-machine-oracle",
+              "constants",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/input.s0",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/rust-reference.elf"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "",
+            "stdout_hex": "",
+            "stderr": "",
+            "elapsed_seconds": 0.0007826500004739501
+          },
+          {
+            "command": [
+              "/usr/bin/qemu-riscv64",
+              "-s",
+              "1048576",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants/reference.elf"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-constants",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0007\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u000f\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u007f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\u000f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\ufffd\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\u007f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\u0000\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd",
+            "stdout_hex": "0000000000000000ff070000000000000008000000000000ff0f000000000000ff7f0000000000000080000000000000ffffff0f000000000000008000000000ffffffff00000000ffffffffffffff7f000000000000008000f8ffffffffffffffffffffffffffff",
+            "stderr": "",
+            "elapsed_seconds": 0.005059917000835412
+          }
+        ],
+        "reference_sha256": "656bbdcb0ac438c04cb9ebf25ae0dd431175e25f3aa6cd803db7f308949afe26",
+        "rust_reference_sha256": "8b9cd106df5f2c96758b779f35424076229afb1c4dc8b1b8613aff5913f883d8",
+        "rust_exact_elf": true,
+        "elf": {
+          "sha256": "656bbdcb0ac438c04cb9ebf25ae0dd431175e25f3aa6cd803db7f308949afe26",
+          "bytes": 4984,
+          "memory": {
+            "rw_bytes": 0,
+            "image_span_bytes": 344
+          },
+          "rw_file_bytes": 0,
+          "rw_memory_bytes": 0
+        }
+      }
+    },
+    {
+      "case": {
+        "name": "s0-all-operations-far-fixups",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "files": {
+          "input.s0": {
+            "source": "tests/compiler/s0/all.s0"
+          }
+        },
+        "oracle": {
+          "kind": "text_bytes",
+          "assembly": "tests/compiler/s0/all-reference.s"
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.09636244799912674
+      },
+      "target_elf": {
+        "sha256": "ab9638124a52b2c6c0cc9988b62d3e83b4814013aa64f34b15662f1fd7ead84a",
+        "bytes": 16385,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 12289
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.0037048720005259383
+      },
+      "oracle": {
+        "kind": "text_bytes",
+        "tools": {
+          "/usr/bin/clang-23": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae",
+          "/usr/bin/ld.lld": "57b6c64db534793f05918a6e935c900e9938bd64d0ac95933285930b568387ea"
+        },
+        "commands": [
+          {
+            "command": [
+              "/usr/bin/clang-23",
+              "--target=riscv64-unknown-elf",
+              "-march=rv64im_zicsr",
+              "-mabi=lp64",
+              "-mno-relax",
+              "-c",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/tests/compiler/s0/all-reference.s",
+              "-o",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups/reference.o"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "",
+            "stdout_hex": "",
+            "stderr": "",
+            "elapsed_seconds": 0.01059381200138887
+          },
+          {
+            "command": [
+              "/usr/bin/ld.lld",
+              "--no-relax",
+              "-Ttext=0x10000",
+              "-e",
+              "entry",
+              "--oformat=binary",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups/reference.o",
+              "-o",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups/reference.bin"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "",
+            "stdout_hex": "",
+            "stderr": "",
+            "elapsed_seconds": 0.006243679999897722
+          },
+          {
+            "command": [
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/rust-machine-oracle",
+              "s0",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups/input.s0",
+              "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups/rust-reference.elf"
+            ],
+            "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-all-operations-far-fixups",
+            "host_oracle_build": false,
+            "exit": 0,
+            "stdout": "",
+            "stdout_hex": "",
+            "stderr": "",
+            "elapsed_seconds": 0.0030716889996256214
+          }
+        ],
+        "reference_sha256": "6277b769982bb4d41727029ebb29bcea5869bddbf21952c5ca5e629edc94fd51",
+        "rust_reference_sha256": "ab9638124a52b2c6c0cc9988b62d3e83b4814013aa64f34b15662f1fd7ead84a",
+        "rust_exact_elf": true,
+        "target_text_sha256": "6277b769982bb4d41727029ebb29bcea5869bddbf21952c5ca5e629edc94fd51",
+        "text_bytes": 7044
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-0",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nadd x32,x1,x2\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-0",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.012492977000874816
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-1",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\naddi x1,x2,2048\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-1",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.010453935999976238
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-2",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\naddi x1,x2,-2049\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-2",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.011771576999308309
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-3",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nslli x1,x2,64\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-3",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.010262456000418752
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-4",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nsrli x1,x2,-1\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-4",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.011676283000269905
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-5",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nld x1,(x2)\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-5",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.01171877900014806
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-6",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nld x1,0xg(x2)\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-6",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.010502458999326336
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-7",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\ncall foo+8\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-7",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.011017353999704937
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-8",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\naddress x0,entry\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-8",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.018625532000442035
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-9",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\necall x0\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-9",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.011722032999387011
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-10",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\naddi x1,x2,0xAB\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-10",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.013132578000295325
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-11",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=10",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nentry: ecall\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-11",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=10\n",
+        "elapsed_seconds": 0.011900513000000501
+      }
+    },
+    {
+      "case": {
+        "name": "s0-invalid-12",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "file=7 byte=17",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "# ignored\nentry:\nentry:\n"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-invalid-12",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_PARSE file=7 byte=17\n",
+        "elapsed_seconds": 0.012814088999220985
+      }
+    },
+    {
+      "case": {
+        "name": "s0-unsupported-0",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_UNSUPPORTED",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "li x1,0"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-unsupported-0",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_UNSUPPORTED file=7 byte=0\n",
+        "elapsed_seconds": 0.010791082999276114
+      }
+    },
+    {
+      "case": {
+        "name": "s0-unsupported-1",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_UNSUPPORTED",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "la x1,entry"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-unsupported-1",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_UNSUPPORTED file=7 byte=0\n",
+        "elapsed_seconds": 0.010983458001646795
+      }
+    },
+    {
+      "case": {
+        "name": "s0-unsupported-2",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_UNSUPPORTED",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": ".word 1"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-unsupported-2",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_UNSUPPORTED file=7 byte=0\n",
+        "elapsed_seconds": 0.01152957300109847
+      }
+    },
+    {
+      "case": {
+        "name": "s0-unsupported-3",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "asm"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_UNSUPPORTED",
+        "output_absent": "out.elf",
+        "files": {
+          "input.s0": {
+            "text": "csrr x1,0"
+          }
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "asm"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/s0-unsupported-3",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_UNSUPPORTED file=7 byte=0\n",
+        "elapsed_seconds": 0.016656388999763294
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badtype",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badtype"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badtype"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badtype",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.014052996000827989
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badoffsetconst",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badoffsetconst"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badoffsetconst"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badoffsetconst",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.016958497000814532
+      }
+    },
+    {
+      "case": {
+        "name": "ir-badoffsetmut",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "badoffsetmut"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "badoffsetmut"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-badoffsetmut",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.015933136999592534
+      }
+    },
+    {
+      "case": {
+        "name": "ir-label_two",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "label_two"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "label_two"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-label_two",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.016048721998231485
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_yes_missing",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_yes_missing"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_yes_missing"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_yes_missing",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.08611243299856142
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_no_missing",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_no_missing"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_no_missing"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_no_missing",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.08724856999833719
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_fallthrough",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_fallthrough"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr_contains": "I_INTERNAL",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_fallthrough"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_fallthrough",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=2 byte=17\n",
+        "elapsed_seconds": 0.08552652499929536
+      }
+    },
+    {
+      "case": {
+        "name": "ir-labels_reuse",
+        "manifest": "tests/compiler/machine.build",
+        "compile_exit": 0,
+        "arguments": [
+          "labels_reuse"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/0/probe.elf",
+          "labels_reuse"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_reuse",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.09527111799980048
+      },
+      "target_elf": {
+        "sha256": "63d33e0e1775966bd03757eb6c14e35ab95434691b3e1ec4b307938a6113749f",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_reuse/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ir-labels_reuse",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.005620757001452148
+      }
+    },
+    {
+      "case": {
+        "name": "pure-rules-explicit-inputs",
+        "manifest": "tests/compiler/pure-rules.build",
+        "compile_exit": 0,
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/1/probe.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/pure-rules-explicit-inputs",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.011051258999941638
+      }
+    },
+    {
+      "case": {
+        "name": "machine-far-scratch",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "far-scratch"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "far-scratch"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-far-scratch",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.016183902000193484
+      },
+      "target_elf": {
+        "sha256": "680955e48158943bf339af4c65283671c7762a58c5937dd3d41fa04699464a57",
+        "bytes": 16385,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 12289
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-far-scratch/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-far-scratch",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.005386961998738116
+      }
+    },
+    {
+      "case": {
+        "name": "machine-page-0",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "page-0"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "elf_padding_words": 0,
+        "repeat_generator": true
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-0"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-0",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.011209329999473994
+      },
+      "target_elf": {
+        "sha256": "e0ad58e3f733dcee2ab082029fa02379c6116218326e133c40a0a50313e2864b",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-0/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-0",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.0035503309991327114
+      },
+      "layout": {
+        "passed": true,
+        "padding_words": 0,
+        "text_bytes": 12,
+        "expected_file_bytes": 12289,
+        "expected_sha256": "e0ad58e3f733dcee2ab082029fa02379c6116218326e133c40a0a50313e2864b",
+        "actual_sha256": "e0ad58e3f733dcee2ab082029fa02379c6116218326e133c40a0a50313e2864b",
+        "checks": [
+          "all ELF header fields",
+          "all three program headers",
+          "exact exit and padding instructions",
+          "zero intersegment padding",
+          "zero empty data segments",
+          "exact file end"
+        ]
+      },
+      "repeat_generator": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-0"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-0/repeat",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.011565769998924225,
+        "passed": true,
+        "sha256": "e0ad58e3f733dcee2ab082029fa02379c6116218326e133c40a0a50313e2864b"
+      }
+    },
+    {
+      "case": {
+        "name": "machine-page-1021",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "page-1021"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "elf_padding_words": 1021,
+        "repeat_generator": true
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1021"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1021",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.013605359999928623
+      },
+      "target_elf": {
+        "sha256": "058189d08f39b0281d017f13b96d3f24a2bff1c696269e32f27e692fff56442d",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1021/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1021",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.003810906999206054
+      },
+      "layout": {
+        "passed": true,
+        "padding_words": 1021,
+        "text_bytes": 4096,
+        "expected_file_bytes": 12289,
+        "expected_sha256": "058189d08f39b0281d017f13b96d3f24a2bff1c696269e32f27e692fff56442d",
+        "actual_sha256": "058189d08f39b0281d017f13b96d3f24a2bff1c696269e32f27e692fff56442d",
+        "checks": [
+          "all ELF header fields",
+          "all three program headers",
+          "exact exit and padding instructions",
+          "zero intersegment padding",
+          "zero empty data segments",
+          "exact file end"
+        ]
+      },
+      "repeat_generator": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1021"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1021/repeat",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.012778129001162597,
+        "passed": true,
+        "sha256": "058189d08f39b0281d017f13b96d3f24a2bff1c696269e32f27e692fff56442d"
+      }
+    },
+    {
+      "case": {
+        "name": "machine-page-1022",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "page-1022"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "elf_padding_words": 1022,
+        "repeat_generator": true
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1022"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1022",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.013966320000690757
+      },
+      "target_elf": {
+        "sha256": "e7038237bd222c21c15143119ef4ca553a935437557d4353130c00a4ec6f60b6",
+        "bytes": 16385,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 12289
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1022/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1022",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.004183084000032977
+      },
+      "layout": {
+        "passed": true,
+        "padding_words": 1022,
+        "text_bytes": 4100,
+        "expected_file_bytes": 16385,
+        "expected_sha256": "e7038237bd222c21c15143119ef4ca553a935437557d4353130c00a4ec6f60b6",
+        "actual_sha256": "e7038237bd222c21c15143119ef4ca553a935437557d4353130c00a4ec6f60b6",
+        "checks": [
+          "all ELF header fields",
+          "all three program headers",
+          "exact exit and padding instructions",
+          "zero intersegment padding",
+          "zero empty data segments",
+          "exact file end"
+        ]
+      },
+      "repeat_generator": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1022"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1022/repeat",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.014335179999761749,
+        "passed": true,
+        "sha256": "e7038237bd222c21c15143119ef4ca553a935437557d4353130c00a4ec6f60b6"
+      }
+    },
+    {
+      "case": {
+        "name": "machine-page-1023",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "page-1023"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "elf_padding_words": 1023,
+        "repeat_generator": true
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1023"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1023",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.012798244999430608
+      },
+      "target_elf": {
+        "sha256": "a76376300d771b6516bcd2add1483244e476f2cb51543b73a0898e5a32cc19c7",
+        "bytes": 16385,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 12289
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1023/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1023",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.004017192000901559
+      },
+      "layout": {
+        "passed": true,
+        "padding_words": 1023,
+        "text_bytes": 4104,
+        "expected_file_bytes": 16385,
+        "expected_sha256": "a76376300d771b6516bcd2add1483244e476f2cb51543b73a0898e5a32cc19c7",
+        "actual_sha256": "a76376300d771b6516bcd2add1483244e476f2cb51543b73a0898e5a32cc19c7",
+        "checks": [
+          "all ELF header fields",
+          "all three program headers",
+          "exact exit and padding instructions",
+          "zero intersegment padding",
+          "zero empty data segments",
+          "exact file end"
+        ]
+      },
+      "repeat_generator": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1023"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1023/repeat",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.013426956000330392,
+        "passed": true,
+        "sha256": "a76376300d771b6516bcd2add1483244e476f2cb51543b73a0898e5a32cc19c7"
+      }
+    },
+    {
+      "case": {
+        "name": "machine-page-1024",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "page-1024"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "elf_padding_words": 1024,
+        "repeat_generator": true
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1024"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1024",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.01422380400072143
+      },
+      "target_elf": {
+        "sha256": "51f7ef2ceb117a7ce3d9314ac2d5f7a0388babb1cf31e3d41333b5436f41afc6",
+        "bytes": 16385,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 12289
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1024/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1024",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.003750947998923948
+      },
+      "layout": {
+        "passed": true,
+        "padding_words": 1024,
+        "text_bytes": 4108,
+        "expected_file_bytes": 16385,
+        "expected_sha256": "51f7ef2ceb117a7ce3d9314ac2d5f7a0388babb1cf31e3d41333b5436f41afc6",
+        "actual_sha256": "51f7ef2ceb117a7ce3d9314ac2d5f7a0388babb1cf31e3d41333b5436f41afc6",
+        "checks": [
+          "all ELF header fields",
+          "all three program headers",
+          "exact exit and padding instructions",
+          "zero intersegment padding",
+          "zero empty data segments",
+          "exact file end"
+        ]
+      },
+      "repeat_generator": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "page-1024"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-page-1024/repeat",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.01231909400121367,
+        "passed": true,
+        "sha256": "51f7ef2ceb117a7ce3d9314ac2d5f7a0388babb1cf31e3d41333b5436f41afc6"
+      }
+    },
+    {
+      "case": {
+        "name": "machine-text-capacity",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "text-capacity"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "elf_padding_words": 2097149
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "text-capacity"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-text-capacity",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 1.7556656489996385
+      },
+      "target_elf": {
+        "sha256": "abd458c7d1761b9c1be7355775206f79d09e1a3166555fde0a09f17a7ff1dc2f",
+        "bytes": 8396801,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8392705
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-text-capacity/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-text-capacity",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.005624830000670045
+      },
+      "layout": {
+        "passed": true,
+        "padding_words": 2097149,
+        "text_bytes": 8388608,
+        "expected_file_bytes": 8396801,
+        "expected_sha256": "abd458c7d1761b9c1be7355775206f79d09e1a3166555fde0a09f17a7ff1dc2f",
+        "actual_sha256": "abd458c7d1761b9c1be7355775206f79d09e1a3166555fde0a09f17a7ff1dc2f",
+        "checks": [
+          "all ELF header fields",
+          "all three program headers",
+          "exact exit and padding instructions",
+          "zero intersegment padding",
+          "zero empty data segments",
+          "exact file end"
+        ]
+      }
+    },
+    {
+      "case": {
+        "name": "machine-text-overflow",
+        "manifest": "tests/compiler/machine-boundaries.build",
+        "compile_exit": 0,
+        "arguments": [
+          "text-overflow"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "actual=8388612 limit=8388608 I_LIMIT file=0 byte=0\n",
+        "output_absent": "out.elf"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/2/probe.elf",
+          "text-overflow"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-text-overflow",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "actual=8388612 limit=8388608 I_LIMIT file=0 byte=0\n",
+        "elapsed_seconds": 1.6353713030002837
+      }
+    },
+    {
+      "case": {
+        "name": "machine-raw-abi",
+        "manifest": "tests/compiler/machine-abi.build",
+        "compile_exit": 0,
+        "arguments": [],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "",
+        "target": {
+          "path": "out.elf",
+          "exit": 42,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/3/probe.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-raw-abi",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.0301241420002043
+      },
+      "target_elf": {
+        "sha256": "e9b41091e6e448a71f08c50dac953ffab697f4bafb7080274a7466fa8f7e200e",
+        "bytes": 12289,
+        "memory": {
+          "rw_bytes": 1,
+          "image_span_bytes": 8193
+        },
+        "rw_file_bytes": 1,
+        "rw_memory_bytes": 1
+      },
+      "target_run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-raw-abi/out.elf"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/machine-raw-abi",
+        "host_oracle_build": false,
+        "exit": 42,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.0071998670009634225
+      }
+    },
+    {
+      "case": {
+        "name": "ast-good",
+        "manifest": "tests/compiler/ast-lifecycle.build",
+        "compile_exit": 0,
+        "arguments": [
+          "good"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/4/probe.elf",
+          "good"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ast-good",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.02975544000037189
+      }
+    },
+    {
+      "case": {
+        "name": "ast-end-node",
+        "manifest": "tests/compiler/ast-lifecycle.build",
+        "compile_exit": 0,
+        "arguments": [
+          "end-node"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=1 byte=66\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/4/probe.elf",
+          "end-node"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ast-end-node",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=1 byte=66\n",
+        "elapsed_seconds": 0.03004775299996254
+      }
+    },
+    {
+      "case": {
+        "name": "ast-stale-node",
+        "manifest": "tests/compiler/ast-lifecycle.build",
+        "compile_exit": 0,
+        "arguments": [
+          "stale-node"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=1 byte=66\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/4/probe.elf",
+          "stale-node"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ast-stale-node",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=1 byte=66\n",
+        "elapsed_seconds": 0.03204497800106765
+      }
+    },
+    {
+      "case": {
+        "name": "ast-stale-type",
+        "manifest": "tests/compiler/ast-lifecycle.build",
+        "compile_exit": 0,
+        "arguments": [
+          "stale-type"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=1 byte=66\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/4/probe.elf",
+          "stale-type"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/ast-stale-type",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=1 byte=66\n",
+        "elapsed_seconds": 0.03253435700025875
+      }
+    },
+    {
+      "case": {
+        "name": "ast-cross-id",
+        "manifest": "tests/compiler/ast-cross-id.build",
+        "compile_exit": 1,
+        "compile_stderr": "E_TYPE file=11 byte=97\n"
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "name": "ast-zero-id",
+        "manifest": "tests/compiler/ast-zero-id.build",
+        "compile_exit": 1,
+        "compile_stderr": "E_NAME file=11 byte=88\n"
+      },
+      "passed": true
+    },
+    {
+      "case": {
+        "name": "owner-good",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "good"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "good"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-good",
+        "host_oracle_build": false,
+        "exit": 0,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "",
+        "elapsed_seconds": 0.015193326000371599
+      }
+    },
+    {
+      "case": {
+        "name": "owner-source-append",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "source-append"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "source-append"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-source-append",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.010297576000084518
+      }
+    },
+    {
+      "case": {
+        "name": "owner-header-twice",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "header-twice"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "header-twice"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-header-twice",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.009587001000909368
+      }
+    },
+    {
+      "case": {
+        "name": "owner-import-after-header",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "import-after-header"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "import-after-header"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-import-after-header",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.008580534000429907
+      }
+    },
+    {
+      "case": {
+        "name": "owner-data-overrun",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "data-overrun"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "E_LINK file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "data-overrun"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-data-overrun",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.011160775999087491
+      }
+    },
+    {
+      "case": {
+        "name": "owner-copy-overrun",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "copy-overrun"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "E_LINK file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "copy-overrun"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-copy-overrun",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.010758677999547217
+      }
+    },
+    {
+      "case": {
+        "name": "owner-symbol-twice",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "symbol-twice"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "E_LINK file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "symbol-twice"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-symbol-twice",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.011776371999076218
+      }
+    },
+    {
+      "case": {
+        "name": "owner-text-twice",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "text-twice"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "text-twice"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-text-twice",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.011417325000365963
+      }
+    },
+    {
+      "case": {
+        "name": "owner-patch-overrun",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "patch-overrun"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "E_LINK file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "patch-overrun"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-patch-overrun",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.01295397200010484
+      }
+    },
+    {
+      "case": {
+        "name": "owner-patch-unaligned",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "patch-unaligned"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "E_LINK file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "patch-unaligned"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-patch-unaligned",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "E_LINK file=0 byte=0\n",
+        "elapsed_seconds": 0.01272389000041585
+      }
+    },
+    {
+      "case": {
+        "name": "owner-word-sealed",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "word-sealed"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "word-sealed"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-word-sealed",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.018120253000233788
+      }
+    },
+    {
+      "case": {
+        "name": "owner-patch-sealed",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "patch-sealed"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "patch-sealed"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-patch-sealed",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.015859726001508534
+      }
+    },
+    {
+      "case": {
+        "name": "owner-data-sealed",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "data-sealed"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "data-sealed"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-data-sealed",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.020890797999527422
+      }
+    },
+    {
+      "case": {
+        "name": "owner-object-sealed",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "object-sealed"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "object-sealed"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-object-sealed",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.01809634900018864
+      }
+    },
+    {
+      "case": {
+        "name": "owner-symbol-sealed",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "symbol-sealed"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "symbol-sealed"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-symbol-sealed",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.019024680001166416
+      }
+    },
+    {
+      "case": {
+        "name": "owner-finish-twice",
+        "manifest": "tests/compiler/owner.build",
+        "compile_exit": 0,
+        "arguments": [
+          "finish-twice"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n"
+      },
+      "passed": true,
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/builds/7/probe.elf",
+          "finish-twice"
+        ],
+        "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/runs/owner-finish-twice",
+        "host_oracle_build": false,
+        "exit": 1,
+        "stdout": "",
+        "stdout_hex": "",
+        "stderr": "I_INTERNAL file=0 byte=0\n",
+        "elapsed_seconds": 0.016398005998780718
+      }
+    }
+  ],
+  "passed": true,
+  "capsule_sha256": "e20ebd6975a12b01ab1d108d100c0f59ab4a3894a6c69db30ee92bb03340ef08",
+  "rust_oracle": {
+    "rustc": "/home/mii/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "rustc_sha256": "ba4b837efb6612dfa8d941c5a72b8a50d1d03a0f36216743b173949aa8d9eb75",
+    "build": {
+      "command": [
+        "/home/mii/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree/tools/q_machine_oracle.rs",
+        "-o",
+        "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/rust-machine-oracle"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": true,
+      "exit": 0,
+      "stdout": "",
+      "stdout_hex": "",
+      "stderr": "",
+      "elapsed_seconds": 0.22246553900004074
+    },
+    "sysroot_command": {
+      "command": [
+        "/usr/bin/rustc",
+        "--print",
+        "sysroot"
+      ],
+      "cwd": "/home/mii/code/konOSuba/biomiya/build/layout-machine-r2/tree",
+      "host_oracle_build": true,
+      "exit": 0,
+      "stdout": "/home/mii/.rustup/toolchains/stable-x86_64-unknown-linux-gnu\n",
+      "stdout_hex": "2f686f6d652f6d69692f2e7275737475702f746f6f6c636861696e732f737461626c652d7838365f36342d756e6b6e6f776e2d6c696e75782d676e750a",
+      "stderr": "",
+      "elapsed_seconds": 0.008905737999157282
+    },
+    "reads_vt": false,
+    "sha256": "455c97f3ff47b1bd004fab9c07ef7b3fed224eb68d1ee227bfa86c17ef5d434f"
+  },
+  "changed_inputs": []
+}

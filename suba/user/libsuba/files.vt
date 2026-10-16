@@ -1,0 +1,58 @@
+// Synchronous public calls; the kernel may suspend this process between bounded
+// copies. Caller storage must remain valid until return. No implicit offsets/flush.
+module libsuba::files;
+import suba::abi;
+import suba::files;
+import suba::argument_wire;
+import libsuba::syscall;
+pub struct Stat { pub kind: u32, pub flags: u32, pub generation: usize,
+    pub bytes: usize, pub source_epoch: usize, pub boot_id: usize }
+pub enum Stated { Ready(Stat), Failed(usize) }
+pub unsafe fn open(path: []const u8, flags: usize) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_FILE_OPEN, core::addr(path.data), path.len, flags, 0, 0, 0);
+}
+pub unsafe fn read_at(file: usize, offset: usize, buffer: []u8) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_FILE_READ_AT, file, offset, core::addr(buffer.data), buffer.len, 0, 0);
+}
+pub unsafe fn write_at(file: usize, offset: usize, buffer: []const u8) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_FILE_WRITE_AT, file, offset, core::addr(buffer.data), buffer.len, 0, 0);
+}
+pub fn sync(file: usize, seal: bool) -> syscall::Reply {
+    var flags: usize = 0;
+    if seal { flags = files::SEAL; }
+    return syscall::invoke(abi::SYS_FILE_SYNC, file, flags, 0, 0, 0, 0);
+}
+pub fn sync_all() -> syscall::Reply { return syscall::invoke(abi::SYS_SYNC_ALL, 0, 0, 0, 0, 0, 0); }
+pub unsafe fn mkdir(path: []const u8) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_MKDIR, core::addr(path.data), path.len, 0, 0, 0, 0);
+}
+pub unsafe fn unlink(path: []const u8) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_UNLINK, core::addr(path.data), path.len, 0, 0, 0, 0);
+}
+pub unsafe fn replace(source: []const u8, destination: []const u8) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_REPLACE, core::addr(source.data), source.len,
+        core::addr(destination.data), destination.len, 0, 0);
+}
+// One explicit wire record; return0 is end, otherwise value is the next cursor.
+pub unsafe fn list(path: []const u8, cursor: usize, record: []u8) -> syscall::Reply {
+    return syscall::invoke(abi::SYS_LIST, core::addr(path.data), path.len, cursor,
+        core::addr(record.data), record.len, 0);
+}
+pub fn stat(file: usize) -> Stated {
+    var record: [files::STAT_BYTES]u8 = zero;
+    let result: syscall::Reply = syscall::invoke(abi::SYS_FILE_STAT, file,
+        core::addr(core::slice_of_mut(record).data), files::STAT_BYTES, 0, 0, 0);
+    if result.status != abi::OK { return Stated::Failed(result.status); }
+    // SAFETY: successful fixed-size copyout into this live local record.
+    unsafe {
+        let bytes: []const u8 = core::slice_of(record);
+        if argument_wire::word(bytes, 0, 4) != abi::VERSION as usize ||
+            argument_wire::word(bytes, 4, 4) != files::STAT_BYTES { return Stated::Failed(abi::INVALID); }
+        return Stated::Ready(make Stat { kind: argument_wire::word(bytes, files::STAT_KIND, 4) as u32,
+            flags: argument_wire::word(bytes, files::STAT_FLAGS, 4) as u32,
+            generation: argument_wire::word(bytes, files::STAT_GENERATION, 8),
+            bytes: argument_wire::word(bytes, files::STAT_FILE_BYTES, 8),
+            source_epoch: argument_wire::word(bytes, files::STAT_SOURCE_EPOCH, 8),
+            boot_id: argument_wire::word(bytes, files::STAT_BOOT_ID, 8) });
+    }
+}

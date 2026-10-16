@@ -1,0 +1,401 @@
+// Sv39 page-table owner. Serialized S-mode only; caller never reaps an active root.
+// All public unsafe operations require serialized S-mode and a live direct RAM map.
+// Kernel branches are shared and S-only. Every private page is tracked exactly once.
+module kernel::space;
+import suba::abi;
+import kernel::memory;
+import kernel::ram;
+import platform::devices;
+
+pub const CAPACITY: usize = 16;
+pub const QUOTA_PAGES: usize = 24576;
+pub const READ: usize = 2;
+pub const WRITE: usize = 4;
+pub const EXECUTE: usize = 8;
+pub const STACK_TOP: usize = 0x70021000;
+pub const PANIC_TOP: usize = 0x70024000;
+const KERNEL_RESERVE: usize = 256;
+const GENERATION_MAX: usize = 0xffffffffffffffff;
+
+pub struct Id { slot: usize, generation: usize }
+pub enum Create { Ready(Id), Full, NoMemory }
+pub enum Progress { More, Done, Invalid }
+pub enum MappingResult { Ready(usize), Invalid, NoMemory }
+pub enum Lookup { Page(usize), Invalid }
+pub struct KernelSegment { pub base: usize, pub bytes: usize, pub permissions: usize }
+enum Owned { Empty, Page(memory::Frame), Hole(usize) }
+struct Record { live: bool, generation: usize, root: usize, count: usize,
+    high: usize, free: usize, external: usize }
+struct PageInfo { slot: u32, children: u32 }
+// Physical frame -> unique owned slot+1; zero denotes no private owner.
+static mut PAGE_INFO: [abi::RAM_BYTES / abi::PAGE_BYTES]PageInfo = zero;
+static mut RECORDS: [CAPACITY]Record = zero;
+static mut PAGES: [CAPACITY * QUOTA_PAGES]Owned = zero;
+static mut KERNEL_PAGES: [1024]Owned = zero;
+static mut KERNEL_COUNT: usize = 0;
+static mut KERNEL_ROOT: usize = 0;
+
+unsafe fn live(id: Id) -> bool {
+    unsafe {
+        return id.slot < CAPACITY && RECORDS[id.slot].live &&
+            RECORDS[id.slot].generation == id.generation;
+    }
+}
+
+unsafe fn allocate(owner: usize) -> usize {
+    // SAFETY: serialized owner metadata; every successful Frame is recorded before use.
+    unsafe {
+        if owner < CAPACITY {
+            if RECORDS[owner].count + RECORDS[owner].external == QUOTA_PAGES || memory::stats().free <= KERNEL_RESERVE {
+                return 0;
+            }
+        } else { if KERNEL_COUNT == 1024_usize { return 0; } }
+        match memory::allocate() {
+            memory::Allocation::NotReady => { return 0; },
+            memory::Allocation::Exhausted => { return 0; },
+            memory::Allocation::Ready(frame) => {
+                var address: usize = 0;
+                match memory::address(frame) {
+                    memory::AddressResult::Value(value) => { address = value; },
+                    memory::AddressResult::Invalid => { return 0; }
+                }
+                if owner < CAPACITY {
+                    var slot: usize = RECORDS[owner].high;
+                    if RECORDS[owner].free != 0_usize {
+                        slot = RECORDS[owner].free - 1_usize;
+                        match PAGES[owner * QUOTA_PAGES + slot] {
+                            Owned::Hole(next) => { RECORDS[owner].free = next; },
+                            Owned::Empty => { return 0; },
+                            Owned::Page(value) => { return 0; }
+                        }
+                    } else { RECORDS[owner].high = slot + 1_usize; }
+                    let at: usize = owner * QUOTA_PAGES + slot;
+                    PAGES[at] = Owned::Page(frame);
+                    PAGE_INFO[(address - abi::RAM_BASE) / abi::PAGE_BYTES] =
+                        make PageInfo { slot: (at + 1_usize) as u32, children: 0 };
+                    RECORDS[owner].count = RECORDS[owner].count + 1_usize;
+                } else {
+                    KERNEL_PAGES[KERNEL_COUNT] = Owned::Page(frame);
+                    KERNEL_COUNT = KERNEL_COUNT + 1_usize;
+                }
+                return address;
+            }
+        }
+    }
+}
+
+unsafe fn table(root: usize, address: usize, owner: usize) -> usize {
+    // SAFETY: root and every child are zeroed tracked ordinary-RAM page tables.
+    unsafe {
+        var node: usize = root;
+        var shift: usize = 30;
+        while shift > 12_usize {
+            let location: *usize = core::ptr::<usize>(node + ((address >> shift) & 511_usize) * 8_usize);
+            let value: usize = *location;
+            if value == 0_usize {
+                let page: usize = allocate(owner);
+                if page == 0_usize { return 0; }
+                *location = ((page >> 12_usize) << 10_usize) | 1_usize;
+                if owner < CAPACITY {
+                    let index: usize = (node - abi::RAM_BASE) / abi::PAGE_BYTES;
+                    PAGE_INFO[index].children = PAGE_INFO[index].children + 1_u32;
+                }
+                node = page;
+            } else {
+                if (value & 15_usize) != 1_usize { return 0; }
+                node = (value >> 10_usize) << 12_usize;
+            }
+            shift = shift - 9_usize;
+        }
+        return node + ((address >> 12_usize) & 511_usize) * 8_usize;
+    }
+}
+
+unsafe fn map(root: usize, va: usize, physical: usize, flags: usize, owner: usize) -> bool {
+    // SAFETY: addresses are page aligned, low canonical Sv39; physical is owned RAM/MMIO.
+    unsafe {
+        let entry: usize = table(root, va, owner);
+        if entry == 0_usize { return false; }
+        let pointer: *usize = core::ptr::<usize>(entry);
+        if *pointer != 0_usize { return false; }
+        // A/D set by supervisor; V plus caller-approved RWX/U, never a writable executable page.
+        *pointer = ((physical >> 12_usize) << 10_usize) | flags | 193_usize;
+        return true;
+    }
+}
+
+// Boot-only, at most fixed RAM pages plus 35 stack pages. Segments come from the
+// validated original kernel ELF. Payloads are validated reserved, read-only sources.
+pub unsafe fn initialize(segments: []const KernelSegment,
+    payloads: []const KernelSegment) -> bool {
+    // SAFETY: boot caller supplies live validated ELF/reservation views; allocator pages
+    // are ordinary RAM. Only admitted pages and these explicit reservations are mapped.
+    unsafe {
+        if KERNEL_ROOT != 0_usize { return false; }
+        KERNEL_ROOT = allocate(CAPACITY);
+        if KERNEL_ROOT == 0_usize { return false; }
+        var address: usize = abi::BOOT_BASE;
+        while address < abi::RAM_BASE + abi::RAM_BYTES {
+            var flags: usize = 0;
+            if address < abi::KERNEL_BASE || ram::available_page(address) { flags = READ | WRITE; }
+            var i: usize = 0;
+            while i < segments.len {
+                if address >= segments[i].base && address - segments[i].base < segments[i].bytes {
+                    flags = segments[i].permissions;
+                }
+                i = i + 1_usize;
+            }
+            i = 0;
+            while i < payloads.len {
+                if address >= payloads[i].base && address - payloads[i].base < payloads[i].bytes {
+                    flags = READ;
+                }
+                i = i + 1_usize;
+            }
+            if flags != 0_usize && !map(KERNEL_ROOT, address, address, flags, CAPACITY) { return false; }
+            address = address + abi::PAGE_BYTES;
+        }
+        // Only fixed device pages are mapped; every alias is S-only RW/NX.
+        if !map(KERNEL_ROOT, devices::MMIO_OFFSET + devices::UART, devices::UART, READ | WRITE, CAPACITY) { return false; }
+        if !map(KERNEL_ROOT, devices::MMIO_OFFSET + devices::FW_CFG, devices::FW_CFG, READ | WRITE, CAPACITY) { return false; }
+        var slot: usize = 1;
+        while slot <= devices::VIRTIO_SLOTS {
+            let physical: usize = devices::VIRTIO_BASE + slot * abi::PAGE_BYTES;
+            if !map(KERNEL_ROOT, devices::MMIO_OFFSET + physical, physical, READ | WRITE, CAPACITY) { return false; }
+            slot = slot + 1_usize;
+        }
+        if !map(KERNEL_ROOT, devices::MMIO_OFFSET + devices::PLIC_PRIORITY, devices::PLIC_PRIORITY, READ | WRITE, CAPACITY) { return false; }
+        if !map(KERNEL_ROOT, devices::MMIO_OFFSET + devices::PLIC_PENDING, devices::PLIC_PENDING, READ, CAPACITY) { return false; }
+        if !map(KERNEL_ROOT, devices::MMIO_OFFSET + devices::PLIC_ENABLE, devices::PLIC_ENABLE, READ | WRITE, CAPACITY) { return false; }
+        if !map(KERNEL_ROOT, devices::MMIO_OFFSET + devices::PLIC_CONTEXT, devices::PLIC_CONTEXT, READ | WRITE, CAPACITY) { return false; }
+        var i: usize = 0;
+        while i < 32_usize {
+            let page: usize = allocate(CAPACITY);
+            if page == 0_usize || !map(KERNEL_ROOT, STACK_TOP - 131072_usize + i * abi::PAGE_BYTES,
+                page, READ | WRITE, CAPACITY) { return false; }
+            i = i + 1_usize;
+        }
+        let panic_page: usize = allocate(CAPACITY);
+        if panic_page == 0_usize || !map(KERNEL_ROOT, PANIC_TOP - abi::PAGE_BYTES,
+            panic_page, READ | WRITE, CAPACITY) { return false; }
+        return true;
+    }
+}
+
+pub unsafe fn kernel_token() -> usize {
+    unsafe { return (8_usize << 60_usize) | (KERNEL_ROOT >> 12_usize); }
+}
+
+pub unsafe fn create() -> Create {
+    unsafe {
+        if KERNEL_ROOT == 0_usize { return Create::NoMemory; }
+        var slot: usize = 0;
+        while slot < CAPACITY {
+            if !RECORDS[slot].live && RECORDS[slot].generation != GENERATION_MAX {
+                RECORDS[slot].generation = RECORDS[slot].generation + 1_usize;
+                RECORDS[slot].live = true;
+                let root: usize = allocate(slot);
+                if root == 0_usize { RECORDS[slot].live = false; return Create::NoMemory; }
+                RECORDS[slot].root = root;
+                // Root[0] is private user space, root[1]/[2] share S-only kernel branches.
+                *core::ptr::<usize>(root + 8_usize) = *core::ptr::<usize>(KERNEL_ROOT + 8_usize);
+                *core::ptr::<usize>(root + 16_usize) = *core::ptr::<usize>(KERNEL_ROOT + 16_usize);
+                return Create::Ready(make Id { slot: slot, generation: RECORDS[slot].generation });
+            }
+            slot = slot + 1_usize;
+        }
+        return Create::Full;
+    }
+}
+
+pub unsafe fn token(id: Id) -> usize {
+    unsafe {
+        if !live(id) { return 0; }
+        return (8_usize << 60_usize) | (RECORDS[id.slot].root >> 12_usize);
+    }
+}
+
+// Adds one private zero page; failed construction retains partial pages for reap.
+// Caller is loading/inactive, or performs sfence.vma before resuming this space.
+pub unsafe fn map_user(id: Id, address: usize, flags: usize) -> MappingResult {
+    if address < abi::USER_BASE || address >= abi::USER_STACK_END ||
+        address % abi::PAGE_BYTES != 0_usize { return MappingResult::Invalid; }
+    if flags != READ && flags != (READ | WRITE) && flags != (READ | EXECUTE) {
+        return MappingResult::Invalid;
+    }
+    unsafe {
+        if !live(id) { return MappingResult::Invalid; }
+        let leaf: usize = table(RECORDS[id.slot].root, address, id.slot);
+        if leaf == 0_usize {
+            if !prune(id.slot, address) { return MappingResult::Invalid; }
+            return MappingResult::NoMemory;
+        }
+        if *core::ptr::<usize>(leaf) != 0_usize { return MappingResult::Invalid; }
+        let physical: usize = allocate(id.slot);
+        if physical == 0_usize {
+            if !prune(id.slot, address) { return MappingResult::Invalid; }
+            return MappingResult::NoMemory;
+        }
+        *core::ptr::<usize>(leaf) = ((physical >> 12_usize) << 10_usize) | flags | 209_usize;
+        let index: usize = ((leaf & 0xfffffffffffff000_usize) - abi::RAM_BASE) / abi::PAGE_BYTES;
+        PAGE_INFO[index].children = PAGE_INFO[index].children + 1_u32;
+        return MappingResult::Ready(physical);
+    }
+}
+
+// Read/write usercopy uses the physical alias with SUM=0. No user VA is dereferenced.
+pub unsafe fn lookup(id: Id, address: usize, write: bool) -> Lookup {
+    // SAFETY: owner-created tables contain only tracked ordinary RAM; no user-writable
+    // table bytes or huge leaves exist. The live identity precedes all table access.
+    unsafe {
+        if !live(id) || address < abi::USER_BASE || address >= abi::USER_STACK_END { return Lookup::Invalid; }
+        var node: usize = RECORDS[id.slot].root;
+        var shift: usize = 30;
+        loop {
+            let value: usize = *core::ptr::<usize>(node + ((address >> shift) & 511_usize) * 8_usize);
+            if (value & 1_usize) == 0_usize { return Lookup::Invalid; }
+            if shift == 12_usize {
+                if (value & 18_usize) != 18_usize || (write && (value & WRITE) == 0_usize) { return Lookup::Invalid; }
+                return Lookup::Page(((value >> 10_usize) << 12_usize) | (address & 4095_usize));
+            }
+            if (value & 15_usize) != 1_usize { return Lookup::Invalid; }
+            node = (value >> 10_usize) << 12_usize;
+            shift = shift - 9_usize;
+        }
+    }
+}
+
+// Releases one tracked private page and returns its slot to the reusable free list.
+unsafe fn release_page(owner: usize, physical: usize) -> bool {
+    // SAFETY: physical is obtained from an owner-created PTE, never a user scalar.
+    unsafe {
+        let index: usize = (physical - abi::RAM_BASE) / abi::PAGE_BYTES;
+        let tag: usize = PAGE_INFO[index].slot as usize;
+        if tag == 0_usize { return false; }
+        let at: usize = tag - 1_usize;
+        if at / QUOTA_PAGES != owner { return false; }
+        match PAGES[at] {
+            Owned::Empty => { return false; },
+            Owned::Hole(next) => { return false; },
+            Owned::Page(frame) => {
+                match memory::release(frame) {
+                    memory::ReleaseResult::Invalid => { return false; },
+                    memory::ReleaseResult::Released => {}
+                }
+            }
+        }
+        PAGE_INFO[index] = zero;
+        PAGES[at] = Owned::Hole(RECORDS[owner].free);
+        RECORDS[owner].free = at % QUOTA_PAGES + 1_usize;
+        RECORDS[owner].count = RECORDS[owner].count - 1_usize;
+        return true;
+    }
+}
+
+// At most two private tables can become empty along a user walk. No 512-entry scan.
+unsafe fn prune(owner: usize, address: usize) -> bool {
+    unsafe {
+        let root: usize = RECORDS[owner].root;
+        let top: *usize = core::ptr::<usize>(root);
+        if *top == 0_usize { return true; }
+        let middle: usize = (*top >> 10_usize) << 12_usize;
+        let link: *usize = core::ptr::<usize>(middle + ((address >> 21_usize) & 511_usize) * 8_usize);
+        let middle_index: usize = (middle - abi::RAM_BASE) / abi::PAGE_BYTES;
+        if *link != 0_usize {
+            let leaf: usize = (*link >> 10_usize) << 12_usize;
+            if PAGE_INFO[(leaf - abi::RAM_BASE) / abi::PAGE_BYTES].children == 0_u32 {
+                *link = 0;
+                if !release_page(owner, leaf) { return false; }
+                PAGE_INFO[middle_index].children = PAGE_INFO[middle_index].children - 1_u32;
+            }
+        }
+        if PAGE_INFO[middle_index].children == 0_u32 {
+            *top = 0;
+            if !release_page(owner, middle) { return false; }
+            let root_index: usize = (root - abi::RAM_BASE) / abi::PAGE_BYTES;
+            PAGE_INFO[root_index].children = PAGE_INFO[root_index].children - 1_u32;
+        }
+        return true;
+    }
+}
+
+// Only dynamic mappings can be revoked individually. No concurrent execution or borrow.
+// Caller activates (sfence.vma) before this process next executes.
+pub unsafe fn unmap_user(id: Id, address: usize) -> bool {
+    if address < abi::USER_PAGES_BASE || address >= abi::USER_PAGES_END ||
+        address % abi::PAGE_BYTES != 0_usize { return false; }
+    unsafe {
+        if !live(id) { return false; }
+        var node: usize = RECORDS[id.slot].root;
+        var shift: usize = 30;
+        while shift > 12_usize {
+            let entry: usize = *core::ptr::<usize>(node + ((address >> shift) & 511_usize) * 8_usize);
+            if (entry & 15_usize) != 1_usize { return false; }
+            node = (entry >> 10_usize) << 12_usize;
+            shift = shift - 9_usize;
+        }
+        let pointer: *usize = core::ptr::<usize>(node + ((address >> 12_usize) & 511_usize) * 8_usize);
+        let leaf: usize = *pointer;
+        if (leaf & 23_usize) != 23_usize { return false; }
+        *pointer = 0;
+        if !release_page(id.slot, (leaf >> 10_usize) << 12_usize) { return false; }
+        let index: usize = (node - abi::RAM_BASE) / abi::PAGE_BYTES;
+        PAGE_INFO[index].children = PAGE_INFO[index].children - 1_u32;
+        return prune(id.slot, address);
+    }
+}
+
+// External owners (e.g. window) retain their Frames; this only charges the quota.
+pub unsafe fn charge(id: Id, pages: usize) -> bool {
+    unsafe {
+        if !live(id) || pages > QUOTA_PAGES - RECORDS[id.slot].count - RECORDS[id.slot].external { return false; }
+        RECORDS[id.slot].external = RECORDS[id.slot].external + pages;
+        return true;
+    }
+}
+
+pub unsafe fn uncharge(id: Id, pages: usize) -> bool {
+    unsafe {
+        if !live(id) || pages > RECORDS[id.slot].external { return false; }
+        RECORDS[id.slot].external = RECORDS[id.slot].external - pages;
+        return true;
+    }
+}
+
+// At most sixteen slots (including holes) per step. Caller removed execution/borrowers.
+// External references may outlive user pages, but must drain before space identity reuse.
+pub unsafe fn reap_step(id: Id) -> Progress {
+    unsafe {
+        if !live(id) { return Progress::Invalid; }
+        var budget: usize = 16;
+        while RECORDS[id.slot].high > 0_usize && budget > 0_usize {
+            RECORDS[id.slot].high = RECORDS[id.slot].high - 1_usize;
+            let at: usize = id.slot * QUOTA_PAGES + RECORDS[id.slot].high;
+            match PAGES[at] {
+                Owned::Empty => { return Progress::Invalid; },
+                Owned::Hole(next) => {},
+                Owned::Page(frame) => {
+                    var physical: usize = 0;
+                    match memory::address(frame) {
+                        memory::AddressResult::Invalid => { return Progress::Invalid; },
+                        memory::AddressResult::Value(value) => { physical = value; }
+                    }
+                    match memory::release(frame) {
+                        memory::ReleaseResult::Invalid => { return Progress::Invalid; },
+                        memory::ReleaseResult::Released => {}
+                    }
+                    PAGE_INFO[(physical - abi::RAM_BASE) / abi::PAGE_BYTES] = zero;
+                    RECORDS[id.slot].count = RECORDS[id.slot].count - 1_usize;
+                }
+            }
+            PAGES[at] = Owned::Empty;
+            budget = budget - 1_usize;
+        }
+        if RECORDS[id.slot].high != 0_usize || RECORDS[id.slot].external != 0_usize { return Progress::More; }
+        if RECORDS[id.slot].count != 0_usize { return Progress::Invalid; }
+        RECORDS[id.slot].live = false;
+        RECORDS[id.slot].root = 0;
+        RECORDS[id.slot].free = 0;
+        return Progress::Done;
+    }
+}

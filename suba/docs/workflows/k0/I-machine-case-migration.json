@@ -1,0 +1,9 @@
+{
+  "file": "next/q/tests/machine-cases.json",
+  "before_sha256": "0a7197ad40fe5c6e8e4d4cfd3358f278fbb1815e2c2aebc98a6b9051134548a0",
+  "after_sha256": "03d9c1fbecb92d456d7fb20a6acb1e3d936f9d4cb5979b72cf585dd57e10f827",
+  "case": "s0-unsupported-3",
+  "reason": "K0 explicitly supports csrrw, so its former unsupported expectation conflicts with the accepted S0 contract. Retain unsupported-op rejection using unsupported csrr pseudoinstruction. CSR encoding and valid/invalid operands covered by S0 167-case suite. No production change.",
+  "failed_run": "build/k0-machine-r1/verification.json",
+  "replacement_run": "build/k0-machine-r2/verification.json"
+}

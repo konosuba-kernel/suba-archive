@@ -1,0 +1,8 @@
+# Linux RV64 C ABI: a0 syscall number, a1..a3 args, a0 result. No stack use; x27 preserved.
+__k6_syscall:
+addi x17, x10, 0
+addi x10, x11, 0
+addi x11, x12, 0
+addi x12, x13, 0
+ecall
+jalr x0, 0(x1)

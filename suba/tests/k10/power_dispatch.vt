@@ -1,0 +1,138 @@
+// K10 exploration template. Installed only into an isolated kernel snapshot.
+// Serialized dispatch owns a one-way shutdown request; one process per step.
+module kernel::dispatch;
+enum Power { Running, Ordinary(usize), Desktop, Drain, Flush, Ready }
+static mut POWER: Power = zero;
+static mut POWER_ACTION: usize = 0;
+static mut POWER_BASELINE: usize = 0;
+pub unsafe fn power_baseline(pages: usize) -> () { unsafe { POWER_BASELINE = pages; } return (); }
+pub enum PowerStep { Running, More, Wait, Ready, Invalid }
+
+pub unsafe fn stopping() -> bool {
+    unsafe { match POWER { Power::Running => { return false; },
+        Power::Ordinary(slot) => {}, Power::Desktop => {}, Power::Drain => {},
+        Power::Flush => {}, Power::Ready => {} } }
+    return true;
+}
+
+// Reject new ownership/work after the serialized request commits. Existing FS
+// transactions and cleanup advance; desktop reads/display remain available.
+// Existing ordinary requests stop advancing until normal death cancels them.
+unsafe fn power_write(operation: usize, args: [6]usize) -> bool {
+    unsafe {
+        if operation == abi::SYS_FILE_OPEN { return args[2_usize] != files::READ; }
+        return operation == abi::SYS_SPAWN || operation == abi::SYS_JOB_CREATE ||
+            operation == abi::SYS_JOB_FREEZE || operation == abi::SYS_ALLOC_PAGES ||
+            operation == abi::SYS_STREAM_CREATE || operation == abi::SYS_STREAM_WRITE ||
+            operation == abi::SYS_FILE_WRITE_AT || operation == abi::SYS_MKDIR ||
+            operation == abi::SYS_UNLINK || operation == abi::SYS_REPLACE ||
+            operation == abi::SYS_WINDOW_CREATE ||
+            (operation == abi::SYS_FILE_SYNC && args[1_usize] != 0_usize);
+    }
+}
+unsafe fn power_call(id: process::Id, args: [6]usize) -> bool {
+    unsafe {
+        if !desktop_authorized(id, args[0_usize]) { return answer(id, abi::DENIED, 0); }
+        match handle(id, args[0_usize], objects::POWER) {
+            objects::LookupResult::Ready(value) => {},
+            objects::LookupResult::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            objects::LookupResult::Denied => { return answer(id, abi::DENIED, 0); }
+        }
+        if args[1_usize] > 1_usize || args[2_usize] != 0_usize || args[3_usize] != 0_usize ||
+            args[4_usize] != 0_usize || args[5_usize] != 0_usize { return answer(id, abi::INVALID, 0); }
+        if stopping() { return answer(id, abi::BUSY, 0); }
+        POWER_ACTION = args[1_usize];
+        POWER = Power::Ordinary(0);
+        machine::text("power: stopping\n");
+        return answer(id, abi::OK, 0);
+    }
+}
+unsafe fn stop_ordinary(slot: usize) -> bool {
+    unsafe {
+        match process::at(slot) {
+            process::Found::Empty => {},
+            process::Found::Ready(id) => {
+                if process::trusted_desktop(id) { return true; }
+                match process::state(id) {
+                    process::State::Dying => {}, process::State::Exited => {},
+                    process::State::Vacant => { return false; },
+                    process::State::Loading => { return process::terminate(id, abi::CANCELLED); },
+                    process::State::Prepared => { return process::terminate(id, abi::CANCELLED); },
+                    process::State::Ready => { return process::terminate(id, abi::CANCELLED); },
+                    process::State::Running => { return process::terminate(id, abi::CANCELLED); },
+                    process::State::Blocked => { return process::terminate(id, abi::CANCELLED); }
+                }
+            }
+        }
+    }
+    return true;
+}
+unsafe fn ordinary_exited() -> bool {
+    unsafe {
+        var slot: usize = 0;
+        while slot < process::CAPACITY {
+            match process::at(slot) {
+                process::Found::Empty => {},
+                process::Found::Ready(id) => {
+                    if !process::trusted_desktop(id) {
+                        match process::state(id) {
+                            process::State::Exited => {},
+                            process::State::Vacant => { return false; },
+                            process::State::Loading => { return false; },
+                            process::State::Prepared => { return false; },
+                            process::State::Ready => { return false; },
+                            process::State::Running => { return false; },
+                            process::State::Blocked => { return false; },
+                            process::State::Dying => { return false; }
+                        }
+                    }
+                }
+            }
+            slot = slot + 1_usize;
+        }
+    }
+    return true;
+}
+pub unsafe fn power_step() -> PowerStep {
+    unsafe {
+        match POWER {
+            Power::Running => { return PowerStep::Running; },
+            Power::Ordinary(slot) => {
+                if slot < process::CAPACITY {
+                    if !stop_ordinary(slot) { return PowerStep::Invalid; }
+                    POWER = Power::Ordinary(slot + 1_usize);
+                } else { POWER = Power::Desktop; }
+            },
+            Power::Desktop => {
+                if !ordinary_exited() { return PowerStep::Wait; }
+                var slot: usize = 0;
+                while slot < process::CAPACITY {
+                    match process::at(slot) {
+                        process::Found::Empty => {},
+                        process::Found::Ready(id) => {
+                            if process::trusted_desktop(id) && !process::shutdown_desktop(id) { return PowerStep::Invalid; }
+                        }
+                    }
+                    slot = slot + 1_usize;
+                }
+                POWER = Power::Drain;
+            },
+            Power::Drain => {
+                if !quiescent() { return PowerStep::Wait; }
+                if memory::stats().free != POWER_BASELINE { return PowerStep::Invalid; }
+                machine::text("power: processes drained\n");
+                POWER = Power::Flush;
+            },
+            Power::Flush => {
+                match fs::shutdown_step() {
+                    fs::Progress::More => {}, fs::Progress::Wait => { return PowerStep::Wait; },
+                    fs::Progress::Invalid => { return PowerStep::Invalid; },
+                    fs::Progress::Ready => { POWER = Power::Ready; return PowerStep::Ready; }
+                }
+            },
+            Power::Ready => { return PowerStep::Ready; }
+        }
+    }
+    return PowerStep::More;
+}
+pub unsafe fn power_action() -> usize { unsafe { return POWER_ACTION; } }

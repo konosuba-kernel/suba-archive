@@ -1,0 +1,73 @@
+// Bounded, deterministic UTF-8 input provenance. This module owns no global state.
+module user::build::records;
+import user::build::sha256;
+pub struct Writer { bytes: []u8, used: usize, valid: bool }
+pub unsafe fn begin(storage: []u8) -> Writer {
+    return make Writer { bytes: storage, used: 0, valid: true };
+}
+pub unsafe fn text(writer: *Writer, value: []const u8) -> bool {
+    // SAFETY: caller owns writer backing; input is disjoint immutable RAM.
+    unsafe {
+        if !(*writer).valid || value.len > (*writer).bytes.len - (*writer).used {
+            (*writer).valid = false;
+            return false;
+        }
+        var i: usize = 0;
+        while i < value.len {
+            (*writer).bytes[(*writer).used + i] = value[i];
+            i = i + 1_usize;
+        }
+        (*writer).used = (*writer).used + value.len;
+    }
+    return true;
+}
+pub unsafe fn number(writer: *Writer, value: usize) -> bool {
+    var digits: [20]u8 = zero;
+    var next: usize = 20;
+    var rest: usize = value;
+    unsafe {
+        loop {
+            next = next - 1_usize;
+            digits[next] = (rest % 10_usize) as u8 + 48_u8;
+            rest = rest / 10_usize;
+            if rest == 0_usize { break; }
+        }
+        return text(writer, core::slice_from_raw_parts(core::ptr_add(core::slice_of(digits).data, next), 20_usize - next));
+    }
+}
+pub unsafe fn hex(output: []u8, digest: []const u8) -> bool {
+    if digest.len != 32_usize || output.len != 64_usize { return false; }
+    let digits: []const u8 = "0123456789abcdef";
+    unsafe {
+        var i: usize = 0;
+        while i < digest.len {
+            output[i * 2_usize] = digits[(digest[i] >> 4_u8) as usize];
+            output[i * 2_usize + 1_usize] = digits[(digest[i] & 15_u8) as usize];
+            i = i + 1_usize;
+        }
+    }
+    return true;
+}
+// The ordinal is the compiler's file id: VT first, then S0; manifest itself is0.
+// Source mapping records can be shown verbatim or parsed by the editor.
+pub unsafe fn input(writer: *Writer, ordinal: usize, path: []const u8,
+    data: []const u8) -> bool {
+    var hash: sha256::State = sha256::begin();
+    var digest: [32]u8 = zero;
+    var encoded: [64]u8 = zero;
+    unsafe {
+        if !sha256::update(core::addr_of_mut(hash), data) ||
+            !sha256::finish(core::addr_of_mut(hash), core::slice_of_mut(digest)) ||
+            !hex(core::slice_of_mut(encoded), core::slice_of(digest)) { return false; }
+        return text(writer, "input ") && number(writer, ordinal) && text(writer, " ") &&
+            text(writer, core::slice_of(encoded)) && text(writer, " ") &&
+            text(writer, path) && text(writer, "\n");
+    }
+}
+// Borrow expires at the next modifying operation or destruction of the writer.
+pub unsafe fn bytes(writer: *const Writer) -> []const u8 {
+    unsafe {
+        if !(*writer).valid { return ""; }
+        return core::slice_from_raw_parts((*writer).bytes.data, (*writer).used);
+    }
+}

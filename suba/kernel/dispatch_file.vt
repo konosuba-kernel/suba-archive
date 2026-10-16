@@ -1,0 +1,205 @@
+// File requests share K3 tokens and teardown. FS actions borrow only kernel staging;
+// every user copy checks the still-deliverable process and the original request token.
+module kernel::dispatch;
+unsafe fn client(id: process::Id) -> fs::Client {
+    unsafe { return make fs::Client { slot: process::slot(id), generation: process::generation(id) }; }
+}
+fn file_error(error: fs::Error) -> usize {
+    match error {
+        fs::Error::Invalid => { return abi::INVALID; }, fs::Error::Denied => { return abi::DENIED; },
+        fs::Error::NotFound => { return abi::NOT_FOUND; }, fs::Error::Exists => { return abi::EXISTS; },
+        fs::Error::Busy => { return abi::BUSY; }, fs::Error::NoMemory => { return abi::NO_MEMORY; },
+        fs::Error::NoSpace => { return abi::NO_SPACE; }, fs::Error::Limit => { return abi::LIMIT; }
+    }
+}
+unsafe fn queue_file(id: process::Id, command: fs::Command, first: []const u8,
+    second: []const u8, address: usize, writing: bool) -> bool {
+    unsafe {
+        match fs::enqueue(client(id), command, first, second) {
+            fs::Queued::Failed(error) => { return answer(id, file_error(error), 0); },
+            fs::Queued::Ready(ticket) => {
+                return pending(id, request::Operation::File(make request::File {
+                    ticket: ticket, address: address, writing: writing }));
+            }
+        }
+    }
+}
+unsafe fn file_step(work: request::Pending, file: request::File) -> bool {
+    unsafe {
+        match fs::action(file.ticket) {
+            fs::Action::Invalid => { return false; }, fs::Action::Wait => { return true; },
+            fs::Action::Input(copy) => {
+                if !usercopy::read(work.owner, file.address + copy.offset, copy.bytes) { return false; }
+                return fs::copied(file.ticket);
+            },
+            fs::Action::Output(copy) => {
+                if !usercopy::write(work.owner, file.address + copy.offset,
+                    core::slice_from_raw_parts(copy.bytes.data, copy.bytes.len)) { return false; }
+                return fs::copied(file.ticket);
+            },
+            fs::Action::Done(result) => {
+                if !fs::take(file.ticket) { return false; }
+                match result {
+                    fs::Outcome::Failed(error) => { return finish(work, file_error(error), 0); },
+                    fs::Outcome::Value(value) => { return finish(work, abi::OK, value); },
+                    fs::Outcome::Directory(node) => { return false; },
+                    fs::Outcome::File(object) => {
+                        var rights: u32 = objects::READ;
+                        if file.writing { rights = objects::WRITE; }
+                        match insert(work.owner, objects::Object::File(object), rights) {
+                            objects::InsertResult::Invalid => { return false; },
+                            objects::InsertResult::Limit => {
+                                if !fs::release_file(object) { return false; }
+                                return finish(work, abi::LIMIT, 0);
+                            },
+                            objects::InsertResult::Ready(handle) => { return finish(work, abi::OK, handle); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+unsafe fn file_handle_call(id: process::Id, operation: usize, args: [6]usize) -> bool {
+    unsafe {
+        var rights: u32 = 0;
+        if operation == abi::SYS_FILE_READ_AT { rights = objects::READ; }
+        if operation == abi::SYS_FILE_WRITE_AT { rights = objects::WRITE; }
+        var file: objects::Identity = zero;
+        match handle(id, args[0_usize], rights) {
+            objects::LookupResult::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            objects::LookupResult::Denied => { return answer(id, abi::DENIED, 0); },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::File(value) => { file = value; },
+                    objects::Object::Desktop(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Empty => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::StreamRead(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::StreamWrite(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Child(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Job(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Window(value) => { return answer(id, abi::BAD_HANDLE, 0); }
+                }
+            }
+        }
+        if operation == abi::SYS_FILE_SYNC {
+            if args[1_usize] > files::SEAL { return answer(id, abi::INVALID, 0); }
+            return queue_file(id, fs::Command::Sync(make fs::Sync { file: file, seal: args[1_usize] == files::SEAL }), "", "", 0, false);
+        }
+        if operation == abi::SYS_FILE_STAT {
+            if args[2_usize] != files::STAT_BYTES || !usercopy::range(id, args[1_usize], files::STAT_BYTES, true) {
+                return answer(id, abi::INVALID, 0);
+            }
+            return queue_file(id, fs::Command::Stat(file), "", "", args[1_usize], false);
+        }
+        if args[3_usize] > 65536_usize { return answer(id, abi::LIMIT, 0); }
+        let writing: bool = operation == abi::SYS_FILE_WRITE_AT;
+        if !usercopy::range(id, args[2_usize], args[3_usize], !writing) { return answer(id, abi::INVALID, 0); }
+        let access: fs::Access = make fs::Access { file: file, offset: args[1_usize], bytes: args[3_usize] };
+        if writing { return queue_file(id, fs::Command::Write(access), "", "", args[2_usize], true); }
+        return queue_file(id, fs::Command::Read(access), "", "", args[2_usize], false);
+    }
+}
+unsafe fn file_call(id: process::Id, operation: usize, args: [6]usize) -> bool {
+    unsafe {
+        if operation == abi::SYS_SYNC_ALL { return queue_file(id, fs::Command::SyncAll, "", "", 0, false); }
+        if operation == abi::SYS_FILE_READ_AT || operation == abi::SYS_FILE_WRITE_AT ||
+            operation == abi::SYS_FILE_STAT || operation == abi::SYS_FILE_SYNC { return file_handle_call(id, operation, args); }
+        var first: [255]u8 = zero;
+        var second: [255]u8 = zero;
+        if args[1_usize] == 0_usize || args[1_usize] > 255_usize { return answer(id, abi::INVALID, 0); }
+        let path: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(first).data, args[1_usize]);
+        if !usercopy::read(id, args[0_usize], path) { return answer(id, abi::INVALID, 0); }
+        let name: []const u8 = core::slice_from_raw_parts(path.data, path.len);
+        if operation == abi::SYS_FILE_OPEN {
+            let flags: usize = args[2_usize];
+            let mode: usize = flags & 3_usize;
+            if flags > 15_usize || (mode != files::READ && mode != files::WRITE) ||
+                ((flags & files::CREATE_NEW) != 0_usize && mode != files::WRITE) ||
+                ((flags & files::TRANSIENT) != 0_usize && (flags & files::CREATE_NEW) == 0_usize) {
+                return answer(id, abi::INVALID, 0);
+            }
+            match OWNERS[process::slot(id)] {
+                Owner::Empty => { return false; },
+                Owner::Attached(owner) => { if !objects::available(owner) { return answer(id, abi::LIMIT, 0); } }
+            }
+            return queue_file(id, fs::Command::Open(flags), name, "", 0, mode == files::WRITE);
+        }
+        if operation == abi::SYS_MKDIR { return queue_file(id, fs::Command::Mkdir, name, "", 0, false); }
+        if operation == abi::SYS_UNLINK { return queue_file(id, fs::Command::Unlink, name, "", 0, false); }
+        if operation == abi::SYS_LIST {
+            if args[4_usize] != files::ENTRY_BYTES || !usercopy::range(id, args[3_usize], files::ENTRY_BYTES, true) {
+                return answer(id, abi::INVALID, 0);
+            }
+            return queue_file(id, fs::Command::List(args[2_usize]), name, "", args[3_usize], false);
+        }
+        if operation == abi::SYS_REPLACE {
+            if args[3_usize] == 0_usize || args[3_usize] > 255_usize { return answer(id, abi::INVALID, 0); }
+            let other: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(second).data, args[3_usize]);
+            if !usercopy::read(id, args[2_usize], other) { return answer(id, abi::INVALID, 0); }
+            return queue_file(id, fs::Command::Replace, name, core::slice_from_raw_parts(other.data, other.len), 0, false);
+        }
+        return false;
+    }
+}
+
+unsafe fn cancel_preparing(inputs: request::Preparing) -> bool {
+    unsafe {
+        if !image_reads::close(inputs.source) { return false; }
+        match inputs.phase {
+            request::Preparation::Directory(ticket) => { return fs::cancel(ticket); },
+            request::Preparation::Create => {
+                return fs::directory_release(inputs.directory) && children::abort(inputs.reservation);
+            },
+            request::Preparation::Inspect => {},
+            request::Preparation::Copy(offset) => {}, request::Preparation::Validate => {}
+        }
+        return true;
+    }
+}
+unsafe fn prepare_directory(work: request::Pending, inputs: request::Preparing, ticket: objects::Identity) -> bool {
+    unsafe {
+        match fs::action(ticket) {
+            fs::Action::Wait => { return true; }, fs::Action::Invalid => { return false; },
+            fs::Action::Input(copy) => { return false; }, fs::Action::Output(copy) => { return false; },
+            fs::Action::Done(result) => {
+                if !fs::take(ticket) { return false; }
+                match result {
+                    fs::Outcome::Failed(error) => { return spawn_result(work, inputs.source, file_error(error), 0); },
+                    fs::Outcome::File(file) => { return false; }, fs::Outcome::Value(value) => { return false; },
+                    fs::Outcome::Directory(node) => {
+                        var next: request::Preparing = inputs;
+                        next.directory = node;
+                        return reserve_child(work, next);
+                    }
+                }
+            }
+        }
+    }
+}
+// Boot phase only, before any U process is published; normal spawn uses the same
+// Directory action incrementally through the request coordinator above.
+unsafe fn boot_directory(id: process::Id) -> bool {
+    unsafe {
+        var ticket: objects::Identity = zero;
+        match fs::enqueue(client(id), fs::Command::Directory, "/work", "") {
+            fs::Queued::Failed(error) => { return false; }, fs::Queued::Ready(value) => { ticket = value; }
+        }
+        loop {
+            match fs::step() { fs::Progress::Invalid => { return false; },
+                fs::Progress::More => {}, fs::Progress::Wait => {}, fs::Progress::Ready => {} }
+            match fs::action(ticket) {
+                fs::Action::Wait => {}, fs::Action::Invalid => { return false; },
+                fs::Action::Input(copy) => { return false; }, fs::Action::Output(copy) => { return false; },
+                fs::Action::Done(result) => {
+                    if !fs::take(ticket) { return false; }
+                    match result {
+                        fs::Outcome::Directory(node) => { return fs::install_directory(client(id), node); },
+                        fs::Outcome::File(file) => { return false; }, fs::Outcome::Value(value) => { return false; },
+                        fs::Outcome::Failed(error) => { return false; }
+                    }
+                }
+            }
+        }
+    }
+}

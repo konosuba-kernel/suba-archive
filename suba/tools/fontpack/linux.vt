@@ -1,0 +1,38 @@
+// Linux adapter for native pack(). Stream errors return nonzero; only Ready writes stdout.
+module tool::fontpack_linux;
+import tool::fontpack;
+import user::text::font;
+extern abi(C) fn __k6_syscall(n: usize, a: usize, b: usize, c: usize) -> usize;
+static mut INPUT: [fontpack::INPUT_LIMIT + 1_usize]u8 = zero;
+static mut OUTPUT: [font::FILE_BYTES]u8 = zero;
+
+pub fn run() -> u32 {
+    var count: usize = 0;
+    // SAFETY: exclusive fixed buffers; every read/write is bounded by remaining bytes.
+    unsafe {
+        while count < fontpack::INPUT_LIMIT + 1_usize {
+            let received: usize = __k6_syscall(63, 0,
+                core::addr(core::ptr_add(core::slice_of_mut(INPUT).data, count)),
+                fontpack::INPUT_LIMIT + 1_usize - count);
+            if received > fontpack::INPUT_LIMIT + 1_usize - count { return 4; }
+            if received == 0_usize { break; }
+            count = count + received;
+        }
+        match fontpack::pack(core::slice_from_raw_parts(core::slice_of(INPUT).data, count),
+            core::slice_of_mut(OUTPUT)) {
+            fontpack::Pack::Invalid(offset) => { return 1; },
+            fontpack::Pack::NoMemory => { return 2; },
+            fontpack::Pack::Limit => { return 3; },
+            fontpack::Pack::Aliased => { return 5; },
+            fontpack::Pack::Ready(glyphs) => {},
+        }
+        var sent: usize = 0;
+        while sent < font::FILE_BYTES {
+            let wrote: usize = __k6_syscall(64, 1,
+                core::addr(core::ptr_add(core::slice_of(OUTPUT).data, sent)), font::FILE_BYTES - sent);
+            if wrote == 0_usize || wrote > font::FILE_BYTES - sent { return 4; }
+            sent = sent + wrote;
+        }
+    }
+    return 0;
+}

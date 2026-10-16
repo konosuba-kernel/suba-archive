@@ -1,0 +1,135 @@
+// K7's real submitted-I/O cancellation protocol, with per-round complete ledger.
+// No ordinary worker uses the boot RAM provider; all spawn paths are /sys/worker.
+module test::k10_dma;
+import suba::abi;
+import suba::syscalls;
+import suba::files as wire;
+import suba::argument_wire;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::arguments;
+import libsuba::argument_builder;
+import test::k10_config as config;
+static mut ARGS: [4096]u8 = zero;
+static mut INFO: [64]u8 = zero;
+static mut ROOT: [31]u8 = zero;
+static mut ROOT_BYTES: usize = 0;
+static mut PATH: [255]u8 = zero;
+static mut BULK: [65536]u8 = zero;
+unsafe fn path(suffix: []const u8) -> []const u8 {
+    unsafe {
+        var i: usize = 0;
+        while i < ROOT_BYTES { PATH[i] = ROOT[i]; i = i + 1_usize; }
+        i = 0;
+        while i < suffix.len { PATH[ROOT_BYTES + i] = suffix[i]; i = i + 1_usize; }
+        return core::slice_from_raw_parts(core::slice_of(PATH).data, ROOT_BYTES + suffix.len);
+    }
+}
+unsafe fn spawn(role: []const u8, cwd: []const u8, job: usize) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(ARGS), cwd) ||
+            !argument_builder::append(core::slice_of_mut(ARGS), role) { return make syscall::Reply { status: abi::INVALID, value: 0 }; }
+        return services::spawn("/sys/worker", core::slice_of(ARGS), 0, 0, job);
+    }
+}
+unsafe fn job_create() -> syscall::Reply {
+    unsafe {
+        let job: syscall::Reply = syscall::invoke(abi::SYS_JOB_CREATE, core::addr(core::slice_of_mut(INFO).data), 64, 0, 0, 0, 0);
+        if job.status != abi::OK { return job; }
+        ROOT_BYTES = argument_wire::word(core::slice_of(INFO), wire::JOB_PATH_BYTES, 4);
+        if ROOT_BYTES == 0_usize || ROOT_BYTES > 31_usize { return make syscall::Reply { status: abi::INVALID, value: 0 }; }
+        var i: usize = 0;
+        while i < ROOT_BYTES { ROOT[i] = INFO[wire::JOB_PATH + i]; i = i + 1_usize; }
+        return job;
+    }
+}
+fn wait_exit(token: usize) -> bool {
+    let watches: [1]services::Watch = [make services::Watch { handle: token, events: syscalls::EXITED }];
+    let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 100000000_usize;
+    unsafe { return services::wait(core::slice_of(watches), until, false).value == 1_usize; }
+}
+fn collected(token: usize) -> bool {
+    if !wait_exit(token) { return false; }
+    match services::collect(token) {
+        services::Collected::Failed(error) => { return false; },
+        services::Collected::Ready(exit) => { return exit.status == abi::CANCELLED && exit.cause == 0_usize; }
+    }
+}
+unsafe fn rounds(write: bool) -> u32 {
+    unsafe {
+        if syscall::invoke(abi::SYS_STATS, 202, 0, 0, 0, 0, 0).status != abi::OK { return 1; }
+        var round: usize = 0;
+        while round < config::ROUNDS {
+            var job: usize = 0; var revoked: usize = 0;
+            var role: []const u8 = "l"; var cwd: []const u8 = "/work"; var selector: usize = 101;
+            if write {
+                let created: syscall::Reply = job_create();
+                if created.status != abi::OK { return 2; }
+                job = created.value;
+                let old: syscall::Reply = files::open(path("/src/old"), wire::WRITE | wire::CREATE_NEW);
+                if old.status != abi::OK { return 3; }
+                revoked = old.value;
+                let epoch: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_SOURCE_EPOCH, 8);
+                let boot: usize = argument_wire::word(core::slice_of(INFO), wire::JOB_BOOT_ID, 8);
+                if syscall::invoke(abi::SYS_JOB_FREEZE, job, epoch, boot, 0, 0, 0).status != abi::OK { return 4; }
+                role = "w"; if round == 0_usize { role = "f"; }
+                cwd = core::slice_from_raw_parts(core::slice_of(ROOT).data, ROOT_BYTES); selector = 102;
+            }
+            if services::stats(selector).status != abi::OK { return 5; }
+            let child: syscall::Reply = spawn(role, cwd, job);
+            if child.status != abi::OK { return 6; }
+            let until: usize = services::stats(syscalls::STATS_TIME_TICKS).value + 50000000_usize;
+            while services::stats(100).value != 1_usize && services::stats(syscalls::STATS_TIME_TICKS).value < until {}
+            if services::stats(100).value != 1_usize { return 7; }
+            // A submitted Read alone is insufficient: require a genuine Loading
+            // process in addition to the actor blocked in the FS-backed loader.
+            if !write && services::stats(203).value == 0_usize { return 8; }
+            var killed: syscall::Reply = zero;
+            if write { killed = services::job_end(job); }
+            else { killed = syscall::kill_child(child.value); }
+            if killed.status != abi::OK { return 9; }
+            while services::stats(100).value == 1_usize && services::stats(syscalls::STATS_TIME_TICKS).value < until {}
+            if services::stats(100).value == 1_usize || !collected(child.value) { return 10; }
+            if write {
+                if !wait_exit(job) || syscall::close(job).status != abi::OK { return 11; }
+                if files::read_at(revoked, 0, core::slice_of_mut(BULK)).status != abi::DENIED ||
+                    files::write_at(revoked, 0, "x").status != abi::DENIED ||
+                    files::sync(revoked, false).status != abi::DENIED { return 12; }
+                // K7 intentionally retained this revoked handle across rounds.
+                // Close it here so each complete ledger has the same baseline.
+                if syscall::close(revoked).status != abi::OK { return 13; }
+            }
+            if services::stats(103).value != round + 1_usize { return 14; }
+            var state: usize = 3; if write { state = 4; }
+            if syscall::invoke(abi::SYS_STATS, 201, round + 1_usize, state, 0, 0, 0).status != abi::OK { return 15; }
+            round = round + 1_usize;
+        }
+    }
+    return 0;
+}
+fn finish(code: u32) -> u32 {
+    unsafe {
+        var color: u32 = 0x0000ff00; if code != 0_u32 { color = 0x00ff0000_u32 | code; }
+        *core::ptr::<u32>(abi::DISPLAY_BASE) = color;
+        loop { let waiting: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, 0, 0, 0, 0); }
+    }
+    return 0;
+}
+pub fn loading() -> u32 { unsafe { return finish(rounds(false)); } }
+pub fn dma() -> u32 { unsafe { return finish(rounds(true)); } }
+pub fn worker() -> u32 {
+    unsafe {
+        var role: u8 = 0;
+        match arguments::argument(0) { arguments::BytesResult::Invalid => { return 20; },
+            arguments::BytesResult::Value(value) => { if value.len != 1_usize { return 21; } role = value[0_usize]; } }
+        if role == 110_u8 { return 42; }
+        if role == 115_u8 { loop { let waiting: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, 0, 0, 0, 0); } }
+        if role == 108_u8 { let child: syscall::Reply = spawn("n", "", 0); return 22; }
+        if role == 102_u8 { if spawn("s", "", 0).status != abi::OK { return 23; } }
+        let file: syscall::Reply = files::open("out/partial", wire::WRITE | wire::CREATE_NEW | wire::TRANSIENT);
+        if file.status != abi::OK { return 24; }
+        let write: syscall::Reply = files::write_at(file.value, 0, core::slice_of(BULK));
+        return 25;
+    }
+}

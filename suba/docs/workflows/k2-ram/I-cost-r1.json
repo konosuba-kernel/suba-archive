@@ -1,0 +1,434 @@
+{
+  "elf": "/home/mii/code/konOSuba/suba/build/k2-ram-k0-r1/valid/build/kernel.elf",
+  "sha256": "6ec17c0b69c14babf9bbfd16e05cdc0b6ea2d14e5ec024a646018a645c1003d1",
+  "source": {
+    "abi/contract.vt": {
+      "lines": 199,
+      "bytes": 7766
+    },
+    "kernel/machine.vt": {
+      "lines": 64,
+      "bytes": 2364
+    },
+    "kernel/memory.vt": {
+      "lines": 215,
+      "bytes": 8722
+    },
+    "platform/boot_info.vt": {
+      "lines": 117,
+      "bytes": 5230
+    },
+    "platform/fdt.vt": {
+      "lines": 153,
+      "bytes": 6854
+    },
+    "platform/fdt_tree.vt": {
+      "lines": 226,
+      "bytes": 9700
+    },
+    "platform/fdt_properties.vt": {
+      "lines": 174,
+      "bytes": 7096
+    },
+    "kernel/ram.vt": {
+      "lines": 133,
+      "bytes": 5753
+    },
+    "kernel/entry.vt": {
+      "lines": 70,
+      "bytes": 2613
+    },
+    "kernel/machine.s0": {
+      "lines": 111,
+      "bytes": 2348
+    }
+  },
+  "source_lines": 1462,
+  "source_bytes": 58446,
+  "segments": [
+    {
+      "flags": 5,
+      "address": 2151677952,
+      "file_bytes": 153260,
+      "memory_bytes": 153260
+    },
+    {
+      "flags": 4,
+      "address": 2151833600,
+      "file_bytes": 383,
+      "memory_bytes": 383
+    },
+    {
+      "flags": 6,
+      "address": 2151837696,
+      "file_bytes": 4,
+      "memory_bytes": 1704016
+    }
+  ],
+  "frames": [
+    {
+      "address": 2151678188,
+      "bytes": 32
+    },
+    {
+      "address": 2151678248,
+      "bytes": 288
+    },
+    {
+      "address": 2151678984,
+      "bytes": 32
+    },
+    {
+      "address": 2151679044,
+      "bytes": 32
+    },
+    {
+      "address": 2151679120,
+      "bytes": 80
+    },
+    {
+      "address": 2151679264,
+      "bytes": 320
+    },
+    {
+      "address": 2151680200,
+      "bytes": 64
+    },
+    {
+      "address": 2151680316,
+      "bytes": 1216
+    },
+    {
+      "address": 2151683872,
+      "bytes": 1456
+    },
+    {
+      "address": 2151687668,
+      "bytes": 336
+    },
+    {
+      "address": 2151688256,
+      "bytes": 288
+    },
+    {
+      "address": 2151688884,
+      "bytes": 1024
+    },
+    {
+      "address": 2151691788,
+      "bytes": 368
+    },
+    {
+      "address": 2151692900,
+      "bytes": 784
+    },
+    {
+      "address": 2151695132,
+      "bytes": 336
+    },
+    {
+      "address": 2151696040,
+      "bytes": 160
+    },
+    {
+      "address": 2151696284,
+      "bytes": 400
+    },
+    {
+      "address": 2151697152,
+      "bytes": 256
+    },
+    {
+      "address": 2151697744,
+      "bytes": 272
+    },
+    {
+      "address": 2151698444,
+      "bytes": 992
+    },
+    {
+      "address": 2151701292,
+      "bytes": 4496
+    },
+    {
+      "address": 2151711644,
+      "bytes": 880
+    },
+    {
+      "address": 2151712432,
+      "bytes": 160
+    },
+    {
+      "address": 2151712776,
+      "bytes": 624
+    },
+    {
+      "address": 2151714368,
+      "bytes": 192
+    },
+    {
+      "address": 2151714712,
+      "bytes": 176
+    },
+    {
+      "address": 2151715056,
+      "bytes": 464
+    },
+    {
+      "address": 2151716296,
+      "bytes": 1952
+    },
+    {
+      "address": 2151721668,
+      "bytes": 832
+    },
+    {
+      "address": 2151723964,
+      "bytes": 1456
+    },
+    {
+      "address": 2151727920,
+      "bytes": 8480
+    },
+    {
+      "address": 2151737012,
+      "bytes": 304
+    },
+    {
+      "address": 2151737728,
+      "bytes": 224
+    },
+    {
+      "address": 2151738236,
+      "bytes": 416
+    },
+    {
+      "address": 2151739364,
+      "bytes": 224
+    },
+    {
+      "address": 2151740832,
+      "bytes": 512
+    },
+    {
+      "address": 2151742436,
+      "bytes": 480
+    },
+    {
+      "address": 2151743964,
+      "bytes": 752
+    },
+    {
+      "address": 2151745944,
+      "bytes": 2608
+    },
+    {
+      "address": 2151755940,
+      "bytes": 1904
+    },
+    {
+      "address": 2151761060,
+      "bytes": 2080
+    },
+    {
+      "address": 2151766396,
+      "bytes": 3936
+    },
+    {
+      "address": 2151780656,
+      "bytes": 208
+    },
+    {
+      "address": 2151781156,
+      "bytes": 432
+    },
+    {
+      "address": 2151782472,
+      "bytes": 480
+    },
+    {
+      "address": 2151783836,
+      "bytes": 1472
+    },
+    {
+      "address": 2151787788,
+      "bytes": 1168
+    },
+    {
+      "address": 2151790744,
+      "bytes": 992
+    },
+    {
+      "address": 2151793692,
+      "bytes": 1616
+    },
+    {
+      "address": 2151798004,
+      "bytes": 1264
+    },
+    {
+      "address": 2151801432,
+      "bytes": 816
+    },
+    {
+      "address": 2151804212,
+      "bytes": 464
+    },
+    {
+      "address": 2151805244,
+      "bytes": 1904
+    },
+    {
+      "address": 2151807864,
+      "bytes": 912
+    },
+    {
+      "address": 2151810176,
+      "bytes": 4256
+    },
+    {
+      "address": 2151817324,
+      "bytes": 6880
+    },
+    {
+      "address": 2151824440,
+      "bytes": 3232
+    },
+    {
+      "address": 2151827512,
+      "bytes": 1360
+    },
+    {
+      "address": 2151828412,
+      "bytes": 208
+    },
+    {
+      "address": 2151828952,
+      "bytes": 64
+    },
+    {
+      "address": 2151829068,
+      "bytes": 560
+    },
+    {
+      "address": 2151830536,
+      "bytes": 176
+    }
+  ],
+  "max_frame": 8480,
+  "all_frames_sum": 70352,
+  "bound_premise": "No recursive/indirect calls, serialized early boot. Sum counts every VT frame once; S0 leaf/stub stack allowance must be audited separately.",
+  "groups": {
+    "production_kernel": {
+      "files": {
+        "kernel/entry.vt": {
+          "lines": 70,
+          "bytes": 2613,
+          "sha256": "7943f2c9a1a6afc7d315718318855ee73078a3dedeb1f41d9a9e46b98c5b3dd9"
+        },
+        "kernel/ram.vt": {
+          "lines": 133,
+          "bytes": 5753,
+          "sha256": "09cf53b9fe6632ffd715d975209275af3dbd1a2b49bbbb9af620b2853707facd"
+        },
+        "kernel/memory.vt": {
+          "lines": 215,
+          "bytes": 8722,
+          "sha256": "3d032d74f870ea20e099db7e5862189a4a440d8abfdf671684ef8be7e4cb80eb"
+        },
+        "kernel/machine.vt": {
+          "lines": 64,
+          "bytes": 2364,
+          "sha256": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca"
+        },
+        "kernel/machine.s0": {
+          "lines": 111,
+          "bytes": 2348,
+          "sha256": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde"
+        }
+      },
+      "lines": 593,
+      "bytes": 21800
+    },
+    "production_platform": {
+      "files": {
+        "platform/fdt_tree.vt": {
+          "lines": 226,
+          "bytes": 9700,
+          "sha256": "5d609dc16136980d061c10a9b0b254b4151f32921ca0b4fbe285661df0c861ae"
+        },
+        "platform/fdt_properties.vt": {
+          "lines": 174,
+          "bytes": 7096,
+          "sha256": "57a0c670787f9603765e148c806fd940bf8434b1d00824466a1ab71bc0201b42"
+        },
+        "platform/fdt.vt": {
+          "lines": 153,
+          "bytes": 6854,
+          "sha256": "d37da23b811cd667fddf8597194439b65d63ac74449170f6a20e16e398896cc6"
+        },
+        "platform/boot_info.vt": {
+          "lines": 117,
+          "bytes": 5230,
+          "sha256": "bb6e66270c3d384e69923a1705926941ad0158de562dc5748019f0ede135d13a"
+        }
+      },
+      "lines": 670,
+      "bytes": 28880
+    },
+    "shared_abi": {
+      "files": {
+        "abi/contract.vt": {
+          "lines": 199,
+          "bytes": 7766,
+          "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d"
+        }
+      },
+      "lines": 199,
+      "bytes": 7766
+    },
+    "tests_k2_ram": {
+      "files": {
+        "tests/k2_ram/memory_probe.vt": {
+          "lines": 174,
+          "bytes": 6632,
+          "sha256": "4064765f5369d6f651d60251b8af7e626ad57d07e075162cfe30451d3458a252"
+        },
+        "tests/k2_ram/boot_info_probe.vt": {
+          "lines": 30,
+          "bytes": 1201,
+          "sha256": "172c55816150c33319a98c3296c95030e4d9394045f9789fce766936a3c526a1"
+        }
+      },
+      "lines": 204,
+      "bytes": 7833
+    },
+    "integration_tools": {
+      "files": {
+        "tools/check_boot_info.py": {
+          "lines": 91,
+          "bytes": 4342,
+          "sha256": "0e195cacada554f00409b65516db5a166e7f5974cc0e01b52ed51fab06c9a960"
+        },
+        "tools/check_ram_boot.py": {
+          "lines": 180,
+          "bytes": 9037,
+          "sha256": "3ba6da76421c209b7f065591f92271a934c46aac3c7a0190025d94d97019a849"
+        },
+        "tools/check_kernel_entry.py": {
+          "lines": 188,
+          "bytes": 10092,
+          "sha256": "ea54c262911ca809db1db861213be26986fcc77cf211f5b31a730be25ccb6cde"
+        },
+        "tools/measure_kernel.py": {
+          "lines": 64,
+          "bytes": 3161,
+          "sha256": "82265574e9bf41172bb972c4505faf50ef490af234e98d5ee45f9bc062b77dea"
+        }
+      },
+      "lines": 523,
+      "bytes": 26632
+    }
+  },
+  "stack_audit": "All production VT paths are nonrecursive/direct. 70,352 B is sum of every emitted VT function frame, a conservative bound (not observed high-water). All production types align <=16; no extra dynamic alignment. Compiler entry, copy helper, external call and panic/trap bridges leave sp unchanged; machine.s0 leaves sp unchanged. 131,072 B dedicated stack leaves 60,720 B under this bound. Fatal emergency vector does not use stack. User traps/IRQ are not supported."
+}

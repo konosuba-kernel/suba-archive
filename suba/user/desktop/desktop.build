@@ -1,0 +1,16 @@
+format 1
+profile suba-user
+entry user::desktop::main
+source abi/contract.vt
+source abi/windows.vt
+source abi/syscalls.vt
+source abi/argument_wire.vt
+source user/libsuba/argument_builder.vt
+source user/libsuba/arguments.vt
+source user/libsuba/syscall.vt
+source user/libsuba/services.vt
+source user/libsuba/windows.vt
+source user/draw/pixels.vt
+source user/desktop/main.vt
+assembly user/libsuba/syscall.s0
+output build/desktop.elf

@@ -1,0 +1,365 @@
+{
+  "reviewer": "/root/suba_design_review",
+  "candidate": "C-r1",
+  "checks": [
+    {
+      "name": "candidate:README.md",
+      "pass": true,
+      "detail": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17"
+    },
+    {
+      "name": "candidate:REQUIREMENTS.md",
+      "pass": true,
+      "detail": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a"
+    },
+    {
+      "name": "candidate:design/ARCHITECTURE.md",
+      "pass": true,
+      "detail": "9bf751084c09f4d22022af1d036c6c24791df3b0d267d0e49499516505e82342"
+    },
+    {
+      "name": "candidate:design/CONTRACTS.md",
+      "pass": true,
+      "detail": "aeb644681fea47ed5176e20f88f0110bc4d58d6fcc2bf724f4971a1d20f0b768"
+    },
+    {
+      "name": "candidate:design/IMPLEMENTATION.md",
+      "pass": true,
+      "detail": "ad96e0f62d70c0e2ef2bc76d09c00876daf7ebea9bbb1bf61f85c7f10a80fff8"
+    },
+    {
+      "name": "candidate:design/research/platform.md",
+      "pass": true,
+      "detail": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb"
+    },
+    {
+      "name": "candidate:design/research/toolchain.md",
+      "pass": true,
+      "detail": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245"
+    },
+    {
+      "name": "candidate:design/research/toolchain-evidence.json",
+      "pass": true,
+      "detail": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039"
+    },
+    {
+      "name": "compiler hash",
+      "pass": true,
+      "detail": "7e1de550da39c31e203c83d0bce7e13dd5deb64923f3c5e4428aad8fbd7d7d20"
+    },
+    {
+      "name": "compiler bytes",
+      "pass": true,
+      "detail": 999504
+    },
+    {
+      "name": "compiler rw bytes",
+      "pass": true,
+      "detail": [
+        [
+          1,
+          5,
+          4096,
+          65536,
+          65536,
+          989896,
+          989896,
+          4096
+        ],
+        [
+          1,
+          4,
+          995328,
+          1056768,
+          1056768,
+          1836,
+          1836,
+          4096
+        ],
+        [
+          1,
+          6,
+          999424,
+          1060864,
+          1060864,
+          80,
+          55135764,
+          4096
+        ]
+      ]
+    },
+    {
+      "name": "compiler input:next/q/blocking.vt",
+      "pass": true,
+      "detail": "044a0905e9c54b5c4555165f68c488d99605a9e71f1f15b01e1c3ccebf8cd958"
+    },
+    {
+      "name": "compiler input:next/q/check.vt",
+      "pass": true,
+      "detail": "b28c596bbdfb6e056b270627259ed143449bf649766e095008533c3d4ab8b205"
+    },
+    {
+      "name": "compiler input:next/q/compiler.build",
+      "pass": true,
+      "detail": "29d766fd9ccc67b19475c9bb1277ec39be99afb135e068d8f0a9e09173a4375b"
+    },
+    {
+      "name": "compiler input:next/q/image.vt",
+      "pass": true,
+      "detail": "21a8641c3a5f7d03a50682698969f7b1ad8f300ec0a5be256c7dd6a333e0389a"
+    },
+    {
+      "name": "compiler input:next/q/init.vt",
+      "pass": true,
+      "detail": "06df249b98ef394495425aba4a60ba44515b676017a03445998d08a96f47f615"
+    },
+    {
+      "name": "compiler input:next/q/input.vt",
+      "pass": true,
+      "detail": "32d9ce32f8059c110efff67e7f37f8ac7392867ad75f0bfbe1d75adbe4c7028b"
+    },
+    {
+      "name": "compiler input:next/q/ir.vt",
+      "pass": true,
+      "detail": "083ea475e6871ca1940b66b1c1b6830984564f75d27d3a4b7d049c7d484bc2b8"
+    },
+    {
+      "name": "compiler input:next/q/lex.vt",
+      "pass": true,
+      "detail": "275e04dd18ba1013d0594729704f1ebe4634eaab8c24f91dc9a211af608a7f28"
+    },
+    {
+      "name": "compiler input:next/q/main.vt",
+      "pass": true,
+      "detail": "f30ba4a2641da8f6a43f4cbc263f9fbfb2b4c49b3fe1d5cdcc8cdcc3572cb5f4"
+    },
+    {
+      "name": "compiler input:next/q/model.vt",
+      "pass": true,
+      "detail": "d3f90f15c19bfc51c97c903db696b5ca4313e2126ff0d5ca6c5e0b5e83de2caf"
+    },
+    {
+      "name": "compiler input:next/q/parse.vt",
+      "pass": true,
+      "detail": "31fbbeef18ec1564c0a80eef55c8af069a18d3739300168b3e4ed5167f476919"
+    },
+    {
+      "name": "compiler input:next/q/rules.vt",
+      "pass": true,
+      "detail": "8b3846de0315501e992bfc381653c26dc83122432338a64cc675249e71a90951"
+    },
+    {
+      "name": "compiler input:next/q/runtime/bytes.vt",
+      "pass": true,
+      "detail": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5"
+    },
+    {
+      "name": "compiler input:next/q/runtime/linux.s0",
+      "pass": true,
+      "detail": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a"
+    },
+    {
+      "name": "compiler input:next/q/runtime/linux.vt",
+      "pass": true,
+      "detail": "f50998235c8a049c26f9fa73d3eb724a5db4b7f233d521dceb449a3103f73a3a"
+    },
+    {
+      "name": "compiler input:next/q/rv64.vt",
+      "pass": true,
+      "detail": "ba613287c9c48eda58de7fe74ea264d5a010e896ca1d9f5089333a3254b6aabf"
+    },
+    {
+      "name": "compiler input:next/q/s0.vt",
+      "pass": true,
+      "detail": "c90d59a279926a1491fc43307deddc4e04acc0d9754a64aad56fe850fe53d9b7"
+    },
+    {
+      "name": "compiler input:next/q/types.vt",
+      "pass": true,
+      "detail": "d43ea325af473099d368d5ed350aa5b3727c93d3aa300120fc49fd04ffdf9ee3"
+    },
+    {
+      "name": "memory total MiB",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "window budget",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "disk partition total MiB",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "FAT capacity",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "node table",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "trap alignment",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:REQUIREMENTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:design/DELIVERY.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:design/ARCHITECTURE.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:design/CONTRACTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:design/IMPLEMENTATION.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:../biomiya/core-s/docs/reference/s-next-0.1.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:README.md:../biomiya/core-s/next/q/release.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/ARCHITECTURE.md:../REQUIREMENTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/ARCHITECTURE.md:research/platform.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/ARCHITECTURE.md:research/toolchain.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/ARCHITECTURE.md:CONTRACTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/ARCHITECTURE.md:IMPLEMENTATION.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/ARCHITECTURE.md:research/toolchain-evidence.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/CONTRACTS.md:ARCHITECTURE.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/IMPLEMENTATION.md:ARCHITECTURE.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/IMPLEMENTATION.md:CONTRACTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/IMPLEMENTATION.md:DELIVERY.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-local-help.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-local-probe.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-probe.dtb",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-probe.dts",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-ramfb-probe.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-ramfb-probe.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-entry-probe.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-entry-probe.S",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-entry-probe.ld",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/platform.md:platform-entry-probe-failed-r1.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "local link:design/research/toolchain.md:toolchain-evidence.json",
+      "pass": true,
+      "detail": null
+    }
+  ],
+  "supplemental_platform_hashes": {
+    "design/research/platform-entry-probe-failed-r1.json": "4ba48141a75f6619be8df87cc74c985b57ca313a691e50252fec31f5f56287fb",
+    "design/research/platform-entry-probe.S": "6a41541703657a85844541af7a8ee6d7575d806d55e3f8e5624d9751b375e30a",
+    "design/research/platform-entry-probe.json": "2f630e89d100dacf3be2137a555f71725cc228d991fa9b47d65d7b9755f246fc",
+    "design/research/platform-entry-probe.ld": "c1f9c424ed68ad9cf3ad31a388b7d1c4494c950beab832678c26489deb91015b",
+    "design/research/platform-local-help.json": "f884240b161128d6e4930ddc6ea918b2dd6ff345bbe8f886bed51e9dd968ce7c",
+    "design/research/platform-local-probe.json": "c223513b66c90135abfb4bad9e468ab2ee3aebcee338c26e18a710d51af1aa4d",
+    "design/research/platform-probe.dtb": "77c1dbcc2420c0ea761f1b06db2c273e25fb914ccabe81a429e5a7e7fcbbdb3f",
+    "design/research/platform-probe.dts": "1e4857b37f58c8ce9b1de01767b02a4c1dcf450947860915dd15aba07a872272",
+    "design/research/platform-ramfb-probe.json": "0f13490a4cf44c20073fe613f8ea60ddb1faf313d19e0e051ad7dc25a66a324e",
+    "design/research/platform-ramfb-probe.py": "d1c80906769bf046a14862dcf913296c2fd7e220d0575b7a810c92721c1682ba"
+  },
+  "note": "Read-only identity, source-input, ELF, arithmetic and local-link checks; no product tests run."
+}

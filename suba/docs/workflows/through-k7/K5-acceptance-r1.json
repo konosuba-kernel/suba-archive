@@ -1,0 +1,68 @@
+{
+  "stage": "K5",
+  "revision": 1,
+  "verdict": "accepted",
+  "passed": true,
+  "scope": "K5 functionality and lifecycle, not K7 or K10 performance completion",
+  "final_reviewer": "/root/k4_review",
+  "independent_execution_reviewer": "/root/k4_finish",
+  "candidate_sha256": "7d86276770c2d6b64c0a2df1edf696836640c38a5f8917e7abafa255e602442b",
+  "baseline_commit": "10de32fdd5f225c62fb6c90b699122d36bbee4dc",
+  "verified_counts": {
+    "owned_files": 52,
+    "input_files": 120,
+    "evidence_reports": 20
+  },
+  "markdown_sha256": "4812ac2421e59c1efce69f8a07607d9554bd2b4a36343ed5f79b0e76013ffc87",
+  "integrity_audit": {
+    "path": "build/k5-independent-r2/verification.json",
+    "sha256": "6ecb26695e5fcc70bb989de5693353845af8f031040b6fb30e54fe423dc5fa07"
+  },
+  "independent_evidence": {
+    "build/k5-independent-r1/gtk/verification.json": {
+      "sha256": "3ecdb6d3c56ac3d4dc32b315b31fa0f6aafe40ef4b7fc231329c9e98bc2af8e0",
+      "raw_passed": true
+    },
+    "build/k5-independent-r1/contracts/verification.json": {
+      "sha256": "a7b116ff2fc1254c03b0e671ffcbe0c53ed47b1e9721b7ce6ee3bafd71b44905",
+      "raw_passed": true
+    },
+    "build/k5-independent-r1/lifecycle/verification.json": {
+      "sha256": "d24674300c50c8325f279c1f3d5e2ddbd35755cded8ec16fe87582705d8007bd",
+      "raw_passed": true
+    },
+    "build/k5-independent-r1/queue/verification.json": {
+      "sha256": "032685cc92f00b73aec8c8cad83634138bceb20ce52b224596b4256aba7e0df0",
+      "raw_passed": true
+    },
+    "build/k5-independent-r1/negative/verification.json": {
+      "sha256": "ed06157bc173165691acde276f03275c528239b668df1e3ccf9b114e38c4aff3",
+      "raw_passed": false
+    },
+    "build/k5-independent-r1/usercopy/verification.json": {
+      "sha256": "154b0159ad383e119134a7d54a0e5845feabe67220e6789d73ec8be93a701cb6",
+      "raw_passed": true
+    }
+  },
+  "negative_control": {
+    "expected_panic23_observed": true,
+    "raw_report_retained_false": true,
+    "wrapper_issue": "require raises ValueError; replay catches only AssertionError",
+    "serial_sha256": "20da3009562805c5fb013ac44208906d9044cabebf7acce3161949a3fbb62f6f",
+    "same_user_elfs": true
+  },
+  "blocking_findings": [],
+  "performance_targets_met": false,
+  "limitations": [
+    "GTK visible repaint remains seconds; no100ms/p99/30fps claim",
+    "Private Xvfb with real GTK/XTest; not arbitrary host GUI compatibility",
+    "Unobservable QEMU oversized frame drops cannot be detected",
+    "RAM application fixtures; K7 editor/font/FS loader/Job build integration not accepted here"
+  ],
+  "reviewed_author_storage_evidence": [
+    "build/k5-storage-filesystem-r2/verification.json",
+    "build/k5-storage-boundaries-r1/verification.json",
+    "build/k5-storage-cancel-dma-r2/verification.json"
+  ],
+  "production_files_modified_by_reviewers": false
+}

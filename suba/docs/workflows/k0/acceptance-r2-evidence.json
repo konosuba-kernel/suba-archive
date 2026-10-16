@@ -1,0 +1,47 @@
+{
+  "decision": "Accepted",
+  "reviewer": "/root/k0_acceptance",
+  "candidate_sha256": "d0c6a1ad2872ba0aea0fa5603e3aef0027632ce63e1b3fc37da705b7b64701f9",
+  "records": {
+    "suba/build/k0-acceptance-final-entry-r2/verification.json": {
+      "sha256": "5a95d29f94b232311645496fe2b65405ecc51a3f3ac15678d61210cc5d36d86d",
+      "saved": "acceptance-r2-run-1.json"
+    },
+    "suba/build/k0-acceptance-final-observer-r2.json": {
+      "sha256": "df588ccbfb79aff63685bac2bf20d4f390b0550cacc152b7282654fde08d6434",
+      "saved": "acceptance-r2-run-2.json"
+    }
+  },
+  "entry_cases": [
+    {
+      "name": "valid",
+      "passed": true,
+      "expected_execution_passed": true,
+      "execution_passed": true,
+      "terminal_matches": true
+    },
+    {
+      "name": "bad-magic",
+      "passed": true,
+      "expected_execution_passed": true,
+      "execution_passed": true,
+      "terminal_matches": true
+    },
+    {
+      "name": "trusted-fault",
+      "passed": true,
+      "expected_execution_passed": true,
+      "execution_passed": true,
+      "terminal_matches": true
+    },
+    {
+      "name": "post-marker-fault",
+      "passed": true,
+      "expected_execution_passed": false,
+      "execution_passed": false,
+      "terminal_matches": false
+    }
+  ],
+  "negative_serial_tail": "PMP Address Bits  : 54\r\nBoot HART MHPM Info         : 16 (0x0007fff8)\r\nBoot HART Debug Triggers    : 2 triggers\r\nBoot HART MIDELEG           : 0x0000000000001666\r\nBoot HART MEDELEG           : 0x0000000000f4b509\r\nsuba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\n!0000000000000002:0000000080402630:00000000c0001073\nqemu-system-riscv64: terminating on signal 15 from pid 261182 (python3)\n",
+  "final_candidate_mismatches": []
+}

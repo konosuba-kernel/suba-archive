@@ -1,0 +1,42 @@
+// Test-only Linux binary transport, independent of text/editor semantics.
+module test::transport;
+extern abi(C) fn __k6_syscall(n: usize, a: usize, b: usize, c: usize) -> usize;
+pub unsafe fn read(buffer: []u8) -> usize {
+    // SAFETY: caller owns buffer; count checks keep every read within it.
+    unsafe {
+        var count: usize = 0;
+        while count < buffer.len {
+            let got: usize = __k6_syscall(63, 0, core::addr(core::ptr_add(buffer.data, count)), buffer.len - count);
+            if got > buffer.len - count { return buffer.len + 1_usize; }
+            if got == 0_usize { return count; }
+            count = count + got;
+        }
+        return count;
+    }
+}
+pub unsafe fn write(data: []const u8) -> bool {
+    // SAFETY: caller keeps data readable until synchronous writes complete.
+    unsafe {
+        var sent: usize = 0;
+        while sent < data.len {
+            let count: usize = __k6_syscall(64, 1, core::addr(core::ptr_add(data.data, sent)), data.len - sent);
+            if count == 0_usize || count > data.len - sent { return false; }
+            sent = sent + count;
+        }
+    }
+    return true;
+}
+pub fn word(value: usize) -> bool {
+    var bytes: [4]u8 = zero;
+    // SAFETY: local 4-byte buffer stays alive; protocol intentionally limits values to u32.
+    unsafe {
+        var i: usize = 0;
+        while i < 4_usize { bytes[i] = ((value >> (i * 8_usize)) & 255_usize) as u8; i = i + 1_usize; }
+        return write(core::slice_of(bytes));
+    }
+}
+pub unsafe fn get(data: []const u8, offset: usize) -> usize {
+    // SAFETY: caller checks four-byte protocol field before invoking.
+    unsafe { return (data[offset] as usize) | ((data[offset + 1_usize] as usize) << 8_usize) |
+        ((data[offset + 2_usize] as usize) << 16_usize) | ((data[offset + 3_usize] as usize) << 24_usize); }
+}

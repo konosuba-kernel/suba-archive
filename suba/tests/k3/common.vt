@@ -1,0 +1,39 @@
+module test::common;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import libsuba::argument_builder;
+static mut PAGE: [4096]u8 = zero;
+pub unsafe fn spawn(role: []const u8, stdout: usize, stderr: usize, job: usize) -> syscall::Reply {
+    unsafe {
+        if !argument_builder::initialize(core::slice_of_mut(PAGE), "") ||
+            !argument_builder::append(core::slice_of_mut(PAGE), role) {
+            return make syscall::Reply { status: abi::INVALID, value: 0 };
+        }
+        return services::spawn("1", core::slice_of(PAGE), stdout, stderr, job);
+    }
+}
+pub unsafe fn wait(handle: usize, events: usize) -> syscall::Reply {
+    var watches: [1]services::Watch = [make services::Watch { handle: handle, events: events };1];
+    let now: syscall::Reply = services::stats(syscalls::STATS_TIME_TICKS);
+    unsafe { return services::wait(core::slice_of(watches), now.value + 50000000_usize, false); }
+}
+pub fn collect(child: usize, expected: usize) -> bool {
+    unsafe {
+        let waited: syscall::Reply = wait(child, syscalls::EXITED);
+        if waited.status != abi::OK || waited.value != 1_usize { return false; }
+    }
+    match services::collect(child) {
+        services::Collected::Failed(status) => { return false; },
+        services::Collected::Ready(exit) => { return exit.status == expected && exit.cause == 0_usize; }
+    }
+}
+pub unsafe fn equal(a: []const u8, b: []const u8) -> bool {
+    if a.len != b.len { return false; }
+    unsafe {
+        var i: usize = 0;
+        while i < a.len { if a[i] != b[i] { return false; } i = i + 1_usize; }
+    }
+    return true;
+}

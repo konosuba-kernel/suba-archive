@@ -1,0 +1,3660 @@
+{
+  "schema": "q-s0-system-v1",
+  "passed": true,
+  "input_sha256": {
+    "k0-s0-encoding.s0": "2b63d6d8dc1e54b8a93fe12ff4c8043d05e0152ca5bbfe84ba72b20970372c9a",
+    "k0-s0-invalid.json": "fd40b43f420e28a672da8f5b60da42fd06fe7c190f21babab6c56c9a83b30efd",
+    "k0-s0-run.vt": "aa705e52cab6d21b71c5d316bb9c43ed7fa5e5efdc7bf27587ca356572b876d7",
+    "k0-s0-run.s0": "c952b809b7c376e6ad411fc6c7562f41adbbb47e679284189b8cf9956e542fdd",
+    "tool.py": "4b94094e6902b9c8c4f6b64a64e1ba1148366256b8ab602fc4f71f33abcdabda",
+    "compiler.elf": "3f29c54ea59f5fa27ef250fa5cf584d9989b1b843130bb24340da542afb11c8f"
+  },
+  "tools": {
+    "qemu-riscv64": {
+      "path": "/usr/bin/qemu-riscv64",
+      "sha256": "f9937664b4107120a6b0a9727f27a2c215de3af57c467f7c575d1a13303b0bd2"
+    },
+    "clang": {
+      "path": "/usr/bin/clang-23",
+      "sha256": "939a882527432ec23b094c289e7f170bf2d6ec282e74dde75e31b08602fa3eae"
+    }
+  },
+  "cases": [
+    {
+      "name": "encodings",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=46 assembly=1540 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=544 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/encodings/prefix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/encodings/prefix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/encodings/suffix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/encodings/suffix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/encodings/oracle.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/encodings/oracle.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "start_address": 65744,
+      "compared_bytes": 336,
+      "oracle_sha256": "3a33b6baf0d129db00aac1abd2f08d34d5401185dd83144706c5f9ea653259db",
+      "q_sha256": "3a33b6baf0d129db00aac1abd2f08d34d5401185dd83144706c5f9ea653259db"
+    },
+    {
+      "name": "align_4",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=46 assembly=119 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=232 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4/prefix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4/prefix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4/suffix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4/suffix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4/oracle.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4/oracle.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "start_address": 65744,
+      "compared_bytes": 24,
+      "oracle_sha256": "f65b10f5e025a3bc7bf7df3ec7f0d6ff2e4c430f2c837bafd5e8936f88d847af",
+      "q_sha256": "f65b10f5e025a3bc7bf7df3ec7f0d6ff2e4c430f2c837bafd5e8936f88d847af"
+    },
+    {
+      "name": "align_8",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=46 assembly=119 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=236 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_8/prefix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_8/prefix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_8/suffix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_8/suffix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_8/oracle.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_8/oracle.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "start_address": 65744,
+      "compared_bytes": 28,
+      "oracle_sha256": "fc66c202d8df0554b60f977e8d2e2f78b1e81ac5b44f4c6b8f8674ab2677c065",
+      "q_sha256": "fc66c202d8df0554b60f977e8d2e2f78b1e81ac5b44f4c6b8f8674ab2677c065"
+    },
+    {
+      "name": "align_16",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=46 assembly=120 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=236 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_16/prefix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_16/prefix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_16/suffix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_16/suffix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_16/oracle.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_16/oracle.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "start_address": 65744,
+      "compared_bytes": 28,
+      "oracle_sha256": "fc66c202d8df0554b60f977e8d2e2f78b1e81ac5b44f4c6b8f8674ab2677c065",
+      "q_sha256": "fc66c202d8df0554b60f977e8d2e2f78b1e81ac5b44f4c6b8f8674ab2677c065"
+    },
+    {
+      "name": "align_256",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=46 assembly=121 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=268 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_256/prefix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_256/prefix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_256/suffix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_256/suffix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_256/oracle.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_256/oracle.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "start_address": 65744,
+      "compared_bytes": 60,
+      "oracle_sha256": "d3854f90da2bbc8bd4acb7b1fc68b0c175dd61b735e58580f95c27616884d908",
+      "q_sha256": "d3854f90da2bbc8bd4acb7b1fc68b0c175dd61b735e58580f95c27616884d908"
+    },
+    {
+      "name": "align_4096",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=46 assembly=122 names=4 name_bytes=17 decls=1 types=5 fields=0 params=0 max_ast=3 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=4108 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=16385\n"
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4096/prefix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4096/prefix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4096/suffix.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4096/suffix.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "/usr/bin/clang-23",
+            "--target=riscv64",
+            "-march=rv64im_zicsr_zifencei",
+            "-mabi=lp64",
+            "-c",
+            "-o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4096/oracle.o",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/align_4096/oracle.s"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "start_address": 65744,
+      "compared_bytes": 3900,
+      "oracle_sha256": "2acc209d211a8269de6dce77a4c906b0e93a23fe9afb6d0627940d2ce5c4ff7a",
+      "q_sha256": "2acc209d211a8269de6dce77a4c906b0e93a23fe9afb6d0627940d2ce5c4ff7a"
+    },
+    {
+      "name": "invalid_000",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, -1, x1"
+    },
+    {
+      "name": "invalid_001",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, 4096, x1"
+    },
+    {
+      "name": "invalid_002",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, 0x1000, x1"
+    },
+    {
+      "name": "invalid_003",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, 99999999999999999999999999999999999, x1"
+    },
+    {
+      "name": "invalid_004",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, 0x, x1"
+    },
+    {
+      "name": "invalid_005",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, sstatus, x1"
+    },
+    {
+      "name": "invalid_006",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, +1, x1"
+    },
+    {
+      "name": "invalid_007",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x32, 256, x1"
+    },
+    {
+      "name": "invalid_008",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x-1, 256, x1"
+    },
+    {
+      "name": "invalid_009",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw a0, 256, x1"
+    },
+    {
+      "name": "invalid_010",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x, 256, x1"
+    },
+    {
+      "name": "invalid_011",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x99999999999999999, 256, x1"
+    },
+    {
+      "name": "invalid_012",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, 256, x1, x0"
+    },
+    {
+      "name": "invalid_013",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1, 256"
+    },
+    {
+      "name": "invalid_014",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x1 256, x1"
+    },
+    {
+      "name": "invalid_015",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, -1, x1"
+    },
+    {
+      "name": "invalid_016",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, 4096, x1"
+    },
+    {
+      "name": "invalid_017",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, 0x1000, x1"
+    },
+    {
+      "name": "invalid_018",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, 99999999999999999999999999999999999, x1"
+    },
+    {
+      "name": "invalid_019",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, 0x, x1"
+    },
+    {
+      "name": "invalid_020",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, sstatus, x1"
+    },
+    {
+      "name": "invalid_021",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, +1, x1"
+    },
+    {
+      "name": "invalid_022",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x32, 256, x1"
+    },
+    {
+      "name": "invalid_023",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x-1, 256, x1"
+    },
+    {
+      "name": "invalid_024",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs a0, 256, x1"
+    },
+    {
+      "name": "invalid_025",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x, 256, x1"
+    },
+    {
+      "name": "invalid_026",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x99999999999999999, 256, x1"
+    },
+    {
+      "name": "invalid_027",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, 256, x1, x0"
+    },
+    {
+      "name": "invalid_028",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1, 256"
+    },
+    {
+      "name": "invalid_029",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x1 256, x1"
+    },
+    {
+      "name": "invalid_030",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, -1, x1"
+    },
+    {
+      "name": "invalid_031",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, 4096, x1"
+    },
+    {
+      "name": "invalid_032",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, 0x1000, x1"
+    },
+    {
+      "name": "invalid_033",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, 99999999999999999999999999999999999, x1"
+    },
+    {
+      "name": "invalid_034",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, 0x, x1"
+    },
+    {
+      "name": "invalid_035",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, sstatus, x1"
+    },
+    {
+      "name": "invalid_036",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, +1, x1"
+    },
+    {
+      "name": "invalid_037",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x32, 256, x1"
+    },
+    {
+      "name": "invalid_038",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x-1, 256, x1"
+    },
+    {
+      "name": "invalid_039",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc a0, 256, x1"
+    },
+    {
+      "name": "invalid_040",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x, 256, x1"
+    },
+    {
+      "name": "invalid_041",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x99999999999999999, 256, x1"
+    },
+    {
+      "name": "invalid_042",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, 256, x1, x0"
+    },
+    {
+      "name": "invalid_043",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1, 256"
+    },
+    {
+      "name": "invalid_044",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x1 256, x1"
+    },
+    {
+      "name": "invalid_045",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, -1, 1"
+    },
+    {
+      "name": "invalid_046",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, 4096, 1"
+    },
+    {
+      "name": "invalid_047",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, 0x1000, 1"
+    },
+    {
+      "name": "invalid_048",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, 99999999999999999999999999999999999, 1"
+    },
+    {
+      "name": "invalid_049",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, 0x, 1"
+    },
+    {
+      "name": "invalid_050",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, sstatus, 1"
+    },
+    {
+      "name": "invalid_051",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, +1, 1"
+    },
+    {
+      "name": "invalid_052",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x32, 256, 1"
+    },
+    {
+      "name": "invalid_053",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x-1, 256, 1"
+    },
+    {
+      "name": "invalid_054",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi a0, 256, 1"
+    },
+    {
+      "name": "invalid_055",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x, 256, 1"
+    },
+    {
+      "name": "invalid_056",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x99999999999999999, 256, 1"
+    },
+    {
+      "name": "invalid_057",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, 256, 1, x0"
+    },
+    {
+      "name": "invalid_058",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1, 256"
+    },
+    {
+      "name": "invalid_059",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x1 256, 1"
+    },
+    {
+      "name": "invalid_060",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, -1, 1"
+    },
+    {
+      "name": "invalid_061",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, 4096, 1"
+    },
+    {
+      "name": "invalid_062",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, 0x1000, 1"
+    },
+    {
+      "name": "invalid_063",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, 99999999999999999999999999999999999, 1"
+    },
+    {
+      "name": "invalid_064",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, 0x, 1"
+    },
+    {
+      "name": "invalid_065",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, sstatus, 1"
+    },
+    {
+      "name": "invalid_066",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, +1, 1"
+    },
+    {
+      "name": "invalid_067",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x32, 256, 1"
+    },
+    {
+      "name": "invalid_068",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x-1, 256, 1"
+    },
+    {
+      "name": "invalid_069",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi a0, 256, 1"
+    },
+    {
+      "name": "invalid_070",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x, 256, 1"
+    },
+    {
+      "name": "invalid_071",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x99999999999999999, 256, 1"
+    },
+    {
+      "name": "invalid_072",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, 256, 1, x0"
+    },
+    {
+      "name": "invalid_073",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1, 256"
+    },
+    {
+      "name": "invalid_074",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x1 256, 1"
+    },
+    {
+      "name": "invalid_075",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, -1, 1"
+    },
+    {
+      "name": "invalid_076",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, 4096, 1"
+    },
+    {
+      "name": "invalid_077",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, 0x1000, 1"
+    },
+    {
+      "name": "invalid_078",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, 99999999999999999999999999999999999, 1"
+    },
+    {
+      "name": "invalid_079",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, 0x, 1"
+    },
+    {
+      "name": "invalid_080",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, sstatus, 1"
+    },
+    {
+      "name": "invalid_081",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, +1, 1"
+    },
+    {
+      "name": "invalid_082",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x32, 256, 1"
+    },
+    {
+      "name": "invalid_083",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x-1, 256, 1"
+    },
+    {
+      "name": "invalid_084",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci a0, 256, 1"
+    },
+    {
+      "name": "invalid_085",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x, 256, 1"
+    },
+    {
+      "name": "invalid_086",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x99999999999999999, 256, 1"
+    },
+    {
+      "name": "invalid_087",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, 256, 1, x0"
+    },
+    {
+      "name": "invalid_088",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1, 256"
+    },
+    {
+      "name": "invalid_089",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x1 256, 1"
+    },
+    {
+      "name": "invalid_090",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x0, 256, -1"
+    },
+    {
+      "name": "invalid_091",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x0, 256, 32"
+    },
+    {
+      "name": "invalid_092",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x0, 256, 0x20"
+    },
+    {
+      "name": "invalid_093",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x0, 256, x1"
+    },
+    {
+      "name": "invalid_094",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x0, 256, 99999999999999999999999999999"
+    },
+    {
+      "name": "invalid_095",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrwi x0, 256, 0x"
+    },
+    {
+      "name": "invalid_096",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x0, 256, -1"
+    },
+    {
+      "name": "invalid_097",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x0, 256, 32"
+    },
+    {
+      "name": "invalid_098",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x0, 256, 0x20"
+    },
+    {
+      "name": "invalid_099",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x0, 256, x1"
+    },
+    {
+      "name": "invalid_100",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x0, 256, 99999999999999999999999999999"
+    },
+    {
+      "name": "invalid_101",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrsi x0, 256, 0x"
+    },
+    {
+      "name": "invalid_102",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x0, 256, -1"
+    },
+    {
+      "name": "invalid_103",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x0, 256, 32"
+    },
+    {
+      "name": "invalid_104",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x0, 256, 0x20"
+    },
+    {
+      "name": "invalid_105",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x0, 256, x1"
+    },
+    {
+      "name": "invalid_106",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x0, 256, 99999999999999999999999999999"
+    },
+    {
+      "name": "invalid_107",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrci x0, 256, 0x"
+    },
+    {
+      "name": "invalid_108",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x0, 256, x32"
+    },
+    {
+      "name": "invalid_109",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x0, 256, -1"
+    },
+    {
+      "name": "invalid_110",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x0, 256, 32"
+    },
+    {
+      "name": "invalid_111",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrw x0, 256, x-1"
+    },
+    {
+      "name": "invalid_112",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x0, 256, x32"
+    },
+    {
+      "name": "invalid_113",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x0, 256, -1"
+    },
+    {
+      "name": "invalid_114",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x0, 256, 32"
+    },
+    {
+      "name": "invalid_115",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrs x0, 256, x-1"
+    },
+    {
+      "name": "invalid_116",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x0, 256, x32"
+    },
+    {
+      "name": "invalid_117",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x0, 256, -1"
+    },
+    {
+      "name": "invalid_118",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x0, 256, 32"
+    },
+    {
+      "name": "invalid_119",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "csrrc x0, 256, x-1"
+    },
+    {
+      "name": "invalid_120",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sret x0"
+    },
+    {
+      "name": "invalid_121",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sret 0"
+    },
+    {
+      "name": "invalid_122",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sret,"
+    },
+    {
+      "name": "invalid_123",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "wfi x0"
+    },
+    {
+      "name": "invalid_124",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "wfi 0"
+    },
+    {
+      "name": "invalid_125",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "wfi,"
+    },
+    {
+      "name": "invalid_126",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "fence x0"
+    },
+    {
+      "name": "invalid_127",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "fence 0"
+    },
+    {
+      "name": "invalid_128",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "fence,"
+    },
+    {
+      "name": "invalid_129",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "fence.i x0"
+    },
+    {
+      "name": "invalid_130",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "fence.i 0"
+    },
+    {
+      "name": "invalid_131",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "fence.i,"
+    },
+    {
+      "name": "invalid_132",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sfence.vma"
+    },
+    {
+      "name": "invalid_133",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sfence.vma x0"
+    },
+    {
+      "name": "invalid_134",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sfence.vma x32, x0"
+    },
+    {
+      "name": "invalid_135",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sfence.vma x0, x32"
+    },
+    {
+      "name": "invalid_136",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sfence.vma x0, -1"
+    },
+    {
+      "name": "invalid_137",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sfence.vma x0, x0, x0"
+    },
+    {
+      "name": "invalid_138",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sh x32, 0(x1)"
+    },
+    {
+      "name": "invalid_139",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sh x1, 0(x32)"
+    },
+    {
+      "name": "invalid_140",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sh x1, -2049(x2)"
+    },
+    {
+      "name": "invalid_141",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sh x1, 2048(x2)"
+    },
+    {
+      "name": "invalid_142",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sh x1, 0(x2), x3"
+    },
+    {
+      "name": "invalid_143",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 0"
+    },
+    {
+      "name": "invalid_144",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 1"
+    },
+    {
+      "name": "invalid_145",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 2"
+    },
+    {
+      "name": "invalid_146",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 3"
+    },
+    {
+      "name": "invalid_147",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 5"
+    },
+    {
+      "name": "invalid_148",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 4095"
+    },
+    {
+      "name": "invalid_149",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 4097"
+    },
+    {
+      "name": "invalid_150",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 8192"
+    },
+    {
+      "name": "invalid_151",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align -4"
+    },
+    {
+      "name": "invalid_152",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 0x"
+    },
+    {
+      "name": "invalid_153",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align x4"
+    },
+    {
+      "name": "invalid_154",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 4,"
+    },
+    {
+      "name": "invalid_155",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 4 8"
+    },
+    {
+      "name": "invalid_156",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "align 99999999999999999999999999"
+    },
+    {
+      "name": "invalid_157",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "addi x1, x2, 2048"
+    },
+    {
+      "name": "invalid_158",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "slli x1, x2, 64"
+    },
+    {
+      "name": "invalid_159",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "E_PARSE file=2 byte=0\n"
+        }
+      ],
+      "passed": true,
+      "assembly": "sd x1, -2049(x2)"
+    },
+    {
+      "name": "halfword_execution",
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/compiler.elf",
+            "build",
+            "program.build"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=1 imports=0 assembly_files=1 source=168 assembly=449 names=8 name_bytes=76 decls=2 types=5 fields=0 params=0 max_ast=13 max_ir=13 max_frame=64 max_bindings=0 max_defers=0 max_loops=0 max_slots=5 max_args=0 max_params=0 text=4104 data=0 objects=0 symbols=14 fixups=11 relocations=0 elf=16385\n"
+        },
+        {
+          "command": [
+            "/usr/bin/qemu-riscv64",
+            "/home/mii/code/konOSuba/biomiya/core-s/build/k0-s0-root-r1/halfword_execution/program.elf"
+          ],
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

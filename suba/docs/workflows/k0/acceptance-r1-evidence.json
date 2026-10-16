@@ -1,0 +1,24 @@
+{
+  "reviewer": "/root/k0_acceptance",
+  "candidate_sha256": "5ec2c2947483591cf49ca1eb9aea6d3dc86bc2bf7092ae407d63cd8e30cb5faa",
+  "decision": "Rejected",
+  "independent_records": {
+    "suba/build/k0-acceptance-final-entry-r1/verification.json": "b3e7050440d840a1a731d95a9148848d851bf52990ed536199a0c8c738520e81",
+    "suba/build/k0-acceptance-final-abi-r1/verification.json": "01a62ef5a844a73e10c1fe898ccc342ff0aba209f996ca2c9c701cf74312f1b8",
+    "suba/build/k0-acceptance-final-observer-r1.json": "394f336aaf192c01ba02f2077eda04bfe013bf823918496f1e2f7cff2115be2f",
+    "biomiya/build/k0-acceptance-final-host-r1/verification.json": "4865c829e15c240bbd877504e4a5407bc024bf6c664e5dcec98a40a6fddaad2b"
+  },
+  "other_evidence": [
+    "acceptance-r1-identity.json",
+    "acceptance-r1-migration.json",
+    "acceptance-r1-bootstrap-check.json",
+    "acceptance-r1-post-marker-fault.json"
+  ],
+  "blockers": [
+    {
+      "path": "suba/tools/check_kernel_entry.py",
+      "problem": "valid path only forbids ordinary panic, so real emergency trap after success marker is accepted",
+      "evidence": "acceptance-r1-post-marker-fault.json"
+    }
+  ]
+}

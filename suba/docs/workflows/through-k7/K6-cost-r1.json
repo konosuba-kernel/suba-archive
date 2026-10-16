@@ -1,0 +1,399 @@
+{
+  "production": [
+    {
+      "path": "user/text/font.vt",
+      "bytes": 2646,
+      "physical_lines": 57,
+      "sha256": "ec26a42384408cff4ab17e7bbcc88969bbd6b73606d503348b828138d3f08796"
+    },
+    {
+      "path": "user/text/utf8.vt",
+      "bytes": 3283,
+      "physical_lines": 81,
+      "sha256": "1300d030cf93527fabd19d190530600bb899f8288f0a45b09ef555ccf40990fd"
+    },
+    {
+      "path": "user/edit/buffer.vt",
+      "bytes": 10479,
+      "physical_lines": 220,
+      "sha256": "762dfe2f60f6e9e9ca751f6e85d0e036deaac643d71944d0f5a4e5304d38359f"
+    },
+    {
+      "path": "user/edit/motion.vt",
+      "bytes": 5254,
+      "physical_lines": 128,
+      "sha256": "2594b9e8db05293bae0c8ecb17fd765eb6635ae8fd1cd30ca372a81fa00d4079"
+    },
+    {
+      "path": "tools/fontpack/linux.s0",
+      "bytes": 195,
+      "physical_lines": 8,
+      "sha256": "1732ac6480b0ea31ae4c46a4d6b9cbf079b4dbe26dfa07a3439c484ec981507f"
+    },
+    {
+      "path": "tools/fontpack/linux.vt",
+      "bytes": 1719,
+      "physical_lines": 38,
+      "sha256": "a09fee4ed70655e472f8b3982090006132f12a401d6b6793c35f61df190ccbaa"
+    },
+    {
+      "path": "tools/fontpack/pack.vt",
+      "bytes": 4711,
+      "physical_lines": 111,
+      "sha256": "b6ab189fd7ecf72a84c8c78851b393b330e10096c3f1f47f71ff3cb3190db285"
+    }
+  ],
+  "production_total_lines": 643,
+  "production_total_bytes": 28287,
+  "test_sources": [
+    {
+      "path": "tests/k6/cost.py",
+      "bytes": 3663,
+      "physical_lines": 62,
+      "sha256": "67418599c8844e16bb2e11e9d1b94917cf445ac775441ee57a48dfcd36bf23d0"
+    },
+    {
+      "path": "tests/k6/editor_probe.vt",
+      "bytes": 5339,
+      "physical_lines": 108,
+      "sha256": "de239b114d9cc2959c32fd572aa5dc90c28583cadd0ecf2c2d4f23d791469100"
+    },
+    {
+      "path": "tests/k6/font_probe.vt",
+      "bytes": 1976,
+      "physical_lines": 42,
+      "sha256": "88f67732af44ea624ed415922b53c98a6dea68220dddf442fbbf9b4ea9b87869"
+    },
+    {
+      "path": "tests/k6/model.py",
+      "bytes": 3900,
+      "physical_lines": 99,
+      "sha256": "372a5313f8d1a0d3c8af1de7bee365891648c12a8be4c3f85ecaa761fd5f5590"
+    },
+    {
+      "path": "tests/k6/resources.vt",
+      "bytes": 7623,
+      "physical_lines": 131,
+      "sha256": "fd735180dde82ba156a11dfc3506444d760684f929ff30bc882ad6021f1293b1"
+    },
+    {
+      "path": "tests/k6/transport.vt",
+      "bytes": 1837,
+      "physical_lines": 42,
+      "sha256": "8721aeb7a76a158f10ff541e3e205b664d117a2ae81682444adda2369e834bf9"
+    },
+    {
+      "path": "tests/k6/utf8_probe.vt",
+      "bytes": 1500,
+      "physical_lines": 34,
+      "sha256": "bb44479b3cc4bbbd41543a0809edf57320ebf8352649f65b94661cf02441963b"
+    }
+  ],
+  "test_driver": {
+    "path": "tools/check_k6.py",
+    "bytes": 11916,
+    "physical_lines": 183,
+    "sha256": "0a837e7f160e4d5c4b51d0a5f884718eeb49bbf04d16373bce6c3af396f52100"
+  },
+  "font_assets": [
+    {
+      "path": "assets/unifont/COPYING",
+      "bytes": 48441,
+      "sha256": "cd2785c2b8e0a01d203560265b2d2d47cdb1401d2707d25918ac5531bcdba947"
+    },
+    {
+      "path": "assets/unifont/COPYRIGHT",
+      "bytes": 355,
+      "sha256": "2cda4009364feab3375529c0e219f3059f04b55d2c5fe4559f3ec4a20a142398"
+    },
+    {
+      "path": "assets/unifont/OFL-1.1.txt",
+      "bytes": 4340,
+      "sha256": "869692af094c57fb7258c57fe26820c759319603321d0ffeb278de3651763ded"
+    },
+    {
+      "path": "assets/unifont/README.md",
+      "bytes": 2773,
+      "sha256": "067f1f9ff2414207cf92e8a3d91847404203cbbb17f485396c25e1017c735c68"
+    },
+    {
+      "path": "assets/unifont/UPSTREAM-README",
+      "bytes": 29677,
+      "sha256": "0c35716b811d92631b60c92c1ab6a650e5da486f82896c1e87aaef931eb9336a"
+    },
+    {
+      "path": "assets/unifont/coverage.json",
+      "bytes": 523,
+      "sha256": "94872359f928e3ae0fba06ec45a14aa6c6847bd3de7948111049bb26f4547b98"
+    },
+    {
+      "path": "assets/unifont/provenance.json",
+      "bytes": 1989,
+      "sha256": "7cbab88e535f39cef4e0899ecb88dea1bef820c341d2ec1e726e1449cfb2365b"
+    },
+    {
+      "path": "assets/unifont/suba-bmp.fnt",
+      "bytes": 2162704,
+      "sha256": "137bb0651c22e30f6eb29aad6f74c6173ee5079a4c739bb78517cb16b9ccc8fd"
+    },
+    {
+      "path": "assets/unifont/unifont-17.0.04.hex",
+      "bytes": 3762996,
+      "sha256": "6d3a14fc497f290cc0d43daa87181b5b932d3db23747cf1335a7759e76ef9882"
+    },
+    {
+      "path": "assets/unifont/unifont-17.0.04.hex.gz",
+      "bytes": 936643,
+      "sha256": "e808096f98ff04294f0d49452cad51964e2930b7be046ac8e1efadc46b2bab0f"
+    }
+  ],
+  "build_costs": [
+    {
+      "name": "utf8",
+      "elf_sha256": "32b2087bd2e77b05d29f78fb263098969709ff4a669a61dc4e4ecf59b619c252",
+      "elf_bytes": 28673,
+      "segments": [
+        {
+          "flags": 5,
+          "file_bytes": 17492,
+          "memory_bytes": 17492,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 4,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 6,
+          "file_bytes": 1,
+          "memory_bytes": 65538,
+          "bss_bytes": 65537
+        }
+      ],
+      "max_production_frame": {
+        "name": "user::text::utf8::decode",
+        "module": "user::text::utf8",
+        "source": "user/text/utf8.vt",
+        "address": 66100,
+        "frame_bytes": 1984,
+        "calls": [
+          "user::text::utf8::scalar"
+        ]
+      },
+      "longest_production_chain": [
+        "user::text::utf8::validate",
+        {
+          "bytes": 2704,
+          "chain": [
+            "user::text::utf8::validate",
+            "user::text::utf8::decode",
+            "user::text::utf8::scalar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "editor",
+      "elf_sha256": "58f93957c6dde0cf87c8fd95943e32e0238d2ff7f3381b07749e1fbcf4fd79d3",
+      "elf_bytes": 81921,
+      "segments": [
+        {
+          "flags": 5,
+          "file_bytes": 69984,
+          "memory_bytes": 69984,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 4,
+          "file_bytes": 2,
+          "memory_bytes": 2,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 6,
+          "file_bytes": 1,
+          "memory_bytes": 16777217,
+          "bss_bytes": 16777216
+        }
+      ],
+      "max_production_frame": {
+        "name": "user::edit::buffer::replace",
+        "module": "user::edit::buffer",
+        "source": "user/edit/buffer.vt",
+        "address": 90796,
+        "frame_bytes": 2320,
+        "calls": [
+          "user::edit::buffer::move_gap",
+          "user::edit::buffer::overlaps",
+          "user::edit::buffer::state",
+          "user::text::utf8::validate"
+        ]
+      },
+      "longest_production_chain": [
+        "user::edit::buffer::erase",
+        {
+          "bytes": 5920,
+          "chain": [
+            "user::edit::buffer::erase",
+            "user::edit::buffer::replace",
+            "user::text::utf8::validate",
+            "user::text::utf8::decode",
+            "user::text::utf8::scalar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "resources",
+      "elf_sha256": "c056cc3f8dab8ecc52b09d8f938f1c8cbf32fc5925207bd83b1b72a881718fa3",
+      "elf_bytes": 114689,
+      "segments": [
+        {
+          "flags": 5,
+          "file_bytes": 105992,
+          "memory_bytes": 105992,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 4,
+          "file_bytes": 204,
+          "memory_bytes": 204,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 6,
+          "file_bytes": 1,
+          "memory_bytes": 2163217,
+          "bss_bytes": 2163216
+        }
+      ],
+      "max_production_frame": {
+        "name": "tool::fontpack::pack",
+        "module": "tool::fontpack",
+        "source": "tools/fontpack/pack.vt",
+        "address": 129832,
+        "frame_bytes": 2480,
+        "calls": [
+          "tool::fontpack::line",
+          "tool::fontpack::overlaps",
+          "tool::fontpack::write_glyph"
+        ]
+      },
+      "longest_production_chain": [
+        "user::edit::buffer::erase",
+        {
+          "bytes": 5920,
+          "chain": [
+            "user::edit::buffer::erase",
+            "user::edit::buffer::replace",
+            "user::text::utf8::validate",
+            "user::text::utf8::decode",
+            "user::text::utf8::scalar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fontpack",
+      "elf_sha256": "f07c836049533ea28f4fb14088fc2027d3d7d6e419d682686ca8296bd90ee961",
+      "elf_bytes": 40961,
+      "segments": [
+        {
+          "flags": 5,
+          "file_bytes": 29328,
+          "memory_bytes": 29328,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 4,
+          "file_bytes": 64,
+          "memory_bytes": 64,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 6,
+          "file_bytes": 1,
+          "memory_bytes": 7405586,
+          "bss_bytes": 7405585
+        }
+      ],
+      "max_production_frame": {
+        "name": "tool::fontpack::pack",
+        "module": "tool::fontpack",
+        "source": "tools/fontpack/pack.vt",
+        "address": 81400,
+        "frame_bytes": 2480,
+        "calls": [
+          "tool::fontpack::line",
+          "tool::fontpack::overlaps",
+          "tool::fontpack::write_glyph"
+        ]
+      },
+      "longest_production_chain": [
+        "tool::fontpack::pack",
+        {
+          "bytes": 5136,
+          "chain": [
+            "tool::fontpack::pack",
+            "tool::fontpack::line",
+            "tool::fontpack::nibble"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "glyphs",
+      "elf_sha256": "4756ebee17c6651abe2c5b38178b115d4c4dddc13c64587fb80e5c9c1ccda281",
+      "elf_bytes": 24577,
+      "segments": [
+        {
+          "flags": 5,
+          "file_bytes": 15008,
+          "memory_bytes": 15008,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 4,
+          "file_bytes": 48,
+          "memory_bytes": 48,
+          "bss_bytes": 0
+        },
+        {
+          "flags": 6,
+          "file_bytes": 1,
+          "memory_bytes": 2166802,
+          "bss_bytes": 2166801
+        }
+      ],
+      "max_production_frame": {
+        "name": "user::text::font::open",
+        "module": "user::text::font",
+        "source": "user/text/font.vt",
+        "address": 65684,
+        "frame_bytes": 1360,
+        "calls": []
+      },
+      "longest_production_chain": [
+        "user::text::font::open",
+        {
+          "bytes": 1360,
+          "chain": [
+            "user::text::font::open"
+          ]
+        }
+      ]
+    }
+  ],
+  "core_mutable_static_bytes": 0,
+  "font_fallback_readonly_bytes": 32,
+  "caller_document_storage_max": 4194304,
+  "fontpack_linux_input_buffer": 5242881,
+  "fontpack_linux_output_buffer": 2162704,
+  "raw_function_frames_and_graph": {
+    "path": "build/k6-r4/verification.json",
+    "sha256": "76ab8605a882473b7e0719527600f8ec11200c5715d505f28f6480c232708114"
+  },
+  "stack_exclusions": "caller frames outside public entry, kernel syscall/trap frames, firmware; Linux bridge does not use stack"
+}

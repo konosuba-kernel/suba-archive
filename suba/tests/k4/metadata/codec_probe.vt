@@ -1,0 +1,32 @@
+module test::codec_probe;
+import kernel::fs::codec;
+import test::transport;
+static mut INPUT: [4101]u8 = zero;
+static mut OUTPUT: [4096]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        let count: usize = transport::read(core::slice_of_mut(INPUT));
+        if count == 0_usize || count > 4100_usize { return 80; }
+        let op: u8 = INPUT[0];
+        let data: []const u8 = core::slice_from_raw_parts(core::ptr_add(core::slice_of(INPUT).data, 1), count - 1_usize);
+        if op == 0_u8 {
+            if !codec::super_write(core::slice_of_mut(OUTPUT), 0) { return 81; }
+            if !transport::write(core::slice_of(OUTPUT)) { return 82; } return 0;
+        }
+        if op == 1_u8 { if codec::super_valid(data) { return 0; } return 1; }
+        if op == 2_u8 { if !transport::word(codec::checksum(data, data.len, 0) as usize) { return 82; } return 0; }
+        if op == 3_u8 || op == 4_u8 {
+            var id: usize = 1; if op == 4_u8 { id = 0; }
+            match codec::node_read(data, id) {
+                codec::NodeRead::Invalid => { return 1; },
+                codec::NodeRead::Value(node) => {
+                    let out: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(OUTPUT).data, 128);
+                    if !codec::node_write(node, out) { return 81; }
+                    if !transport::write(core::slice_from_raw_parts(out.data, out.len)) { return 82; }
+                    return 0;
+                },
+            }
+        }
+    }
+    return 83;
+}

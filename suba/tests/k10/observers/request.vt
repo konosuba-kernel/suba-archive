@@ -1,0 +1,24 @@
+// TEST ONLY: WaitSet is the entire registration; there is no separate wait list.
+pub unsafe fn k10_pending(slot: usize) -> usize {
+    unsafe { if slot < process::CAPACITY && !idle(RECORDS[slot].operation) { return 1; } }
+    return 0;
+}
+pub unsafe fn k10_watches(slot: usize) -> usize {
+    unsafe {
+        if slot >= process::CAPACITY { return 0; }
+        match RECORDS[slot].operation {
+            Operation::Wait(value) => { return value.count + 1_usize; },
+            Operation::Idle => {}, Operation::Job(value) => {}, Operation::WindowCreate(value) => {},
+            Operation::WindowCopy(value) => {}, Operation::File(value) => {}, Operation::Read(value) => {},
+            Operation::Write(value) => {}, Operation::Preparing(value) => {}, Operation::Installing(value) => {},
+            Operation::Loading(value) => {}, Operation::Pages(value) => {}
+        }
+    }
+    return 0;
+}
+pub unsafe fn k10_owner(slot: usize) -> usize {
+    unsafe {
+        if slot >= process::CAPACITY { return 0; }
+        match RECORDS[slot].owner { Owner::Empty => { return 0; }, Owner::Live(value) => { return 1; } }
+    }
+}

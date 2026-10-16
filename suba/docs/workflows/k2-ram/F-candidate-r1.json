@@ -1,0 +1,71 @@
+{
+  "node": "F",
+  "revision": "r1",
+  "status": "frozen-for-independent-acceptance",
+  "author": "/root/ram_fdt",
+  "independent_reviewer": "/root",
+  "paths_relative_to": "/home/mii/code/konOSuba/suba",
+  "baseline_commit": "e8fe28288a87a354a1bb01f84084a45764dda2b3",
+  "dependencies": {
+    "D_candidate": {
+      "path": "docs/workflows/k2-ram/D-candidate-r3.json",
+      "sha256": "4ef4ddfc49864d263087a9bfc8f0b201dcdc30f00f0cb624b601cb1bb63cf5ed"
+    },
+    "D_acceptance": {
+      "path": "docs/workflows/k2-ram/D-acceptance-r3.md",
+      "sha256": "681dd6adc9f51e4ce572ea79299565505a838de7cf4562801184387b744b59ca"
+    },
+    "contract": {
+      "path": "docs/workflows/k2-ram/CONTRACT.md",
+      "sha256": "64af9154441e1a66c8c70e17566b53ebee651f01c336a0381ae38b69f5f1d409"
+    },
+    "style": {
+      "path": "CODE_STYLE.md",
+      "sha256": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99"
+    },
+    "ABI": {
+      "path": "abi/contract.vt",
+      "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d"
+    },
+    "compiler": {
+      "path": "../biomiya/build/layout-p4-r1/e3.elf",
+      "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+    }
+  },
+  "files": {
+    "platform/fdt.vt": "d37da23b811cd667fddf8597194439b65d63ac74449170f6a20e16e398896cc6",
+    "platform/fdt_properties.vt": "57a0c670787f9603765e148c806fd940bf8434b1d00824466a1ab71bc0201b42",
+    "platform/fdt_tree.vt": "5d609dc16136980d061c10a9b0b254b4151f32921ca0b4fbe285661df0c861ae",
+    "tests/fdt/README.md": "d94713a5388de6931f97d73b50ccf25161f4d65c2228bc1f3a0860c9569e3dfa",
+    "tests/fdt/cases.py": "296384f2739ff4afaa85a19a91518a504b2b4aef2397bbfd174ffea9365817f5",
+    "tests/fdt/linux.s0": "b8ce592f758559d947b445c97ce0fcc1b7a3bd45002144deaf043ec1b338808e",
+    "tests/fdt/opensbi-runtime.dtb": "d8b4117980325a8a744f773cf94bbe0b297e947da95a30767b1a2f396880e12d",
+    "tests/fdt/probe.vt": "cdbefd394c9b99ce2e50488485b8b91e616e1018870a732653c2838c8900b2df",
+    "tests/fdt/qemu-virt.dtb": "4b86967d51a0b5f3102e597214ab2c1344bf6ef38f8c31edc3226b96854fe9e1",
+    "tests/fdt/runtime-capture.json": "eae4d2a275903325abfe76c0638eec6ba02f1a0a22cd547e332917e6e78a687e",
+    "tools/check_fdt.py": "31927dd53424b8f221b140840e303cc55febf25379126c213e29bdebcb27647c",
+    "docs/workflows/k2-ram/F-exploration-r1.md": "cd4e9e3adba06adc1e880812b03488b3cfa257227bed337ce089cb13730f6504",
+    "docs/workflows/k2-ram/F-report-r1.md": "bc065903411addaf476dfd61830f803807ee0163f6719963896281635726f457",
+    "docs/workflows/k2-ram/F-results-r1.json": "59102e5759724e3ba325c8b24128bfbba19bef2433587ea8b31dd9a1bf9f86b4",
+    "docs/workflows/k2-ram/F-cost-r1.json": "203fb950edf29c0c03d9dd26ef4576823ad6135c73177a5265e4c8047a704ba7"
+  },
+  "production_manifest_sources": [
+    "abi/contract.vt",
+    "platform/fdt.vt",
+    "platform/fdt_tree.vt",
+    "platform/fdt_properties.vt"
+  ],
+  "raw_verification": "build/k2-f-r4/verification.json",
+  "verification_summary": {
+    "cases": 359,
+    "negative_controls": 3,
+    "passed": true
+  },
+  "acceptance_required": [
+    "All input-dependent reads bounded before access; no physical described-address access",
+    "Complete memory reservation sources and fail-closed unsupported expressions",
+    "No recursion or mutable global state; bounded traversal and measured stack chain",
+    "Actual QEMU/OpenSBI fixtures and distinguishing semantic defect controls",
+    "Frozen exact source and compiler identity; F component result does not claim kernel boot"
+  ]
+}

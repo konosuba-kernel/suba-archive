@@ -1,0 +1,115 @@
+// Job owns cancellation state and child reference count, not process/page resources.
+// Serialized dispatch; a closed handle cannot retire a job with remaining children.
+module kernel::jobs;
+import kernel::objects;
+const CAPACITY: usize = 32;
+struct Record { live: bool, held: bool, ending: bool, generation: usize, children: usize, storage: bool }
+static mut RECORDS: [CAPACITY]Record = zero;
+pub enum Created { Ready(objects::Identity), Limit }
+pub enum Status { Active, Ending, Done, Invalid }
+unsafe fn valid(id: objects::Identity) -> bool {
+    unsafe { return id.slot < CAPACITY && id.generation != 0_usize &&
+        RECORDS[id.slot].live && RECORDS[id.slot].generation == id.generation; }
+}
+pub unsafe fn create() -> Created {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            if !RECORDS[i].live && RECORDS[i].generation != 0xffffffffffffffff_usize {
+                RECORDS[i].generation = RECORDS[i].generation + 1_usize;
+                RECORDS[i].live = true;
+                RECORDS[i].held = true;
+                RECORDS[i].ending = false;
+                RECORDS[i].children = 0;
+                RECORDS[i].storage = false;
+                return Created::Ready(make objects::Identity { slot: i, generation: RECORDS[i].generation });
+            }
+            i = i + 1_usize;
+        }
+        return Created::Limit;
+    }
+}
+pub unsafe fn status(id: objects::Identity) -> Status {
+    unsafe {
+        if !valid(id) { return Status::Invalid; }
+        if !RECORDS[id.slot].ending { return Status::Active; }
+        if RECORDS[id.slot].children != 0_usize || RECORDS[id.slot].storage { return Status::Ending; }
+        return Status::Done;
+    }
+}
+pub unsafe fn join(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || RECORDS[id.slot].ending || RECORDS[id.slot].children == 64_usize { return false; }
+        RECORDS[id.slot].children = RECORDS[id.slot].children + 1_usize;
+        return true;
+    }
+}
+pub unsafe fn leave(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || RECORDS[id.slot].children == 0_usize { return false; }
+        RECORDS[id.slot].children = RECORDS[id.slot].children - 1_usize;
+        if RECORDS[id.slot].children == 0_usize && !RECORDS[id.slot].held && !RECORDS[id.slot].storage { RECORDS[id.slot].live = false; }
+        return true;
+    }
+}
+pub unsafe fn end(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) { return false; }
+        RECORDS[id.slot].ending = true;
+        return true;
+    }
+}
+pub unsafe fn release(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || !RECORDS[id.slot].held { return false; }
+        RECORDS[id.slot].held = false;
+        RECORDS[id.slot].ending = true;
+        if RECORDS[id.slot].children == 0_usize && !RECORDS[id.slot].storage { RECORDS[id.slot].live = false; }
+        return true;
+    }
+}
+pub unsafe fn live_count() -> usize {
+    unsafe {
+        var count: usize = 0;
+        var i: usize = 0;
+        while i < CAPACITY { if RECORDS[i].live { count = count + 1_usize; } i = i + 1_usize; }
+        return count;
+    }
+}
+
+// A directory tree is a separate system reference, not a child process.
+pub unsafe fn hold_storage(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || RECORDS[id.slot].storage || RECORDS[id.slot].ending { return false; }
+        RECORDS[id.slot].storage = true;
+        return true;
+    }
+}
+pub unsafe fn release_storage(id: objects::Identity) -> bool {
+    unsafe {
+        if !valid(id) || !RECORDS[id.slot].storage || RECORDS[id.slot].children != 0_usize { return false; }
+        RECORDS[id.slot].storage = false;
+        if !RECORDS[id.slot].held { RECORDS[id.slot].live = false; }
+        return true;
+    }
+}
+pub unsafe fn storage_tail(slot: usize) -> objects::Identity {
+    unsafe {
+        if slot < CAPACITY && RECORDS[slot].live && RECORDS[slot].ending && RECORDS[slot].storage &&
+            RECORDS[slot].children == 0_usize {
+            return make objects::Identity { slot: slot, generation: RECORDS[slot].generation };
+        }
+        return make objects::Identity { slot: 0, generation: 0 };
+    }
+}
+
+pub unsafe fn storage_pending() -> bool {
+    unsafe {
+        var slot: usize = 0;
+        while slot < CAPACITY {
+            if storage_tail(slot).generation != 0_usize { return true; }
+            slot = slot + 1_usize;
+        }
+        return false;
+    }
+}

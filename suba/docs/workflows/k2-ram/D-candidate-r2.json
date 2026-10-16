@@ -1,0 +1,13 @@
+{
+  "node": "D",
+  "revision": "r2",
+  "author": "/root",
+  "files": {
+    "docs/workflows/k2-ram/CONTRACT.md": "a642f110d9763392f4502fc4e4b1a2c6a5c7c5eb7c66be3fc49977064426af3f"
+  },
+  "baseline": {
+    "suba": "e8fe282",
+    "biomiya": "d2c6e98"
+  },
+  "changes": "Explicit unsupported Linux usable-memory and allocation-range restrictions; r1 contract preserved in revisions/d-r1/CONTRACT.md"
+}

@@ -1,0 +1,23 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+pub fn run() -> u32 {
+    let initial: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+    let first: syscall::Reply = services::allocate_pages(16384);
+    if first.status != abi::OK { return 80; }
+    let baseline: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+    let second: syscall::Reply = services::allocate_pages(8192);
+    if second.status != abi::NO_MEMORY { return 81; }
+    let rolled: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+    if rolled.value != baseline.value { return 82; }
+    unsafe {
+        *core::ptr::<usize>(first.value) = 123;
+        *core::ptr::<usize>(first.value + 16384_usize * 4096_usize - 8_usize) = 456;
+    }
+    let free: syscall::Reply = services::free_pages(first.value, 16384);
+    let final: syscall::Reply = services::stats(syscalls::STATS_FREE_PAGES);
+    if free.status != abi::OK || final.value != initial.value { return 83; }
+    return 0;
+}

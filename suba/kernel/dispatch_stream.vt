@@ -1,0 +1,237 @@
+// Stream syscalls and level-triggered waits share the dispatch owner and scratch.
+module kernel::dispatch;
+// Module imports are declared once in dispatch.vt (S-next module-wide imports).
+// Each transfer copies twice (ring <-> scratch <-> user), at most 4096 bytes total.
+const STREAM_SLICE_BYTES: usize = 2048;
+
+unsafe fn create_stream(id: process::Id, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if bytes != syscalls::STREAM_PAIR_BYTES || !usercopy::range(id, address, bytes, true) { return answer(id, abi::INVALID, 0); }
+        var identity: objects::Identity = zero;
+        match stream::create() {
+            stream::CreateResult::Limit => { return answer(id, abi::LIMIT, 0); },
+            stream::CreateResult::Ready(value) => { identity = value; }
+        }
+        var read_handle: usize = 0;
+        match insert(id, objects::Object::StreamRead(identity), objects::READ) {
+            objects::InsertResult::Ready(value) => { read_handle = value; },
+            objects::InsertResult::Invalid => { return false; },
+            objects::InsertResult::Limit => {
+                if !stream::release(identity, false) || !stream::release(identity, true) { return false; }
+                return answer(id, abi::LIMIT, 0);
+            }
+        }
+        var write_handle: usize = 0;
+        match insert(id, objects::Object::StreamWrite(identity), objects::WRITE) {
+            objects::InsertResult::Ready(value) => { write_handle = value; },
+            objects::InsertResult::Invalid => { return false; },
+            objects::InsertResult::Limit => {
+                if close(id, read_handle) != abi::OK || !stream::release(identity, true) { return false; }
+                return answer(id, abi::LIMIT, 0);
+            }
+        }
+        let buffer: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+        argument_wire::put(buffer, 0, read_handle, 8);
+        argument_wire::put(buffer, 8, write_handle, 8);
+        if !usercopy::write(id, address, core::slice_from_raw_parts(buffer.data, bytes)) { return false; }
+        return answer(id, abi::OK, 0);
+    }
+}
+
+unsafe fn transfer(id: process::Id, token: usize, address: usize, bytes: usize,
+    flags: usize, writer: bool) -> bool {
+    unsafe {
+        if flags > syscalls::NONBLOCK || !usercopy::range(id, address, bytes, !writer) { return answer(id, abi::INVALID, 0); }
+        var rights: u32 = objects::READ;
+        if writer { rights = objects::WRITE; }
+        var identity: objects::Identity = zero;
+        match handle(id, token, rights) {
+            objects::LookupResult::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            objects::LookupResult::Denied => { return answer(id, abi::DENIED, 0); },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::StreamRead(value) => {
+                        if writer { return answer(id, abi::BAD_HANDLE, 0); } identity = value;
+                    },
+                    objects::Object::StreamWrite(value) => {
+                        if !writer { return answer(id, abi::BAD_HANDLE, 0); } identity = value;
+                    },
+                    objects::Object::Desktop(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Empty => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::File(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Window(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Child(value) => { return answer(id, abi::BAD_HANDLE, 0); },
+                    objects::Object::Job(value) => { return answer(id, abi::BAD_HANDLE, 0); }
+                }
+            }
+        }
+        if bytes == 0_usize { return answer(id, abi::OK, 0); }
+        var ready: bool = false;
+        match stream::status(identity) {
+            stream::StatusResult::Invalid => { return false; },
+            stream::StatusResult::Ready(status) => {
+                ready = status.readable;
+                if writer { ready = status.writable; }
+            }
+        }
+        if !ready && flags == syscalls::NONBLOCK { return answer(id, abi::WOULD_BLOCK, 0); }
+        let data: request::Transfer = make request::Transfer { stream: identity, address: address, bytes: bytes, nonblock: flags == syscalls::NONBLOCK };
+        // Endpoint reference stays in this blocked process's handle table. Kill cancels
+        // delivery before draining it, so no separate hidden stream reference is needed.
+        if writer { return pending(id, request::Operation::Write(data)); }
+        return pending(id, request::Operation::Read(data));
+    }
+}
+
+unsafe fn transfer_step(work: request::Pending, data: request::Transfer, writer: bool) -> bool {
+    unsafe {
+        if !request::active(work.owner, work.token) { return true; }
+        if !usercopy::range(work.owner, data.address, data.bytes, !writer) { return finish(work, abi::INVALID, 0); }
+        var count: usize = data.bytes;
+        if count > STREAM_SLICE_BYTES { count = STREAM_SLICE_BYTES; }
+        let buffer: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, count);
+        if writer {
+            if !usercopy::read(work.owner, data.address, buffer) { return finish(work, abi::INVALID, 0); }
+            match stream::write(data.stream, core::slice_from_raw_parts(buffer.data, count)) {
+                stream::WriteResult::Invalid => { return false; },
+                stream::WriteResult::WouldBlock => {
+                    if data.nonblock { return finish(work, abi::WOULD_BLOCK, 0); }
+                    return true;
+                },
+                stream::WriteResult::BrokenStream => { return finish(work, abi::BROKEN_STREAM, 0); },
+                stream::WriteResult::Count(value) => { return finish(work, abi::OK, value); }
+            }
+        }
+        // Validate the entire original range before consuming a single buffered byte.
+        match stream::read(data.stream, buffer) {
+            stream::ReadResult::Invalid => { return false; },
+            stream::ReadResult::WouldBlock => {
+                if data.nonblock { return finish(work, abi::WOULD_BLOCK, 0); }
+                return true;
+            },
+            stream::ReadResult::Eof => { return finish(work, abi::OK, 0); },
+            stream::ReadResult::Count(value) => {
+                if !usercopy::write(work.owner, data.address, core::slice_from_raw_parts(buffer.data, value)) { return false; }
+                return finish(work, abi::OK, value);
+            }
+        }
+    }
+}
+
+struct Readiness { status: usize, bits: usize }
+unsafe fn watch_ready(id: process::Id, watch: request::Watch) -> Readiness {
+    unsafe {
+        if watch.events == 0_usize || watch.events > 15_usize { return make Readiness { status: abi::INVALID, bits: 0 }; }
+        match handle(id, watch.handle, 0) {
+            objects::LookupResult::BadHandle => { return make Readiness { status: abi::BAD_HANDLE, bits: 0 }; },
+            objects::LookupResult::Denied => { return make Readiness { status: abi::DENIED, bits: 0 }; },
+            objects::LookupResult::Ready(borrow) => {
+                var identity: objects::Identity = zero;
+                var writer: bool = false;
+                match borrow.object {
+                    objects::Object::StreamRead(value) => {
+                        if (borrow.rights & objects::READ) == 0_u32 { return make Readiness { status: abi::DENIED, bits: 0 }; }
+                        identity = value;
+                    },
+                    objects::Object::StreamWrite(value) => {
+                        if (borrow.rights & objects::WRITE) == 0_u32 { return make Readiness { status: abi::DENIED, bits: 0 }; }
+                        identity = value; writer = true;
+                    },
+                    objects::Object::Child(value) => {
+                        if (borrow.rights & objects::COLLECT) == 0_u32 { return make Readiness { status: abi::DENIED, bits: 0 }; }
+                        if watch.events != syscalls::EXITED { return make Readiness { status: abi::INVALID, bits: 0 }; }
+                        match children::collect(value) {
+                            children::Collect::Invalid => { return make Readiness { status: abi::BAD_HANDLE, bits: 0 }; },
+                            children::Collect::Pending => { return make Readiness { status: abi::OK, bits: 0 }; },
+                            children::Collect::Ready(exit) => { return make Readiness { status: abi::OK, bits: 1 }; }
+                        }
+                    },
+                    objects::Object::Job(value) => {
+                        if (borrow.rights & objects::COLLECT) == 0_u32 { return make Readiness { status: abi::DENIED, bits: 0 }; }
+                        if watch.events != syscalls::EXITED { return make Readiness { status: abi::INVALID, bits: 0 }; }
+                        match jobs::status(value) {
+                            jobs::Status::Invalid => { return make Readiness { status: abi::BAD_HANDLE, bits: 0 }; },
+                            jobs::Status::Active => { return make Readiness { status: abi::OK, bits: 0 }; },
+                            jobs::Status::Ending => { return make Readiness { status: abi::OK, bits: 0 }; },
+                            jobs::Status::Done => { return make Readiness { status: abi::OK, bits: 1 }; }
+                        }
+                    },
+                    objects::Object::Desktop(value) => {
+                        if !desktop_authorized(id, watch.handle) { return make Readiness { status: abi::DENIED, bits: 0 }; }
+                        if watch.events != syscalls::READABLE { return make Readiness { status: abi::INVALID, bits: 0 }; }
+                        var bits: usize = 0;
+                        if input::readable() || window::desktop_changed() { bits = 1; }
+                        return make Readiness { status: abi::OK, bits: bits };
+                    },
+                    objects::Object::Empty => { return make Readiness { status: abi::BAD_HANDLE, bits: 0 }; },
+                    objects::Object::File(value) => { return make Readiness { status: abi::INVALID, bits: 0 }; },
+                    objects::Object::Window(value) => {
+                        if watch.events != syscalls::READABLE { return make Readiness { status: abi::INVALID, bits: 0 }; }
+                        if !window::live(value) { return make Readiness { status: abi::BAD_HANDLE, bits: 0 }; }
+                        var bits: usize = 0;
+                        if window::readable(value) { bits = 1; }
+                        return make Readiness { status: abi::OK, bits: bits };
+                    }
+                }
+                var allowed: usize = syscalls::READABLE | syscalls::HANGUP;
+                if writer { allowed = syscalls::WRITABLE | syscalls::HANGUP; }
+                if (watch.events & allowed) != watch.events { return make Readiness { status: abi::INVALID, bits: 0 }; }
+                match stream::status(identity) {
+                    stream::StatusResult::Invalid => { return make Readiness { status: abi::BAD_HANDLE, bits: 0 }; },
+                    stream::StatusResult::Ready(status) => {
+                        var events: usize = 0;
+                        if !writer && status.readable { events = events | syscalls::READABLE; }
+                        if writer && status.writable { events = events | syscalls::WRITABLE; }
+                        if status.eof || status.broken { events = events | syscalls::HANGUP; }
+                        if (events & watch.events) != 0_usize { return make Readiness { status: abi::OK, bits: 1 }; }
+                        return make Readiness { status: abi::OK, bits: 0 };
+                    }
+                }
+            }
+        }
+    }
+}
+unsafe fn readiness(id: process::Id, set: request::WaitSet) -> Readiness {
+    unsafe {
+        var bits: usize = 0;
+        var i: usize = 0;
+        while i < set.count {
+            let state: Readiness = watch_ready(id, set.watches[i]);
+            if state.status != abi::OK { return state; }
+            if state.bits != 0_usize { bits = bits | (1_usize << i); }
+            i = i + 1_usize;
+        }
+        return make Readiness { status: abi::OK, bits: bits };
+    }
+}
+unsafe fn wait_call(id: process::Id, address: usize, count: usize, deadline: usize, nonblock: bool) -> bool {
+    if count > syscalls::WAIT_LIMIT { unsafe { return answer(id, abi::LIMIT, 0); } }
+    unsafe {
+        let bytes: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, count * syscalls::WATCH_BYTES);
+        if !usercopy::read(id, address, bytes) { return answer(id, abi::INVALID, 0); }
+        let view: []const u8 = core::slice_from_raw_parts(bytes.data, bytes.len);
+        var set: request::WaitSet = zero;
+        set.count = count; set.deadline = deadline;
+        var i: usize = 0;
+        while i < count {
+            set.watches[i] = make request::Watch { handle: argument_wire::word(view, i * 16_usize, 8),
+                events: argument_wire::word(view, i * 16_usize + 8_usize, 8) };
+            i = i + 1_usize;
+        }
+        // All watches are checked even if an earlier one is ready. Registration and
+        // blocking are serialized with every producer, so level readiness cannot be lost.
+        let state: Readiness = readiness(id, set);
+        if state.status != abi::OK || state.bits != 0_usize { return answer(id, state.status, state.bits); }
+        if deadline != 0_usize && machine::time() >= deadline { return answer(id, abi::OK, 0); }
+        if nonblock { return answer(id, abi::WOULD_BLOCK, 0); }
+        return pending(id, request::Operation::Wait(set));
+    }
+}
+unsafe fn wait_step(work: request::Pending, set: request::WaitSet) -> bool {
+    unsafe {
+        let state: Readiness = readiness(work.owner, set);
+        if state.status != abi::OK || state.bits != 0_usize { return finish(work, state.status, state.bits); }
+        if set.deadline != 0_usize && machine::time() >= set.deadline { return finish(work, abi::OK, 0); }
+        return true;
+    }
+}

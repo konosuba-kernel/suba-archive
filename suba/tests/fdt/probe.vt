@@ -1,0 +1,57 @@
+// Linux-only test transport. Production parser has no syscall dependency.
+module test::fdt;
+import platform::fdt;
+extern abi(C) fn __fdt_syscall(n: usize, a: usize, b: usize, c: usize) -> usize;
+static mut INPUT: [65537]u8 = zero;
+
+fn emit(value: usize) -> bool {
+    var bytes: [8]u8 = zero;
+    var i: usize = 0;
+    // SAFETY: local buffer stays live until each synchronous write completes.
+    unsafe {
+        while i < 8_usize {
+            bytes[i] = ((value >> (i * 8_usize)) & 255_usize) as u8;
+            i = i + 1_usize;
+        }
+        var sent: usize = 0;
+        while sent < 8_usize {
+            let count: usize = __fdt_syscall(64, 1,
+                core::addr(core::ptr_add(core::slice_of(bytes).data, sent)), 8_usize - sent);
+            if count == 0_usize || count > 8_usize - sent { return false; }
+            sent = sent + count;
+        }
+    }
+    return true;
+}
+
+pub fn run() -> u32 {
+    var count: usize = 0;
+    // SAFETY: single-threaded test owns INPUT; every read fits remaining buffer capacity.
+    unsafe {
+        while count < 65537_usize {
+            let received: usize = __fdt_syscall(63, 0,
+                core::addr(core::ptr_add(core::slice_of_mut(INPUT).data, count)), 65537_usize - count);
+            if received > 65537_usize - count { return 80; }
+            if received == 0_usize { break; }
+            count = count + received;
+        }
+        let data: []const u8 = core::slice_from_raw_parts(core::slice_of(INPUT).data, count);
+        match fdt::inspect(data) {
+            fdt::InspectResult::Invalid => { return 1; },
+            fdt::InspectResult::Unsupported => { return 2; },
+            fdt::InspectResult::Limit => { return 3; },
+            fdt::InspectResult::Ready(description) => {
+                if !emit(description.ram_base) || !emit(description.ram_bytes) ||
+                    !emit(description.reserved_count) { return 81; }
+                var i: usize = 0;
+                while i < description.reserved_count {
+                    if !emit(description.reserved[i].base) || !emit(description.reserved[i].bytes) {
+                        return 81;
+                    }
+                    i = i + 1_usize;
+                }
+                return 0;
+            },
+        }
+    }
+}

@@ -1,0 +1,125 @@
+// Incremental complete allocation validator. No disk I/O or repair.
+module kernel::fs::mount_check;
+import kernel::fs::codec;
+import suba::abi;
+pub struct Fault { pub kind: usize, pub index: usize }
+pub enum Progress { More, Valid, Invalid(Fault) }
+pub struct Walker {
+    phase: usize, cursor: usize, other: usize, parent: usize, depth: usize,
+    remaining: usize, block: u32, last: u32,
+}
+pub fn begin() -> Walker { var walker: Walker = zero; return walker; }
+fn fail(kind: usize, index: usize) -> Progress { return Progress::Invalid(make Fault { kind: kind, index: index }); }
+unsafe fn same_name(a: *const codec::Node, b: *const codec::Node) -> bool {
+    unsafe {
+        if (*a).parent != (*b).parent || (*a).length != (*b).length { return false; }
+        var i: usize = 0;
+        while i < (*a).length { if (*a).name[i] != (*b).name[i] { return false; } i = i + 1_usize; }
+    }
+    return true;
+}
+unsafe fn name_hash(node: *const codec::Node) -> usize {
+    unsafe {
+        var hash: u32 = 2166136261_u32 ^ (*node).parent;
+        var i: usize = 0;
+        while i < (*node).length { hash = (hash ^ ((*node).name[i] as u32)) *% 16777619_u32; i = i + 1_usize; }
+        return (hash as usize) & 8191_usize;
+    }
+}
+// Each call consumes at most 64 checks, including individual ancestor/chain/duplicate steps.
+// Nodes must have passed codec::node_read first. Caller owns persistent zeroed-or-dirty marks.
+pub unsafe fn step(w: *Walker, fat: []const u32, nodes: []const codec::Node, marks: []u32) -> Progress {
+    if fat.len != 65536_usize || nodes.len != abi::FS_NODE_COUNT || marks.len != abi::FS_BLOCKS { return fail(1, 0); }
+    unsafe {
+        var budget: usize = 64;
+        while budget > 0_usize {
+            budget = budget - 1_usize;
+            if (*w).phase == 0_usize {
+                if (*w).cursor == marks.len { (*w).cursor = 0; (*w).phase = 1; continue; }
+                marks[(*w).cursor] = 0; (*w).cursor = (*w).cursor + 1_usize; continue;
+            }
+            if (*w).phase == 1_usize {
+                let i: usize = (*w).cursor;
+                if i == fat.len { (*w).cursor = 0; (*w).phase = 2; continue; }
+                let link: u32 = fat[i];
+                if i < abi::FS_DATA_START || i >= abi::FS_BLOCKS {
+                    if link != abi::FAT_RESERVED { return fail(2, i); }
+                } else {
+                    if link != abi::FAT_FREE && link != abi::FAT_END && !codec::data_block(link) { return fail(3, i); }
+                }
+                (*w).cursor = i + 1_usize; continue;
+            }
+            if (*w).phase == 2_usize {
+                let i: usize = (*w).cursor;
+                if i == nodes.len { (*w).cursor = 1; (*w).other = 0; (*w).phase = 4; continue; }
+                let node: codec::Node = nodes[i];
+                if node.flags > 3_u32 || (node.flags != 0_u32 && node.kind != abi::NODE_FILE) { return fail(4, i); }
+                if i == codec::ROOT || node.kind == abi::NODE_FREE { (*w).cursor = i + 1_usize; continue; }
+                (*w).parent = node.parent as usize; (*w).depth = 1; (*w).phase = 3; continue;
+            }
+            if (*w).phase == 3_usize {
+                let parent: usize = (*w).parent;
+                if parent >= nodes.len || nodes[parent].kind != abi::NODE_DIRECTORY { return fail(5, (*w).cursor); }
+                if (*w).depth > 16_usize { return fail(6, (*w).cursor); }
+                if parent == codec::ROOT { (*w).cursor = (*w).cursor + 1_usize; (*w).phase = 2; continue; }
+                (*w).parent = nodes[parent].parent as usize; (*w).depth = (*w).depth + 1_usize; continue;
+            }
+            if (*w).phase == 4_usize {
+                let i: usize = (*w).cursor;
+                if i == nodes.len { (*w).cursor = 0; (*w).phase = 10; continue; }
+                // Detached versions retain allocation ownership, but no directory name.
+                if nodes[i].kind == abi::NODE_FREE || (nodes[i].flags & codec::DETACHED) != 0_u32 {
+                    (*w).cursor = i + 1_usize; continue;
+                }
+                (*w).other = name_hash(core::ptr_add(nodes.data, i)); (*w).depth = 0; (*w).phase = 9; continue;
+            }
+            // marks first 8192 words temporarily index names; every collision compares exact bytes.
+            if (*w).phase == 9_usize {
+                let i: usize = (*w).cursor; let bucket: usize = (*w).other;
+                let found: usize = marks[bucket] as usize;
+                if found == 0_usize {
+                    marks[bucket] = (i + 1_usize) as u32;
+                    (*w).cursor = i + 1_usize; (*w).phase = 4; continue;
+                }
+                if found > nodes.len { return fail(12, bucket); }
+                if same_name(core::ptr_add(nodes.data, i), core::ptr_add(nodes.data, found - 1_usize)) { return fail(7, i); }
+                (*w).depth = (*w).depth + 1_usize;
+                if (*w).depth == 8192_usize { return fail(12, i); }
+                (*w).other = (bucket + 1_usize) & 8191_usize; continue;
+            }
+            if (*w).phase == 10_usize {
+                if (*w).cursor == 8192_usize { (*w).cursor = 0; (*w).phase = 5; continue; }
+                marks[(*w).cursor] = 0; (*w).cursor = (*w).cursor + 1_usize; continue;
+            }
+            if (*w).phase == 5_usize {
+                let i: usize = (*w).cursor;
+                if i == nodes.len { (*w).cursor = abi::FS_DATA_START; (*w).phase = 7; continue; }
+                let node: codec::Node = nodes[i];
+                if node.kind != abi::NODE_FILE || node.bytes == 0_usize { (*w).cursor = i + 1_usize; continue; }
+                (*w).remaining = (node.bytes + 4095_usize) / 4096_usize;
+                (*w).block = node.first; (*w).last = node.last; (*w).phase = 6; continue;
+            }
+            if (*w).phase == 6_usize {
+                let b: usize = (*w).block as usize;
+                if !codec::data_block((*w).block) { return fail(8, (*w).cursor); }
+                if marks[b] != 0_u32 { return fail(9, b); }
+                marks[b] = ((*w).cursor + 1_usize) as u32;
+                (*w).remaining = (*w).remaining - 1_usize;
+                if (*w).remaining == 0_usize {
+                    if (*w).block != (*w).last || fat[b] != abi::FAT_END { return fail(10, (*w).cursor); }
+                    (*w).cursor = (*w).cursor + 1_usize; (*w).phase = 5; continue;
+                }
+                (*w).block = fat[b]; continue;
+            }
+            if (*w).phase == 7_usize {
+                let b: usize = (*w).cursor;
+                if b == abi::FS_BLOCKS { (*w).phase = 8; return Progress::Valid; }
+                if (fat[b] == abi::FAT_FREE) != (marks[b] == 0_u32) { return fail(11, b); }
+                (*w).cursor = b + 1_usize; continue;
+            }
+            if (*w).phase == 8_usize { return Progress::Valid; }
+            return fail(12, (*w).phase);
+        }
+    }
+    return Progress::More;
+}

@@ -1,0 +1,48 @@
+// File and namespace records, ABI v1. Explicit little endian, zero reserved bytes.
+module suba::files;
+pub const READ: usize = 1;
+pub const WRITE: usize = 2;
+pub const CREATE_NEW: usize = 4;
+pub const TRANSIENT: usize = 8;
+pub const SEAL: usize = 1;
+// FILE_OPEN(path,len,flags); one of READ/WRITE. CREATE_NEW only with WRITE;
+// TRANSIENT only with CREATE_NEW. Existing writable open is exclusive, no truncation.
+// FILE_READ/WRITE_AT(handle,offset,ptr,len), max64KiB; no holes, max16MiB file.
+// FILE_SYNC(handle,flags): SEAL only by transient owner, successful after FLUSH.
+// REPLACE(srcptr,srclen,dstptr,dstlen): same-directory files; no open source writer.
+// Own Transient source publishes atomically with the name; sync(false)/close first,
+// sync_all after replace. A foreign transient source is denied.
+// MKDIR/UNLINK(path,len). SYNC_ALL has no arguments; POWER separately privileged.
+pub const STAT_BYTES: usize = 64;
+pub const STAT_KIND: usize = 8;
+pub const STAT_FLAGS: usize = 12;
+pub const STAT_GENERATION: usize = 16;
+pub const STAT_FILE_BYTES: usize = 24;
+pub const STAT_SOURCE_EPOCH: usize = 32;
+pub const STAT_BOOT_ID: usize = 40;
+// LIST(dirptr,dirlen,cursor,outptr,outlen): first cursor=0, returns next cursor;
+// return0 means no entry. Each result is one record; concurrent changes may alter enumeration.
+pub const ENTRY_BYTES: usize = 96;
+pub const ENTRY_KIND: usize = 8;
+pub const ENTRY_NAME_BYTES: usize = 12;
+pub const ENTRY_GENERATION: usize = 16;
+pub const ENTRY_FILE_BYTES: usize = 24;
+pub const ENTRY_NAME: usize = 32;
+// JOB_CREATE(optional_outptr,outlen): a1 remains private handle. When nonzero,
+// output also returns kernel-owned absolute root path, never derived from a per-process handle.
+pub const JOB_INFO_BYTES: usize = 64;
+pub const JOB_PATH_BYTES: usize = 8;
+pub const JOB_BOOT_ID: usize = 16;
+pub const JOB_SOURCE_EPOCH: usize = 24;
+pub const JOB_PATH: usize = 32;
+pub const JOB_PATH_MAX: usize = 31;
+// JOB_FREEZE(handle,expected_epoch,boot_id); K3 always UNSUPPORTED without real FS freeze.
+pub const STATS_SOURCE_EPOCH: usize = 4;
+pub const STATS_BOOT_ID: usize = 5;
+
+pub const STATS_FS_FREE_BLOCKS: usize = 6;
+pub const STATS_FS_FREE_NODES: usize = 7;
+pub const STATS_FS_FILES: usize = 8;
+pub const STATS_FS_REQUESTS: usize = 9;
+pub const STATS_BLOCK_STATE: usize = 10;
+pub const STATS_FS_DETACHED: usize = 11;

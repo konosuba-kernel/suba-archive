@@ -1,0 +1,21 @@
+{
+  "node": "C",
+  "revision": "r2",
+  "author": "/root",
+  "status": "frozen for independent acceptance",
+  "inputs": {
+    "suba_baseline": "1b73487",
+    "compiler_baseline": "a86586e"
+  },
+  "files": {
+    "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "abi/README.md": "67f23a82124f3254acf356f9608730f6d6d1399ae40dbd62392fc5e9c5ea2b36",
+    "platform/README.md": "ab3f12a9de907c3947e8014ad0e1886ad2d3f1bed09a7abe13897b47ffbc3345",
+    "platform/environment.json": "b14033bcef9f58990c76d3f6584d8dffbad649b9b896b34a11fd2f4443f64501",
+    "tests/k0/abi.vt": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+    "tools/check_abi.py": "4ac3af5dc17ac4097f0c131c41fd2965db3c276be90b416dc40499490a4d524f"
+  },
+  "verification": "build/k0-abi-r1/verification.json",
+  "verification_sha256": "b3c8ffa90119da8b6e4af09253d8835a5da7e398499696d762fba52f06be196c",
+  "reason": "Clarify kernel base/end half-open interval; no numeric or source change"
+}

@@ -1,0 +1,48 @@
+{
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "inputs": {
+    "/home/mii/code/konOSuba/suba/abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "/home/mii/code/konOSuba/suba/tests/k0/abi.vt": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+    "/home/mii/code/konOSuba/biomiya/compiler/runtime/linux.vt": "8637c7763b101d37bc6a87e4d000227b39660dab4001804687cb160996db0ac0",
+    "/home/mii/code/konOSuba/biomiya/compiler/runtime/linux.s0": "b24d8f667eb65a367405e53c3eea1ee7f4e16d927e5139aead47457d9c28c48a"
+  },
+  "commands": [
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=1 source=22699 assembly=345 names=769 name_bytes=15168 decls=214 types=38 fields=16 params=40 max_ast=921 max_ir=872 max_frame=71568 max_bindings=7 max_defers=0 max_loops=1 max_slots=696 max_args=260 max_params=4 text=57308 data=22 objects=2 symbols=542 fixups=1084 relocations=0 elf=65537\n"
+    },
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/suba/build/k0-acceptance-final-abi-r1/probe.elf"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/suba/build/k0-acceptance-final-abi-r1/probe.elf"
+      ],
+      "returncode": 12,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "scope": "ABI constants, seven serialized record byte layouts, six geometry checks; not an OS decoder"
+}

@@ -1,0 +1,214 @@
+// Layout and per-window queues share the window identity owner. Sticky reset,
+// focus and close state cannot be displaced by ordinary key/pointer events.
+module kernel::window;
+import kernel::device::input;
+static mut EVENTS: [CAPACITY * windows::EVENT_CAPACITY]input::Event = zero;
+
+unsafe fn reset_window(slot: usize, cause: u32) -> () {
+    unsafe {
+        RECORDS[slot].head = 0;
+        RECORDS[slot].count = 0;
+        RECORDS[slot].reset = cause;
+    }
+    return ();
+}
+
+pub unsafe fn reset_input(cause: u32) -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < CAPACITY {
+            let id: objects::Identity = make objects::Identity { slot: i, generation: RECORDS[i].generation };
+            if live(id) { reset_window(i, cause); }
+            i = i + 1_usize;
+        }
+        FOCUS_VERSION = FOCUS_VERSION +% 1_usize;
+    }
+    return ();
+}
+
+unsafe fn raise(slot: usize) -> () {
+    unsafe {
+        let old: usize = RECORDS[slot].rank;
+        var highest: usize = 0;
+        var i: usize = 0;
+        while i < CAPACITY {
+            let id: objects::Identity = make objects::Identity { slot: i, generation: RECORDS[i].generation };
+            if live(id) && i != slot {
+                if RECORDS[i].rank > old { RECORDS[i].rank = RECORDS[i].rank - 1_usize; }
+                if RECORDS[i].rank >= highest { highest = RECORDS[i].rank + 1_usize; }
+            }
+            i = i + 1_usize;
+        }
+        RECORDS[slot].rank = highest;
+    }
+    return ();
+}
+
+pub unsafe fn layout(id: objects::Identity, expected: usize,
+    x: usize, y: usize, focus: bool) -> usize {
+    if x > windows::SCREEN_WIDTH - 24_usize || y > windows::SCREEN_HEIGHT - 24_usize {
+        return abi::INVALID;
+    }
+    unsafe {
+        if !live(id) { return abi::BAD_HANDLE; }
+        if expected != LAYOUT { return abi::BUSY; }
+        RECORDS[id.slot].x = x;
+        RECORDS[id.slot].y = y;
+        raise(id.slot);
+        if focus && (FOCUS.slot != id.slot || FOCUS.generation != id.generation) {
+            if live(FOCUS) {
+                reset_window(FOCUS.slot, windows::RESET_FOCUS);
+                RECORDS[FOCUS.slot].focus_changed = true;
+            }
+            FOCUS = id;
+            FOCUS_VERSION = FOCUS_VERSION +% 1_usize;
+            reset_window(id.slot, windows::RESET_FOCUS);
+            RECORDS[id.slot].focus_changed = true;
+        }
+        changed_layout();
+    }
+    return abi::OK;
+}
+
+// List is an ordinary kernel snapshot; the caller usercopies it after this returns.
+pub unsafe fn list(data: []u8) -> bool {
+    if data.len != windows::LIST_BYTES { return false; }
+    unsafe {
+        var i: usize = 0;
+        while i < data.len { data[i] = 0; i = i + 1_usize; }
+        argument_wire::put(data, 0, 1, 4);
+        argument_wire::put(data, 4, windows::LIST_BYTES, 4);
+        argument_wire::put(data, windows::LIST_LAYOUT, LAYOUT, 8);
+        argument_wire::put(data, windows::LIST_FOCUS, FOCUS_VERSION, 8);
+        var count: usize = 0;
+        i = 0;
+        while i < CAPACITY {
+            let id: objects::Identity = make objects::Identity { slot: i, generation: RECORDS[i].generation };
+            if live(id) {
+                let at: usize = windows::LIST_HEADER_BYTES + count * windows::WINDOW_RECORD_BYTES;
+                argument_wire::put(data, at + windows::WINDOW_SLOT, i, 8);
+                argument_wire::put(data, at + windows::WINDOW_GENERATION, id.generation, 8);
+                argument_wire::put(data, at + windows::WINDOW_WIDTH, RECORDS[i].width, 4);
+                argument_wire::put(data, at + windows::WINDOW_HEIGHT, RECORDS[i].height, 4);
+                argument_wire::put(data, at + windows::WINDOW_X, RECORDS[i].x, 4);
+                argument_wire::put(data, at + windows::WINDOW_Y, RECORDS[i].y, 4);
+                argument_wire::put(data, at + windows::WINDOW_Z, RECORDS[i].rank, 4);
+                if FOCUS.slot == i && FOCUS.generation == id.generation {
+                    argument_wire::put(data, at + windows::WINDOW_FLAGS, windows::WINDOW_FOCUSED as usize, 4);
+                }
+                argument_wire::put(data, at + windows::WINDOW_DAMAGE, RECORDS[i].damage, 8);
+                count = count + 1_usize;
+            }
+            i = i + 1_usize;
+        }
+        argument_wire::put(data, windows::LIST_COUNT, count, 4);
+    }
+    return true;
+}
+
+pub unsafe fn route(id: objects::Identity, layout_version: usize,
+    focus_version: usize, sequence: usize) -> usize {
+    unsafe {
+        if !live(id) { return abi::BAD_HANDLE; }
+        if layout_version != LAYOUT || focus_version != FOCUS_VERSION { return abi::BUSY; }
+        if FOCUS.slot != id.slot || FOCUS.generation != id.generation { return abi::DENIED; }
+        var event: input::Event = zero;
+        match input::take_route(sequence) {
+            input::Poll::Empty => { return abi::BUSY; },
+            input::Poll::Ready(value) => { event = value; }
+        }
+        if event.kind == abi::EVENT_POINTER {
+            var x: usize = 0;
+            var y: usize = 0;
+            if event.a >= RECORDS[id.slot].x { x = event.a - RECORDS[id.slot].x; }
+            if event.b >= RECORDS[id.slot].y { y = event.b - RECORDS[id.slot].y; }
+            if event.a < RECORDS[id.slot].x || event.b < RECORDS[id.slot].y ||
+                x >= RECORDS[id.slot].width || y >= RECORDS[id.slot].height { event.flags = event.flags | 2_u32; }
+            event.a = x;
+            event.b = y;
+        }
+        if RECORDS[id.slot].count == windows::EVENT_CAPACITY {
+            reset_window(id.slot, windows::RESET_SOFTWARE);
+            return abi::OK;
+        }
+        let tail: usize = (RECORDS[id.slot].head + RECORDS[id.slot].count) % windows::EVENT_CAPACITY;
+        EVENTS[id.slot * windows::EVENT_CAPACITY + tail] = event;
+        RECORDS[id.slot].count = RECORDS[id.slot].count + 1_usize;
+    }
+    return abi::OK;
+}
+
+pub unsafe fn close_requested(id: objects::Identity) -> usize {
+    unsafe {
+        if !live(id) { return abi::BAD_HANDLE; }
+        RECORDS[id.slot].close = true;
+    }
+    return abi::OK;
+}
+
+pub unsafe fn readable(id: objects::Identity) -> bool {
+    unsafe {
+        if !live(id) { return false; }
+        return RECORDS[id.slot].reset != 0_u32 || RECORDS[id.slot].focus_changed ||
+            RECORDS[id.slot].close || RECORDS[id.slot].count != 0_usize;
+    }
+}
+
+pub unsafe fn next(id: objects::Identity) -> input::Poll {
+    unsafe {
+        if !live(id) { return input::Poll::Empty; }
+        var event: input::Event = zero;
+        if RECORDS[id.slot].reset != 0_u32 {
+            event.kind = windows::EVENT_RESET;
+            event.flags = RECORDS[id.slot].reset;
+            RECORDS[id.slot].reset = 0;
+            return input::Poll::Ready(event);
+        }
+        if RECORDS[id.slot].focus_changed {
+            event.kind = abi::EVENT_FOCUS;
+            event.sequence = FOCUS_VERSION;
+            if FOCUS.slot == id.slot && FOCUS.generation == id.generation { event.a = 1; }
+            RECORDS[id.slot].focus_changed = false;
+            return input::Poll::Ready(event);
+        }
+        if RECORDS[id.slot].close {
+            event.kind = abi::EVENT_CLOSE_REQUESTED;
+            RECORDS[id.slot].close = false;
+            return input::Poll::Ready(event);
+        }
+        if RECORDS[id.slot].count == 0_usize { return input::Poll::Empty; }
+        event = EVENTS[id.slot * windows::EVENT_CAPACITY + RECORDS[id.slot].head];
+        RECORDS[id.slot].head = (RECORDS[id.slot].head + 1_usize) % windows::EVENT_CAPACITY;
+        RECORDS[id.slot].count = RECORDS[id.slot].count - 1_usize;
+        return input::Poll::Ready(event);
+    }
+}
+
+pub unsafe fn desktop_changed() -> bool { unsafe { return CHANGED; } }
+pub unsafe fn take_change() -> bool {
+    unsafe {
+        let value: bool = CHANGED;
+        CHANGED = false;
+        return value;
+    }
+}
+
+// Caller owns writable scratch. Header and reserved bytes are always fully defined.
+pub unsafe fn encode_event(event: input::Event, token: usize, data: []u8) -> bool {
+    if data.len != abi::EVENT_BYTES { return false; }
+    unsafe {
+        var i: usize = 0;
+        while i < data.len { data[i] = 0; i = i + 1_usize; }
+        argument_wire::put(data, abi::EVENT_VERSION, 1, 4);
+        argument_wire::put(data, abi::EVENT_LENGTH, abi::EVENT_BYTES, 4);
+        argument_wire::put(data, abi::EVENT_KIND, event.kind as usize, 4);
+        argument_wire::put(data, abi::EVENT_FLAGS, event.flags as usize, 4);
+        argument_wire::put(data, abi::EVENT_WINDOW, token, 8);
+        argument_wire::put(data, abi::EVENT_SEQUENCE, event.sequence, 8);
+        argument_wire::put(data, abi::EVENT_PAYLOAD, event.a, 8);
+        argument_wire::put(data, abi::EVENT_PAYLOAD + 8_usize, event.b, 8);
+        argument_wire::put(data, abi::EVENT_PAYLOAD + 16_usize, event.c, 8);
+        argument_wire::put(data, abi::EVENT_PAYLOAD + 24_usize, event.d, 8);
+    }
+    return true;
+}

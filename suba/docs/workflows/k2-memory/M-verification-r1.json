@@ -1,0 +1,797 @@
+{
+  "compiler": "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "inputs": {
+    "kernel/memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4",
+    "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "tests/memory/initialize.vt": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497",
+    "tests/memory/lifecycle.vt": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638",
+    "tests/memory/retirement.vt": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c",
+    "tests/memory/support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+    "tools/check_memory.py": "95c59bd0aff4268788f60905713f5125bd23a64df1f504436ece91c39e319fab"
+  },
+  "scope": "same production allocator, Linux identity-addressed ordinary RAM; not full RAM discovery, user isolation or a kernel execution proof",
+  "cases": [
+    {
+      "name": "initialize",
+      "test_copy_mutation": null,
+      "abi_test_copy_mutation": null,
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=20040 assembly=0 names=600 name_bytes=11500 decls=218 types=37 fields=19 params=12 max_ast=398 max_ir=320 max_frame=1376 max_bindings=5 max_defers=0 max_loops=1 max_slots=178 max_args=20 max_params=2 text=21576 data=4 objects=9 symbols=409 fixups=740 relocations=0 elf=32772\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/initialize/probe.elf"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+      },
+      "elf_sha256": "b99f3eff79fd6163d1a9f6f38eb48e54d7e8e6068dea878b5549df70517f6882",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 21576,
+          "memory_bytes": 21576,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 90112,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 94208,
+          "file_bytes": 4,
+          "memory_bytes": 1597489,
+          "bss_bytes": 1597485,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "4",
+        "imports": "4",
+        "assembly_files": "0",
+        "source": "20040",
+        "assembly": "0",
+        "names": "600",
+        "name_bytes": "11500",
+        "decls": "218",
+        "types": "37",
+        "fields": "19",
+        "params": "12",
+        "max_ast": "398",
+        "max_ir": "320",
+        "max_frame": "1376",
+        "max_bindings": "5",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "178",
+        "max_args": "20",
+        "max_params": "2",
+        "text": "21576",
+        "data": "4",
+        "objects": "9",
+        "symbols": "409",
+        "fixups": "740",
+        "relocations": "0",
+        "elf": "32772"
+      }
+    },
+    {
+      "name": "lifecycle",
+      "test_copy_mutation": null,
+      "abi_test_copy_mutation": null,
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=22412 assembly=0 names=627 name_bytes=11964 decls=220 types=37 fields=19 params=18 max_ast=536 max_ir=582 max_frame=2384 max_bindings=9 max_defers=0 max_loops=1 max_slots=345 max_args=46 max_params=3 text=28540 data=4 objects=9 symbols=487 fixups=915 relocations=0 elf=36868\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/lifecycle/probe.elf"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+      },
+      "elf_sha256": "da172590866b78693fc5e2fb50859dccfc7ba308ed95fa3fa65a3fc15f13feb1",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 28540,
+          "memory_bytes": 28540,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 94208,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 98304,
+          "file_bytes": 4,
+          "memory_bytes": 1597489,
+          "bss_bytes": 1597485,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "4",
+        "imports": "4",
+        "assembly_files": "0",
+        "source": "22412",
+        "assembly": "0",
+        "names": "627",
+        "name_bytes": "11964",
+        "decls": "220",
+        "types": "37",
+        "fields": "19",
+        "params": "18",
+        "max_ast": "536",
+        "max_ir": "582",
+        "max_frame": "2384",
+        "max_bindings": "9",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "345",
+        "max_args": "46",
+        "max_params": "3",
+        "text": "28540",
+        "data": "4",
+        "objects": "9",
+        "symbols": "487",
+        "fixups": "915",
+        "relocations": "0",
+        "elf": "36868"
+      }
+    },
+    {
+      "name": "retirement-test-copy",
+      "test_copy_mutation": [
+        "const GENERATION_MAX: u32 = 0xffffffff;",
+        "const GENERATION_MAX: u32 = 2;"
+      ],
+      "abi_test_copy_mutation": null,
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=19603 assembly=0 names=602 name_bytes=11569 decls=217 types=37 fields=19 params=10 max_ast=330 max_ir=294 max_frame=1376 max_bindings=5 max_defers=0 max_loops=1 max_slots=178 max_args=8 max_params=2 text=20344 data=4 objects=9 symbols=385 fixups=706 relocations=0 elf=28676\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/retirement-test-copy/probe.elf"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "18adc11e8ad809562acb33037d9f9ef3bbd450dd3f59904b01fbefaff9b30e28"
+      },
+      "elf_sha256": "c3e322720a6c227561433c4c104e7f42bdd41da6f6d3bf22a5850b9f76a651b2",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 20344,
+          "memory_bytes": 20344,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 86016,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 90112,
+          "file_bytes": 4,
+          "memory_bytes": 1597489,
+          "bss_bytes": 1597485,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "4",
+        "imports": "4",
+        "assembly_files": "0",
+        "source": "19603",
+        "assembly": "0",
+        "names": "602",
+        "name_bytes": "11569",
+        "decls": "217",
+        "types": "37",
+        "fields": "19",
+        "params": "10",
+        "max_ast": "330",
+        "max_ir": "294",
+        "max_frame": "1376",
+        "max_bindings": "5",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "178",
+        "max_args": "8",
+        "max_params": "2",
+        "text": "20344",
+        "data": "4",
+        "objects": "9",
+        "symbols": "385",
+        "fixups": "706",
+        "relocations": "0",
+        "elf": "28676"
+      }
+    },
+    {
+      "name": "capacity-test-copy",
+      "test_copy_mutation": null,
+      "abi_test_copy_mutation": [
+        "pub const RAM_BYTES: usize = 0x20000000;",
+        "pub const RAM_BYTES: usize = 12288;"
+      ],
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=20035 assembly=0 names=600 name_bytes=11500 decls=218 types=37 fields=19 params=12 max_ast=398 max_ir=320 max_frame=1376 max_bindings=5 max_defers=0 max_loops=1 max_slots=178 max_args=20 max_params=2 text=21508 data=4 objects=9 symbols=409 fixups=740 relocations=0 elf=32772\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/capacity-test-copy/probe.elf"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "66f73b6d2fb566b8aba5be1388bbc5c7bd402f28fccbd2f6a54125db597b94ae",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+      },
+      "elf_sha256": "a08acd9c77c71646bb0f3a37a935be69d2978d6ea0eeed052890df3a2becf290",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 21508,
+          "memory_bytes": 21508,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 90112,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 94208,
+          "file_bytes": 4,
+          "memory_bytes": 24665,
+          "bss_bytes": 24661,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "4",
+        "imports": "4",
+        "assembly_files": "0",
+        "source": "20035",
+        "assembly": "0",
+        "names": "600",
+        "name_bytes": "11500",
+        "decls": "218",
+        "types": "37",
+        "fields": "19",
+        "params": "12",
+        "max_ast": "398",
+        "max_ir": "320",
+        "max_frame": "1376",
+        "max_bindings": "5",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "178",
+        "max_args": "20",
+        "max_params": "2",
+        "text": "21508",
+        "data": "4",
+        "objects": "9",
+        "symbols": "409",
+        "fixups": "740",
+        "relocations": "0",
+        "elf": "32772"
+      }
+    },
+    {
+      "name": "missing-clear-negative",
+      "test_copy_mutation": [
+        "        clear_page(index);",
+        "        // TEST COPY: omit page clearing."
+      ],
+      "abi_test_copy_mutation": null,
+      "expected_exit": 24,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=22427 assembly=0 names=627 name_bytes=11964 decls=220 types=37 fields=19 params=18 max_ast=536 max_ir=582 max_frame=2384 max_bindings=9 max_defers=0 max_loops=1 max_slots=345 max_args=46 max_params=3 text=28500 data=4 objects=9 symbols=487 fixups=914 relocations=0 elf=36868\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/missing-clear-negative/probe.elf"
+          ],
+          "returncode": 24,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "657abdbcc2852dddaa1362b7878ea9982cb1ffd7ce299ecd7ecba0b26a099ee3"
+      },
+      "elf_sha256": "3a6ae1ea66167d9da3a649b75d68d110cafb64430d18e617dd72953fb794e82e",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 28500,
+          "memory_bytes": 28500,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 94208,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 98304,
+          "file_bytes": 4,
+          "memory_bytes": 1597489,
+          "bss_bytes": 1597485,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "4",
+        "imports": "4",
+        "assembly_files": "0",
+        "source": "22427",
+        "assembly": "0",
+        "names": "627",
+        "name_bytes": "11964",
+        "decls": "220",
+        "types": "37",
+        "fields": "19",
+        "params": "18",
+        "max_ast": "536",
+        "max_ir": "582",
+        "max_frame": "2384",
+        "max_bindings": "9",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "345",
+        "max_args": "46",
+        "max_params": "3",
+        "text": "28500",
+        "data": "4",
+        "objects": "9",
+        "symbols": "487",
+        "fixups": "914",
+        "relocations": "0",
+        "elf": "36868"
+      }
+    },
+    {
+      "name": "missing-generation-negative",
+      "test_copy_mutation": [
+        "        SLOTS[index].generation = SLOTS[index].generation + 1_u32;",
+        "        SLOTS[index].generation = 1_u32; // TEST COPY: stale identity reuse."
+      ],
+      "abi_test_copy_mutation": null,
+      "expected_exit": 34,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=4 imports=4 assembly_files=0 source=22422 assembly=0 names=627 name_bytes=11964 decls=220 types=37 fields=19 params=18 max_ast=536 max_ir=582 max_frame=2384 max_bindings=9 max_defers=0 max_loops=1 max_slots=345 max_args=46 max_params=3 text=28228 data=4 objects=9 symbols=481 fixups=902 relocations=0 elf=36868\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/missing-generation-negative/probe.elf"
+          ],
+          "returncode": 34,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638",
+        "probe.build": "bdfb62f3a5fc0767acfd5e3610ad73543bdfbc5eda031b272eb68e920b049dde",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "007a0fa60ca11f5fca83a43490289c11ee43cf831f0d999aceb631af5ea16501"
+      },
+      "elf_sha256": "5a34972d938c3887242a1106bff54d26bf5cb541bd71c6059346b2fbee443377",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 28228,
+          "memory_bytes": 28228,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 94208,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 98304,
+          "file_bytes": 4,
+          "memory_bytes": 1597489,
+          "bss_bytes": 1597485,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "4",
+        "imports": "4",
+        "assembly_files": "0",
+        "source": "22422",
+        "assembly": "0",
+        "names": "627",
+        "name_bytes": "11964",
+        "decls": "220",
+        "types": "37",
+        "fields": "19",
+        "params": "18",
+        "max_ast": "536",
+        "max_ir": "582",
+        "max_frame": "2384",
+        "max_bindings": "9",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "345",
+        "max_args": "46",
+        "max_params": "3",
+        "text": "28228",
+        "data": "4",
+        "objects": "9",
+        "symbols": "481",
+        "fixups": "902",
+        "relocations": "0",
+        "elf": "36868"
+      }
+    },
+    {
+      "name": "cost-allocator",
+      "test_copy_mutation": null,
+      "abi_test_copy_mutation": null,
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=14335 assembly=0 names=491 name_bytes=8986 decls=208 types=27 fields=19 params=5 max_ast=315 max_ir=294 max_frame=1376 max_bindings=5 max_defers=0 max_loops=1 max_slots=178 max_args=1 max_params=1 text=12100 data=4 objects=8 symbols=235 fixups=438 relocations=0 elf=20484\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/cost-allocator/probe.elf"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "6493eec192833334c0bf74cb78a915720f30f8ace93bf4aa34138542e9415c4c",
+        "probe.build": "6e056f77e2b833005fd420602845f1cbc4980cb564aff6385e22d14a84301185",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+      },
+      "elf_sha256": "2f9307c5ef7bb87061cd6c4d148080d27d5c8540f3dd7c282badc54043c5ab73",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 12100,
+          "memory_bytes": 12100,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 77824,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 81920,
+          "file_bytes": 4,
+          "memory_bytes": 1572913,
+          "bss_bytes": 1572909,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "3",
+        "imports": "2",
+        "assembly_files": "0",
+        "source": "14335",
+        "assembly": "0",
+        "names": "491",
+        "name_bytes": "8986",
+        "decls": "208",
+        "types": "27",
+        "fields": "19",
+        "params": "5",
+        "max_ast": "315",
+        "max_ir": "294",
+        "max_frame": "1376",
+        "max_bindings": "5",
+        "max_defers": "0",
+        "max_loops": "1",
+        "max_slots": "178",
+        "max_args": "1",
+        "max_params": "1",
+        "text": "12100",
+        "data": "4",
+        "objects": "8",
+        "symbols": "235",
+        "fixups": "438",
+        "relocations": "0",
+        "elf": "20484"
+      }
+    },
+    {
+      "name": "cost-empty",
+      "test_copy_mutation": null,
+      "abi_test_copy_mutation": null,
+      "expected_exit": 0,
+      "commands": [
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/biomiya/build/layout-p4-r1/e3.elf",
+            "build",
+            "probe.build"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "S-next-0.1 sources=2 imports=0 assembly_files=0 source=7821 assembly=0 names=370 name_bytes=7026 decls=181 types=5 fields=0 params=0 max_ast=183 max_ir=3 max_frame=32 max_bindings=0 max_defers=0 max_loops=0 max_slots=1 max_args=0 max_params=0 text=208 data=0 objects=0 symbols=9 fixups=6 relocations=0 elf=12289\n"
+        },
+        {
+          "command": [
+            "qemu-riscv64",
+            "-s",
+            "1048576",
+            "/home/mii/code/konOSuba/suba/build/k2-memory-m-r3/cost-empty/probe.elf"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "passed": true,
+      "inputs": {
+        "probe.vt": "3a9a44a2ff59a7c5a080c94aeef14aa6217f83d120f043f14b929b087d2947d3",
+        "probe.build": "cf778ca97f8b2dd464cd27e13f2d1d04497bb2ec42728bc621c5c7692440d653",
+        "contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+        "support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+        "memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4"
+      },
+      "elf_sha256": "a03b2c010a7a716e3acaca41b79ec96cf19d4df2169336b7a8f48abb4e904bdc",
+      "segments": [
+        {
+          "flags": 5,
+          "address": 65536,
+          "file_bytes": 208,
+          "memory_bytes": 208,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 4,
+          "address": 69632,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        },
+        {
+          "flags": 6,
+          "address": 73728,
+          "file_bytes": 1,
+          "memory_bytes": 1,
+          "bss_bytes": 0,
+          "alignment": 4096
+        }
+      ],
+      "compiler_metrics": {
+        "sources": "2",
+        "imports": "0",
+        "assembly_files": "0",
+        "source": "7821",
+        "assembly": "0",
+        "names": "370",
+        "name_bytes": "7026",
+        "decls": "181",
+        "types": "5",
+        "fields": "0",
+        "params": "0",
+        "max_ast": "183",
+        "max_ir": "3",
+        "max_frame": "32",
+        "max_bindings": "0",
+        "max_defers": "0",
+        "max_loops": "0",
+        "max_slots": "1",
+        "max_args": "0",
+        "max_params": "0",
+        "text": "208",
+        "data": "0",
+        "objects": "0",
+        "symbols": "9",
+        "fixups": "6",
+        "relocations": "0",
+        "elf": "12289"
+      }
+    }
+  ],
+  "passed": true
+}

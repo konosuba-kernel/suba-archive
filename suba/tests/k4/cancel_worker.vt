@@ -1,0 +1,13 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::syscall;
+static mut DATA: [65536]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        let file: syscall::Reply = files::open("partial", 14);
+        if file.status != abi::OK { return 92; }
+        let result: syscall::Reply = files::write_at(file.value, 0, core::slice_of(DATA));
+        return 93;
+    }
+}

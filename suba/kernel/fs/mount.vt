@@ -1,0 +1,214 @@
+module kernel::fs;
+pub struct MountDiagnostic { pub phase: usize, pub kind: usize, pub index: usize }
+static mut MOUNT_DIAGNOSTIC: MountDiagnostic = zero;
+pub unsafe fn mount_diagnostic() -> MountDiagnostic { unsafe { return MOUNT_DIAGNOSTIC; } }
+unsafe fn mount_phase() -> usize {
+    unsafe {
+        match MOUNT {
+            Mount::Start => { return 0; }, Mount::Reading(block) => { return 1; },
+            Mount::Decode(part) => { return 2; }, Mount::Check(walker) => { return 3; },
+            Mount::Purge(cursor) => { return 4; }, Mount::Reclaim => { return 5; },
+            Mount::Persist => { return 6; }, Mount::Stamp => { return 7; },
+            Mount::Stamping => { return 8; }, Mount::Flushing => { return 9; },
+            Mount::Ready => { return 10; }, Mount::Failed => { return 11; }
+        }
+    }
+}
+
+
+// Byte decoding is bounded to one u32 and uses an already checked block view.
+unsafe fn word(bytes: []const u8, at: usize) -> u32 {
+    unsafe { return (bytes[at] as u32) | ((bytes[at + 1_usize] as u32) << 8_u32) |
+        ((bytes[at + 2_usize] as u32) << 16_u32) | ((bytes[at + 3_usize] as u32) << 24_u32); }
+}
+unsafe fn read_metadata(block: usize) -> Progress {
+    unsafe {
+        if !block::submit(block::Command::Read(DISK_BASE + block)) {
+            MOUNT = Mount::Failed;
+            return Progress::Invalid;
+        }
+        MOUNT = Mount::Reading(block);
+        return Progress::Wait;
+    }
+}
+unsafe fn next_metadata(block: usize) -> Progress {
+    unsafe {
+        if !block::finish() { MOUNT = Mount::Failed; return Progress::Invalid; }
+        if block + 1_usize == abi::FS_DATA_START {
+            MOUNT = Mount::Check(mount_check::begin());
+            return Progress::More;
+        }
+        return read_metadata(block + 1_usize);
+    }
+}
+// At most 64 FAT entries or 32 fixed nodes. The bounce remains CPU-owned until finish.
+unsafe fn decode_metadata(part: Decode) -> Progress {
+    unsafe {
+        let buffer: []u8 = block::buffer();
+        let data: []const u8 = core::slice_from_raw_parts(buffer.data, buffer.len);
+        if part.block == 0_usize {
+            if !codec::super_valid(data) { MOUNT_DIAGNOSTIC.kind = 14; MOUNT = Mount::Failed; return Progress::Invalid; }
+            let serial: usize = codec::boot_serial(data);
+            if serial == 0xffffffffffffffff_usize { MOUNT = Mount::Failed; return Progress::Invalid; }
+            BOOT_ID = serial + 1_usize;
+            return next_metadata(0);
+        }
+        if part.block < abi::FS_NODES_START {
+            var i: usize = part.cursor;
+            let end: usize = i + 64_usize;
+            let base: usize = (part.block - abi::FS_FAT_START) * 1024_usize;
+            while i < end {
+                FAT[base + i] = word(data, i * 4_usize);
+                if FAT[base + i] == abi::FAT_FREE && base + i >= abi::FS_DATA_START && base + i < abi::FS_BLOCKS {
+                    FREE_BLOCKS = FREE_BLOCKS + 1_usize;
+                }
+                i = i + 1_usize;
+            }
+            if end < 1024_usize {
+                MOUNT = Mount::Decode(make Decode { block: part.block, cursor: end });
+                return Progress::More;
+            }
+            return next_metadata(part.block);
+        }
+        let base: usize = (part.block - abi::FS_NODES_START) * 32_usize;
+        var i: usize = 0;
+        while i < 32_usize {
+            let record: []const u8 = core::slice_from_raw_parts(core::ptr_add(data.data, i * abi::FS_NODE_BYTES), abi::FS_NODE_BYTES);
+            match codec::node_read(record, base + i) {
+                codec::NodeRead::Invalid => {
+                    MOUNT_DIAGNOSTIC.kind = 13; MOUNT_DIAGNOSTIC.index = base + i;
+                    MOUNT = Mount::Failed; return Progress::Invalid;
+                },
+                codec::NodeRead::Value(node) => {
+                    NODES[base + i] = node;
+                    if node.kind == abi::NODE_FREE && node.generation != 0xffffffffffffffff_usize { FREE_NODES = FREE_NODES + 1_usize; }
+                }
+            }
+            i = i + 1_usize;
+        }
+        return next_metadata(part.block);
+    }
+}
+pub unsafe fn mount_step() -> Progress {
+    unsafe {
+        MOUNT_DIAGNOSTIC.phase = mount_phase();
+        match MOUNT {
+            Mount::Start => { return read_metadata(0); },
+            Mount::Reading(block) => {
+                match block::state() {
+                    block::State::Submitted => { return Progress::Wait; },
+                    block::State::Completed => {
+                        MOUNT = Mount::Decode(make Decode { block: block, cursor: 0 });
+                        return Progress::More;
+                    },
+                    block::State::Offline => {}, block::State::Idle => {},
+                    block::State::Failed => {}
+                }
+                MOUNT = Mount::Failed;
+                return Progress::Invalid;
+            },
+            Mount::Decode(part) => { return decode_metadata(part); },
+            Mount::Check(value) => {
+                var walker: mount_check::Walker = value;
+                match mount_check::step(core::addr_of_mut(walker), core::slice_of(FAT), core::slice_of(NODES), core::slice_of_mut(MARKS)) {
+                    mount_check::Progress::More => { MOUNT = Mount::Check(walker); return Progress::More; },
+                    mount_check::Progress::Valid => { MOUNT = Mount::Purge(0); return Progress::More; },
+                    mount_check::Progress::Invalid(fault) => {
+                        MOUNT_DIAGNOSTIC.kind = fault.kind; MOUNT_DIAGNOSTIC.index = fault.index;
+                        MOUNT = Mount::Failed; return Progress::Invalid;
+                    }
+                }
+            },
+            Mount::Purge(cursor) => { return purge_mount(cursor); },
+            Mount::Reclaim => { return reclaim_mount(); },
+            Mount::Persist => { return persist_mount(); },
+            Mount::Stamp => {
+                if !codec::super_write(block::buffer(), BOOT_ID) ||
+                    !block::submit(block::Command::Write(DISK_BASE)) {
+                    MOUNT = Mount::Failed; return Progress::Invalid;
+                }
+                MOUNT = Mount::Stamping; return Progress::Wait;
+            },
+            Mount::Stamping => { return finish_stamp(false); },
+            Mount::Flushing => { return finish_stamp(true); },
+            Mount::Ready => { return Progress::Ready; },
+            Mount::Failed => { return Progress::Invalid; }
+        }
+    }
+}
+
+unsafe fn finish_stamp(flush: bool) -> Progress {
+    unsafe {
+        match block::state() {
+            block::State::Submitted => { return Progress::Wait; },
+            block::State::Completed => {
+                if !block::finish() { MOUNT = Mount::Failed; return Progress::Invalid; }
+                if flush { MOUNT = Mount::Ready; return Progress::Ready; }
+                if !block::submit(block::Command::Flush) { MOUNT = Mount::Failed; return Progress::Invalid; }
+                MOUNT = Mount::Flushing; return Progress::Wait;
+            },
+            block::State::Offline => {}, block::State::Idle => {}, block::State::Failed => {}
+        }
+        MOUNT = Mount::Failed; return Progress::Invalid;
+    }
+}
+pub unsafe fn boot_id() -> usize { unsafe { return BOOT_ID; } }
+
+// Sync may persist open old versions and unpublished temporary files. They have
+// no owner in a new boot. Validate their complete allocation before reclaiming;
+// this is lifecycle cleanup, not repair of a malformed or interrupted transaction.
+unsafe fn purge_mount(cursor: usize) -> Progress {
+    unsafe {
+        var i: usize = cursor;
+        let end: usize = cursor + 64_usize;
+        while i < end && i < abi::FS_NODE_COUNT {
+            if (NODES[i].flags & codec::DETACHED) != 0_u32 {
+                DETACHED_COUNT = DETACHED_COUNT + 1_usize;
+            } else {
+                if (NODES[i].flags & codec::TRANSIENT) != 0_u32 {
+                    let owner: Client = zero;
+                    detach_node(i, owner);
+                }
+            }
+            i = i + 1_usize;
+        }
+        if i == abi::FS_NODE_COUNT { MOUNT = Mount::Reclaim; }
+        else { MOUNT = Mount::Purge(i); }
+        return Progress::More;
+    }
+}
+unsafe fn reclaim_mount() -> Progress {
+    unsafe {
+        if DETACHED_COUNT != 0_usize {
+            let advanced: bool = cleanup_step();
+            return Progress::More;
+        }
+        // Reuse the ordinary serial metadata writer, with no user request or pin.
+        OPERATIONS[0_usize].state = RequestState::Active;
+        OPERATIONS[0_usize].command = Command::SyncAll;
+        ACTIVE = 0;
+        PHASE = Phase::Start;
+        MOUNT = Mount::Persist;
+        return Progress::More;
+    }
+}
+unsafe fn persist_mount() -> Progress {
+    unsafe {
+        let progress: Progress = step();
+        match OPERATIONS[0_usize].state {
+            RequestState::Done(result) => {
+                OPERATIONS[0_usize].state = RequestState::Empty;
+                match result {
+                    Outcome::Value(value) => { MOUNT = Mount::Stamp; return Progress::More; },
+                    Outcome::Failed(error) => {}, Outcome::File(id) => {}, Outcome::Directory(node) => {}
+                }
+                MOUNT = Mount::Failed;
+                return Progress::Invalid;
+            },
+            RequestState::Active => { return progress; },
+            RequestState::Empty => {}, RequestState::Queued => {}
+        }
+        MOUNT = Mount::Failed;
+        return Progress::Invalid;
+    }
+}

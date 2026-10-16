@@ -1,0 +1,41 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+static mut BUFFER: [2]u8 = zero;
+unsafe fn run_pair(pair: services::StreamPair) -> u32 {
+    unsafe {
+        let job: syscall::Reply = services::job_create();
+        if job.status != abi::OK { return 60; }
+        let frozen: syscall::Reply = services::freeze_inputs(job.value, 0);
+        if frozen.status != abi::UNSUPPORTED { return 61; }
+        let child: syscall::Reply = common::spawn("tree", pair.write, 0, job.value);
+        if child.status != abi::OK { return 62; }
+        let closed: syscall::Reply = syscall::close(pair.write);
+        if closed.status != abi::OK { return 63; }
+        var count: usize = 0;
+        var seen: usize = 0;
+        while count < 2_usize {
+            let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(BUFFER), false);
+            if read.status != abi::OK || read.value == 0_usize { return 64; }
+            var i: usize = 0;
+            while i < read.value {
+                if BUFFER[i] == 71_u8 { seen = seen | 1_usize; }
+                if BUFFER[i] == 84_u8 { seen = seen | 2_usize; }
+                i = i + 1_usize;
+            }
+            count = count + read.value;
+        }
+        if seen != 3_usize { return 65; }
+        // Exit with live child/grandchild, pending waits and every handle still owned.
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    match services::streams() {
+        services::Streams::Failed(status) => { return 59; },
+        services::Streams::Ready(pair) => { unsafe { return run_pair(pair); } }
+    }
+}

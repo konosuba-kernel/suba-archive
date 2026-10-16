@@ -1,0 +1,154 @@
+{
+  "stage": "K7",
+  "revision": 2,
+  "verdict": "indeterminate",
+  "passed": false,
+  "final": true,
+  "reviewer": "/root/k4_review",
+  "candidate_sha256": "64e4b379527cb24564115cab9ac8934dc398cc8e0ef9d388c9351dd96089cc69",
+  "markdown_sha256": "1d791aa7d76f23442a9baffbade747bf4fa0d6ab28e50585a51645f2cf22a90c",
+  "production_kernel_sha256": "2f073509c6af8bce081ec60927e82db836b40fc678582ed0b831903efef88bd3",
+  "verified_counts": {
+    "owned_files": 83,
+    "input_files": 102,
+    "anchored_reports": 6
+  },
+  "candidate_identity_final_check": true,
+  "functional_closed_loop_verified": true,
+  "r1_deterministic_detached_mount_bug_closed": true,
+  "unresolved_acceptance_gate": {
+    "id": "K7-R2-U1",
+    "observed": "Valid non-fault-injected reboot2 panicked70 on the same final production kernel",
+    "evidence": "build/k7-kernel-remount-r1/reboot2/run.json",
+    "contract": "K7 requires full K4: normal persistence and remount; r1 rework requires valid durable lifecycle states to mount before user service",
+    "classification_unknown": [
+      "expected device I/O/deadline failure shutdown",
+      "unexpected mount/IRQ/timer state failure"
+    ],
+    "required_discriminator": "Failure-branch state evidence under relevant timing/load, or corresponding state-machine defect and old/new control; more successful repetitions alone do not classify original failure",
+    "not_claimed": "No new K10 failure-rate target or absolute historical-cause proof"
+  },
+  "evidence": {
+    "build/k7-independent-r2/evidence.json": {
+      "sha256": "8e82e98899fe4ede141c524176fbd99e6c885595791d4709a2b7f04ef03e3df5",
+      "raw_passed": true,
+      "provenance": "independent reviewer"
+    },
+    "build/k7-desktop-r2/verification.json": {
+      "sha256": "4fd484d25f7b8d00006645042ef7593493210236b435add7c3968bde47d6a847",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-pipeline-r5/verification.json": {
+      "sha256": "423c8d356a1c6496c8f4678164caa638867f0db142559db19bf4c835983c057d",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-pipeline-invalid-r4/verification.json": {
+      "sha256": "20bdcd2a097202636169001998b4d038b3a4fd6002c43e945fc9d3faca4b1e46",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-remount-metadata-r1/verification.json": {
+      "sha256": "cef5833ff909a2ed8e23f0877340bc0e4452fed843dd711654ab6b09960271e6",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-recovered-r1/verification.json": {
+      "sha256": "797b8e7db5310ec355657d4f45472c275f712936cbeebfac308f9777b81836cc",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-r2/verification.json": {
+      "sha256": "00f5a87e7ec695603b04efe246f4b05a7c90a87ee7656d098281a054eaf0cc58",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-malformed-r1/verification.json": {
+      "sha256": "91dd8e3827058282e1d0fa6b8e2161fb23a8fd62d97975fc9063c39f03d44591",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-r1/reboot2/run.json": {
+      "sha256": "824cd214886704cb750af12f36e197bb40cc8a51b1ac0d6bb50cdad8dd18f006",
+      "raw_passed": false,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-replay-r1/verification.json": {
+      "sha256": "24000508d266257fcd6d1aaf66f37db915dd37abac3158a4254d31845a9ede64",
+      "raw_passed": null,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-diagnostic-r2/verification.json": {
+      "sha256": "3ba96eef518dd96ed9323c08d6843057650d3f0bb84dd29c9e96171bb91e335f",
+      "raw_passed": true,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-diagnostic-r2/comparison.json": {
+      "sha256": "d110ae095ebd906eae4d8077c63a734c4de46965ded3993ddca25bb6aadcdf25",
+      "raw_passed": null,
+      "provenance": "author/coordinator, reviewed independently"
+    },
+    "build/k7-kernel-remount-io-r1/verification.json": {
+      "sha256": "dd9eb8e65f2d7fd4274446d9965e7b5201f91bc0290b2d5ad7346b3e6ac54581",
+      "raw_passed": null,
+      "provenance": "author/coordinator, reviewed independently"
+    }
+  },
+  "independent_functional_checks": {
+    "passed": true,
+    "independent_reports": {
+      "build/k7-independent-r2/integrity.json": {
+        "sha256": "da9df6676bcdd94a002057dbf3bde2070297aaa730470f5bb16551b259955f10",
+        "passed": true
+      },
+      "build/k7-independent-r2/validator-verification.json": {
+        "sha256": "4153adec48c69fa8285df99a2cc19fb1bad63bfd076061624ed12ab07ce9d5e6",
+        "passed": true
+      },
+      "build/k7-independent-r2/negative-verification.json": {
+        "sha256": "2f371cad36039fa830476fd724941034df800393a117465a029e7553d38f84b4",
+        "passed": true
+      },
+      "build/k7-independent-r2/new-first/verification.json": {
+        "sha256": "323c86ecce93212b9ddcb791f4fdfde73ddbcfd483d8caf74946e5063eb37b9d",
+        "passed": true
+      },
+      "build/k7-independent-r2/new-second/verification.json": {
+        "sha256": "1fdb695e9a137094a6dd88a912120717853cb1eaf50081dda60fe0707d28550a",
+        "passed": true
+      },
+      "build/k7-independent-r2/regress-job/verification.json": {
+        "sha256": "2b2c34d4dfb52a7ef1b14f5f7f7432494b586a46f383961702620a0595bb8345",
+        "passed": true
+      },
+      "build/k7-independent-r2/regress-images/verification.json": {
+        "sha256": "ba354bd04bab5562dd711ef3c088b6332873ece11c8b6e8ff1b964331230a164",
+        "passed": true
+      },
+      "build/k7-independent-r2/regress-death/verification.json": {
+        "sha256": "1d8669b20b3bf601dc8c392c17cbd0bc8177d338052d8bf4032df1b0c54bbeed",
+        "passed": true
+      }
+    },
+    "gui_report_sha256": "4fd484d25f7b8d00006645042ef7593493210236b435add7c3968bde47d6a847",
+    "gui_persistent_oracle_equal": true,
+    "gui_reboot_identical_input": true,
+    "no_job_children": true,
+    "remount_expected_nodes": 10,
+    "remount_expected_allocated_blocks": 144,
+    "original_failed_disk_unchanged": true
+  },
+  "historical_unexplained_failures": [
+    "job-dma-r1 round61 code100",
+    "remount-r1 reboot2 panic70"
+  ],
+  "performance_targets_met": false,
+  "production_files_modified_by_reviewer": false,
+  "accepted_for_stage_commit": false,
+  "excluded_scope": [
+    "K8 native compiler fixed point",
+    "K9 kernel native rebuild",
+    "K10 full stability/performance/teaching delivery"
+  ]
+}

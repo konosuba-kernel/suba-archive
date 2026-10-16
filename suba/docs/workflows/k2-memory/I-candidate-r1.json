@@ -1,0 +1,42 @@
+{
+  "node": "I",
+  "revision": "r1",
+  "author": "/root",
+  "independent_reviewer": "/root/k2_acceptance",
+  "status": "frozen-for-independent-acceptance",
+  "files": {
+    "abi/contract.vt": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d",
+    "docs/K2_MEMORY.md": "3a8c815a37b76819fe8953beb4ddedbedcea822a1a8bf9fb90ca750c270891ce",
+    "docs/workflows/k2-memory/I-cost-r1.json": "95296bdfa30602ab92b9e380aa487465cea5e1014ee517ef6cf37ea30ebde014",
+    "docs/workflows/k2-memory/I-k0-verification-r1.json": "b5a6c30c052d727609f6ae075b3392f77430a02aaa92b6a4e34b3c1bfba91b76",
+    "docs/workflows/k2-memory/I-memory-verification-r1.json": "a902d28bcb3f9076c5e05d1b5a9344707c20fdd1304ea7366225e86459a5c421",
+    "docs/workflows/k2-memory/I-report-r1.md": "5ea81c6383e228749410c92dd79c5517ab0d70e7c49df95658f77839e8d93638",
+    "docs/workflows/k2-memory/prior-k0-consumers/kernel/entry.vt": "fdde814179d05254a9c1b8258d4b4452bf738d4e4178f32971a15f6dfdab8151",
+    "docs/workflows/k2-memory/prior-k0-consumers/kernel/kernel.build": "a43bc6469ea32d97be70e0816596e9fbbbfe7c64f6511d715cacdfd152165abf",
+    "docs/workflows/k2-memory/prior-k0-consumers/tools/check_kernel_entry.py": "5526015515ebdbe8aa5cde66216eda028eed0f0470b7270d09ab56b3cd915731",
+    "kernel/bootstrap_memory.vt": "7724eb2be912c6a15f0fba561ad7ad60af8493174d4f4b68bd407ee67427675a",
+    "kernel/entry.vt": "4233162c804f9d7e374f36b98e8155e5d886c3002ffdfd66a629734064f07193",
+    "kernel/kernel.build": "5d1e6b97f0c6da12b0828b2f4c4d4286246a9fcafb75566382831a76fd9aa19f",
+    "kernel/machine.s0": "bd5cd0acfcdd277706c34ebdbd863411b5a4f7e6f9cf58955d684348fe5ddcde",
+    "kernel/machine.vt": "7c9d78a931a64103e0ffc6b1f59381b7989b3f313c484a446db7e179df5096ca",
+    "kernel/memory.vt": "7112ed5726f35079b6f22084349390916d528f3dc3de3358d2cb7d059f4a1be4",
+    "tests/k0/abi.vt": "76e07d808905d8e09cab13d41b5d3695c7c3f46b6ee50a49694fabbd3dd4d8aa",
+    "tests/k0/boot.vt": "3c100e990f995446be631c92289d07fa5c3da00818c24a66967fbcc4a3dbe8bb",
+    "tests/k0/fw_cfg.vt": "607ad68e260adf0b0c638ecdf4389de51c2f8a615088349399d64f7f24c7ddc6",
+    "tests/k2/memory_probe.vt": "2d5c399ed3004d31cf271cca66b29ac1d449ddd1911354faea1d24b5d8c1be41",
+    "tools/check_kernel_entry.py": "adfebad3a11600153cb2c0b40cf696dd792d114532f28f3ac05a84d9c5084d99",
+    "tools/check_kernel_observer.py": "a8ae5d73a82bda320581754190de05cf3ceef1bfdb705c675e7089711c141c81",
+    "tools/check_memory_boot.py": "f19be8897dceba7fc7d9a62f7fdfa366eda03560f3e0e9cdf02be743128d27e1"
+  },
+  "dependencies": {
+    "docs/workflows/k2-memory/R-candidate-r1.json": "f58658cb7b97dea87209fc7640f0912fbe26da1224d9ffa6ebf650d955e3bc49",
+    "docs/workflows/k2-memory/R-acceptance-r1.md": "a345933004a356a0d4c800f4a09cf3d2ee28a17eabfdc57080b9f588a3854949",
+    "docs/workflows/k2-memory/M-candidate-r1.json": "0f9583c4c5ada9749c7d601f2e6ac74eec2d93de84a50166d6b029ef0add76b0",
+    "docs/workflows/k2-memory/M-acceptance-r1.md": "cb20091a94bd75ce894ccf220a10564cd669a71ac3168ad6667c39266a4f4afc",
+    "CODE_STYLE.md": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99"
+  },
+  "compiler": {
+    "path": "../biomiya/build/layout-p4-r1/e3.elf",
+    "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+  }
+}

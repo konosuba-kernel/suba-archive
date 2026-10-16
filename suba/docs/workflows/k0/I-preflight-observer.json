@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/mii/miniconda3/bin/python3",
+    "-c",
+    "print(\"suba K0 boot: entering kernel\\nsuba kernel K0: handoff accepted\", flush=True)"
+  ],
+  "marker": "suba kernel K0: handoff accepted\n",
+  "observed": true,
+  "observer_stopped_halted_vm": true,
+  "returncode": -15,
+  "log": "suba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\n",
+  "passed": true
+}

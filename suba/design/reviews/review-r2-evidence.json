@@ -1,0 +1,138 @@
+{
+  "reviewer": "/root/suba_design_review",
+  "candidate": "C-r2",
+  "checks": [
+    {
+      "name": "candidate-r2:README.md",
+      "pass": true,
+      "detail": "ef48b90ff93657a9bd4c3f8b7a14f87117163288ef7e65fa86ea02330152ad17"
+    },
+    {
+      "name": "candidate-r2:REQUIREMENTS.md",
+      "pass": true,
+      "detail": "6019cf0da84b6ccf49180c7bbc86db9d5c4d3597452afdc4e1cf0a531644267a"
+    },
+    {
+      "name": "candidate-r2:design/ARCHITECTURE.md",
+      "pass": true,
+      "detail": "3cdda54565813d90decb2ee68e80c7d12a2d13e73dbdb61988fc635d7eb30a8b"
+    },
+    {
+      "name": "candidate-r2:design/CONTRACTS.md",
+      "pass": true,
+      "detail": "03aceb70ffd94d33801c2f73e1986066f1927401fc19fd39bb5fbccd50527ee4"
+    },
+    {
+      "name": "candidate-r2:design/IMPLEMENTATION.md",
+      "pass": true,
+      "detail": "674ccbcf6632130ab6e3d5ca8d785662fbb27c33c42000075a52cfb3917032fc"
+    },
+    {
+      "name": "candidate-r2:design/research/platform.md",
+      "pass": true,
+      "detail": "54f561782ad6d80bca0977b877d901f1f808b2dc92848a76455917b15eb0aedb"
+    },
+    {
+      "name": "candidate-r2:design/research/toolchain.md",
+      "pass": true,
+      "detail": "c0cfeb666693fcbe607b6384ee008ad4e0d13a3755f0cc34d52f386d767db245"
+    },
+    {
+      "name": "candidate-r2:design/research/toolchain-evidence.json",
+      "pass": true,
+      "detail": "62e285480b1af64771e8c42b3f2ddfeb206feadd163c1a4bfd491b84bc647039"
+    },
+    {
+      "name": "preserved-r1:README.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:REQUIREMENTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:design/ARCHITECTURE.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:design/CONTRACTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:design/IMPLEMENTATION.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:design/research/platform.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:design/research/toolchain.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "preserved-r1:design/research/toolchain-evidence.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "unchanged:design/research/platform.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "unchanged:design/research/toolchain.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "unchanged:design/research/toolchain-evidence.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "unchanged:REQUIREMENTS.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "unchanged:README.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "source-fact:start-before-functions-and-s0",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "source-fact:path-limit-96",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "existing-manifest-rewrite-length",
+      "pass": true,
+      "detail": 554
+    },
+    {
+      "name": "existing-manifest-rewrite-paths",
+      "pass": true,
+      "detail": 27
+    }
+  ],
+  "source_hashes": {
+    "biomiya/core-s/next/q/main.vt": "f30ba4a2641da8f6a43f4cbc263f9fbfb2b4c49b3fe1d5cdcc8cdcc3572cb5f4",
+    "biomiya/core-s/next/q/input.vt": "32d9ce32f8059c110efff67e7f37f8ac7392867ad75f0bfbe1d75adbe4c7028b",
+    "biomiya/core-s/next/q/runtime/bytes.vt": "7426e1141b909998d2d9426f1fac473051f0de79c6fbce950c4d4655148959a5"
+  },
+  "nonblocking_discrepancy": "C-r2 CONTRACTS says Linux start is emitted after ordinary functions; actual main.vt emits rv64::start before functions and S0. Boot segment-first stub requirement itself is sound.",
+  "scope": "Read-only identity/source and manifest example checks, no product implementation tests."
+}

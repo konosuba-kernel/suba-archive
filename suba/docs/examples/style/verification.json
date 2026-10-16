@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-14",
+  "scope": "style examples, Linux-user only; not kernel tests",
+  "compiler_sha256": "7e1de550da39c31e203c83d0bce7e13dd5deb64923f3c5e4428aad8fbd7d7d20",
+  "input_sha256": {
+    "ranges.vt": "5f5fc36f36f579364ecbc76a68623c3b5b0ade40762f01811e802a720e499cb0",
+    "bytes.vt": "ae2bbd23a43b5e5b35882b5a5c00630c5f7335a5c0e7e39cc54ffcfd5ec3c04c",
+    "main.vt": "4690c0589ad343c017be6fca091730ea86d0345e7303ab474251e654a298db0c",
+    "program.build": "b7a5b95251362452861fc8c7cca567cb44d3695b7f1463eebca9f356f379a54b"
+  },
+  "commands": [
+    {
+      "argv": [
+        "qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/core-s/build/snext-p4-r2/e3.elf",
+        "build",
+        "program.build"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=0 source=3445 assembly=0 names=86 name_bytes=1349 decls=9 types=22 fields=6 params=6 max_ast=77 max_ir=176 max_frame=1040 max_bindings=6 max_defers=0 max_loops=0 max_slots=135 max_args=14 max_params=3 text=7576 data=0 objects=0 symbols=144 fixups=231 relocations=0 elf=16385\n"
+    },
+    {
+      "argv": [
+        "qemu-riscv64",
+        "program.elf"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "elf_sha256": "bec2fffd31b33f05d9ddf69441197b4fe1d7d543ebf697aaefb64ee9e10886b4",
+  "passed": true
+}

@@ -1,0 +1,263 @@
+// Namespace transactions execute under the same serial worker as file I/O.
+module kernel::fs;
+unsafe fn path_view(other: bool) -> []const u8 {
+    unsafe {
+        if other { return core::slice_from_raw_parts(core::slice_of(OPERATIONS[ACTIVE].other).data, OPERATIONS[ACTIVE].other_bytes); }
+        return core::slice_from_raw_parts(core::slice_of(OPERATIONS[ACTIVE].path).data, OPERATIONS[ACTIVE].path_bytes);
+    }
+}
+unsafe fn begin_resolve(other: bool) -> Progress {
+    unsafe {
+        let bytes: []const u8 = path_view(other);
+        if !path::valid(bytes) { return failed(Error::Invalid); }
+        RESOLVER = resolve_begin(OPERATIONS[ACTIVE].cwd);
+        PHASE = Phase::Resolve;
+        if other { PHASE = Phase::ResolveOther; }
+        return Progress::More;
+    }
+}
+unsafe fn begin_operation() -> Progress {
+    unsafe {
+        COPIED = 0;
+        RESERVED_COUNT = 0;
+        SUBMITTED = false;
+        BLOCK_COUNT = 0;
+        IO_INDEX = 0;
+        let file: objects::Identity = request_file(OPERATIONS[ACTIVE].command);
+        if file.generation != 0_usize {
+            if !file_mode(file, false) && !file_mode(file, true) { return failed(Error::Denied); }
+            NODE = FILES[file.slot].node;
+            if !permitted(NODE, false) { return failed(Error::Denied); }
+        }
+        match OPERATIONS[ACTIVE].command {
+            Command::Read(access) => { return begin_transfer(access, false); },
+            Command::Write(access) => { return begin_transfer(access, true); },
+            Command::Stat(id) => { return stat_output(); },
+            Command::Sync(sync) => {
+                // Seal changes lifecycle/visibility metadata. A borrowed Read
+                // object must not bypass a Frozen tree or the compiler-only out grant.
+                if sync.seal && !permitted(NODE, true) { return failed(Error::Denied); }
+                if sync.seal && ((NODES[NODE].flags & codec::TRANSIENT) == 0_u32 ||
+                    !same_client(NODE_USE[NODE].transient, OPERATIONS[ACTIVE].client)) { return failed(Error::Denied); }
+                if sync.seal { dirty_node(NODE); }
+                SYNC_BLOCK = 0; PHASE = Phase::SyncScan; return Progress::More;
+            },
+            Command::SyncAll => { SYNC_BLOCK = 0; PHASE = Phase::SyncScan; return Progress::More; },
+            Command::Open(flags) => {}, Command::Mkdir => {}, Command::List(cursor) => {},
+            Command::Unlink => {}, Command::Replace => {}, Command::Directory => {},
+            Command::Job(command) => { return job_begin(command); }
+        }
+        return begin_resolve(false);
+    }
+}
+unsafe fn resolve_operation(other: bool) -> Progress {
+    unsafe {
+        match resolve_step(core::addr_of_mut(RESOLVER), path_view(other)) {
+            Resolved::More => { return Progress::More; },
+            Resolved::Failed(error) => { return failed(error); },
+            Resolved::Missing(missing) => {
+                MISSING = missing;
+                if other { OTHER_NODE = abi::FS_NODE_COUNT; return replace_operation(); }
+                match OPERATIONS[ACTIVE].command {
+                    Command::Open(flags) => {
+                        if (flags & files::CREATE_NEW) == 0_usize { return failed(Error::NotFound); }
+                    },
+                    Command::Mkdir => {},
+                    Command::Read(access) => { return Progress::Invalid; }, Command::Write(access) => { return Progress::Invalid; },
+                    Command::Stat(file) => { return Progress::Invalid; }, Command::Sync(sync) => { return Progress::Invalid; },
+                    Command::List(cursor) => { return failed(Error::NotFound); }, Command::Unlink => { return failed(Error::NotFound); },
+                    Command::Replace => { return failed(Error::NotFound); }, Command::SyncAll => { return Progress::Invalid; },
+                    Command::Directory => { return failed(Error::NotFound); },
+            Command::Job(command) => {}
+                }
+                if !permitted(missing.parent, true) { return failed(Error::Denied); }
+                if !creation_depth(missing.parent) { return failed(Error::Limit); }
+                let bytes: []const u8 = path_view(false);
+                if bytes[bytes.len - 1_usize] == 47_u8 { return failed(Error::Invalid); }
+                SCAN = 1; PHASE = Phase::Create; return Progress::More;
+            },
+            Resolved::Found(node) => {
+                if other { OTHER_NODE = node; return replace_operation(); }
+                NODE = node;
+                return found_operation();
+            }
+        }
+    }
+}
+unsafe fn found_operation() -> Progress {
+    unsafe {
+        if !permitted(NODE, false) || !accessible(NODE, OPERATIONS[ACTIVE].client) { return failed(Error::Denied); }
+        match OPERATIONS[ACTIVE].command {
+            Command::Open(flags) => {
+                if (flags & files::CREATE_NEW) != 0_usize { return failed(Error::Exists); }
+                let writing: bool = (flags & files::WRITE) != 0_usize;
+                if writing && !permitted(NODE, true) { return failed(Error::Denied); }
+                match open_existing(NODE, writing, OPERATIONS[ACTIVE].client) {
+                    Opened::Ready(id) => { return complete(Outcome::File(id)); }, Opened::Failed(error) => { return failed(error); }
+                }
+            },
+            Command::Mkdir => { return failed(Error::Exists); },
+            Command::List(cursor) => {
+                if NODES[NODE].kind != abi::NODE_DIRECTORY { return failed(Error::Invalid); }
+                if cursor > abi::FS_NODE_COUNT { return failed(Error::Invalid); }
+                SCAN = cursor; PHASE = Phase::Enumerate; return Progress::More;
+            },
+            Command::Unlink => {
+                if NODE == 0_usize || domain_anchor(NODE) || !permitted(NODE, true) || NODES[NODE].parent == 0_u32 { return failed(Error::Denied); }
+                if NODE_USE[NODE].writer || NODE_USE[NODE].cwd != 0_usize { return failed(Error::Busy); }
+                SCAN = 1; PHASE = Phase::Remove; return Progress::More;
+            },
+            Command::Replace => {
+                if !permitted(NODE, true) { return failed(Error::Denied); }
+                return begin_resolve(true);
+            },
+            Command::Directory => {
+                if NODES[NODE].kind != abi::NODE_DIRECTORY { return failed(Error::Invalid); }
+                NODE_USE[NODE].cwd = NODE_USE[NODE].cwd + 1_usize;
+                return complete(Outcome::Directory(NODE));
+            },
+            Command::Read(access) => {}, Command::Write(access) => {}, Command::Stat(file) => {},
+            Command::Sync(sync) => {}, Command::SyncAll => {},
+            Command::Job(command) => {}
+        }
+        return Progress::Invalid;
+    }
+}
+unsafe fn create_operation() -> Progress {
+    unsafe {
+        var count: usize = 0;
+        while count < 64_usize && SCAN < abi::FS_NODE_COUNT {
+            let node: usize = SCAN;
+            SCAN = SCAN + 1_usize; count = count + 1_usize;
+            if NODES[node].kind == abi::NODE_FREE && NODES[node].generation != 0xffffffffffffffff_usize {
+                if !changed_at(MISSING.parent) { return failed(Error::Limit); }
+                var created: codec::Node = zero;
+                created.kind = abi::NODE_DIRECTORY;
+                var flags: usize = 0;
+                match OPERATIONS[ACTIVE].command {
+                    Command::Open(value) => { flags = value; created.kind = abi::NODE_FILE; }, Command::Mkdir => {},
+                    Command::Read(access) => { return Progress::Invalid; }, Command::Write(access) => { return Progress::Invalid; },
+                    Command::Stat(file) => { return Progress::Invalid; }, Command::Sync(sync) => { return Progress::Invalid; },
+                    Command::List(cursor) => { return Progress::Invalid; }, Command::Unlink => { return Progress::Invalid; },
+                    Command::Replace => { return Progress::Invalid; }, Command::SyncAll => { return Progress::Invalid; },
+                    Command::Directory => { return Progress::Invalid; },
+            Command::Job(command) => {}
+                }
+                created.generation = NODES[node].generation + 1_usize;
+                created.parent = MISSING.parent as u32;
+                created.length = MISSING.name.bytes;
+                let bytes: []const u8 = path_view(false);
+                var i: usize = 0;
+                while i < created.length { created.name[i] = bytes[MISSING.name.start + i]; i = i + 1_usize; }
+                if (flags & files::TRANSIENT) != 0_usize {
+                    created.flags = codec::TRANSIENT;
+                    NODE_USE[node].transient = OPERATIONS[ACTIVE].client;
+                }
+                NODE_USE[node].domain = NODE_USE[MISSING.parent].domain;
+                NODE_USE[node].zone = NODE_USE[MISSING.parent].zone;
+                NODES[node] = created;
+                FREE_NODES = FREE_NODES - 1_usize;
+                dirty_node(node);
+                if created.kind == abi::NODE_DIRECTORY { return complete(Outcome::Value(0)); }
+                match open_existing(node, true, OPERATIONS[ACTIVE].client) {
+                    Opened::Ready(id) => { return complete(Outcome::File(id)); },
+                    Opened::Failed(error) => { free_node(node); return failed(error); }
+                }
+            }
+        }
+        if SCAN == abi::FS_NODE_COUNT { return failed(Error::NoSpace); }
+        return Progress::More;
+    }
+}
+unsafe fn remove_operation() -> Progress {
+    unsafe {
+        if NODES[NODE].kind == abi::NODE_DIRECTORY {
+            var count: usize = 0;
+            while count < 64_usize && SCAN < abi::FS_NODE_COUNT {
+                let node: usize = SCAN;
+                SCAN = SCAN + 1_usize; count = count + 1_usize;
+                // Old versions still need a valid parent until their last reader
+                // closes and the reaper releases the node and its block chain.
+                if NODES[node].kind != abi::NODE_FREE && NODES[node].parent == NODE as u32 {
+                    return failed(Error::Busy);
+                }
+            }
+            if SCAN < abi::FS_NODE_COUNT { return Progress::More; }
+        }
+        if !changed_at(NODE) { return failed(Error::Limit); }
+        if NODES[NODE].kind == abi::NODE_DIRECTORY { free_node(NODE); }
+        else {
+            detach_node(NODE, OPERATIONS[ACTIVE].client);
+        }
+        return complete(Outcome::Value(0));
+    }
+}
+unsafe fn replace_operation() -> Progress {
+    unsafe {
+        var parent: usize = MISSING.parent;
+        var name: []const u8 = "";
+        if OTHER_NODE < abi::FS_NODE_COUNT {
+            parent = NODES[OTHER_NODE].parent as usize;
+            name = core::slice_from_raw_parts(core::slice_of(NODES[OTHER_NODE].name).data, NODES[OTHER_NODE].length);
+        } else {
+            let bytes: []const u8 = path_view(true);
+            if bytes[bytes.len - 1_usize] == 47_u8 { return failed(Error::Invalid); }
+            name = core::slice_from_raw_parts(core::ptr_add(bytes.data, MISSING.name.start), MISSING.name.bytes);
+        }
+        if !permitted(parent, true) { return failed(Error::Denied); }
+        if parent != NODES[NODE].parent as usize { return failed(Error::Invalid); }
+        if OTHER_NODE < abi::FS_NODE_COUNT && !accessible(OTHER_NODE, OPERATIONS[ACTIVE].client) {
+            return failed(Error::Denied);
+        }
+        if !epoch_available(NODE) { return failed(Error::Limit); }
+        if !replace_nodes(NODE, OTHER_NODE, name, OPERATIONS[ACTIVE].client) { return failed(Error::Busy); }
+        if !changed_at(NODE) { return Progress::Invalid; }
+        return complete(Outcome::Value(0));
+    }
+}
+unsafe fn record_header(size: usize) -> []u8 {
+    unsafe {
+        let bytes: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(STAGING).data, size);
+        var i: usize = 0;
+        while i < size { bytes[i] = 0; i = i + 1_usize; }
+        argument_wire::put(bytes, 0, abi::VERSION as usize, 4);
+        argument_wire::put(bytes, 4, size, 4);
+        return bytes;
+    }
+}
+unsafe fn stat_output() -> Progress {
+    unsafe {
+        let bytes: []u8 = record_header(files::STAT_BYTES);
+        argument_wire::put(bytes, files::STAT_KIND, NODES[NODE].kind as usize, 4);
+        argument_wire::put(bytes, files::STAT_FLAGS, NODES[NODE].flags as usize, 4);
+        argument_wire::put(bytes, files::STAT_GENERATION, NODES[NODE].generation, 8);
+        argument_wire::put(bytes, files::STAT_FILE_BYTES, NODES[NODE].bytes, 8);
+        argument_wire::put(bytes, files::STAT_SOURCE_EPOCH, SOURCE_EPOCH, 8);
+        argument_wire::put(bytes, files::STAT_BOOT_ID, BOOT_ID, 8);
+        COPIED = 0; LENGTH = files::STAT_BYTES; PHASE = Phase::Output;
+        return Progress::More;
+    }
+}
+unsafe fn enumerate_operation() -> Progress {
+    unsafe {
+        var count: usize = 0;
+        while count < 64_usize && SCAN < abi::FS_NODE_COUNT {
+            let node: usize = SCAN;
+            SCAN = SCAN + 1_usize; count = count + 1_usize;
+            if node != 0_usize && NODES[node].kind != abi::NODE_FREE && NODES[node].parent == NODE as u32 &&
+                (NODES[node].flags & codec::DETACHED) == 0_u32 {
+                let bytes: []u8 = record_header(files::ENTRY_BYTES);
+                argument_wire::put(bytes, files::ENTRY_KIND, NODES[node].kind as usize, 4);
+                argument_wire::put(bytes, files::ENTRY_NAME_BYTES, NODES[node].length, 4);
+                argument_wire::put(bytes, files::ENTRY_GENERATION, NODES[node].generation, 8);
+                argument_wire::put(bytes, files::ENTRY_FILE_BYTES, NODES[node].bytes, 8);
+                var i: usize = 0;
+                while i < NODES[node].length { bytes[files::ENTRY_NAME + i] = NODES[node].name[i]; i = i + 1_usize; }
+                LENGTH = files::ENTRY_BYTES; COPIED = 0; PHASE = Phase::Output;
+                return Progress::More;
+            }
+        }
+        if SCAN == abi::FS_NODE_COUNT { return complete(Outcome::Value(0)); }
+        return Progress::More;
+    }
+}

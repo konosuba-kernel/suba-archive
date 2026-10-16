@@ -1,0 +1,30 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+static mut DATA: [65536]u8 = zero;
+pub fn run() -> u32 {
+    unsafe {
+        var round: usize = 0;
+        while round < 4_usize {
+            let opened: syscall::Reply = files::open("empty", 6);
+            if opened.status != abi::OK { return 60; }
+            let epoch: syscall::Reply = services::stats(4);
+            if files::write_at(opened.value, 0, core::slice_of(DATA)).status != abi::NO_SPACE || services::stats(4).value != epoch.value { return 61; }
+            match files::stat(opened.value) {
+                files::Stated::Failed(status) => { return 62; },
+                files::Stated::Ready(stat) => { if stat.bytes != 0_usize { return 63; } }
+            }
+            if syscall::close(opened.value).status != abi::OK || files::unlink("empty").status != abi::OK { return 64; }
+            round = round + 1_usize;
+        }
+        let old: syscall::Reply = files::open("probe", 1);
+        if old.status != abi::OK { return 65; }
+        let read: syscall::Reply = files::read_at(old.value, 0, core::slice_of_mut(DATA));
+        if read.status != abi::OK || read.value != 3_usize || DATA[0_usize] != 111_u8 ||
+            DATA[1_usize] != 108_u8 || DATA[2_usize] != 100_u8 { return 66; }
+        if syscall::close(old.value).status != abi::OK || files::sync_all().status != abi::OK { return 67; }
+        return 0;
+    }
+}

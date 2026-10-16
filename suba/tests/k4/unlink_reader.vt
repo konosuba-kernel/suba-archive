@@ -1,0 +1,73 @@
+// A detached file stays readable through its existing handle, then releases its
+// node and data blocks after close. The next boot must see only the kept file.
+module test::program;
+import suba::abi;
+import suba::argument_wire;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+static mut BUFFER: [4096]u8 = zero;
+static mut RECORD: [96]u8 = zero;
+unsafe fn equals(bytes: []const u8, expected: []const u8) -> bool {
+    unsafe {
+        if bytes.len != expected.len { return false; }
+        var i: usize = 0;
+        while i < bytes.len {
+            if bytes[i] != expected[i] { return false; }
+            i = i + 1_usize;
+        }
+        return true;
+    }
+}
+unsafe fn listing(path: []const u8, expected: []const u8) -> bool {
+    unsafe {
+        let first: syscall::Reply = files::list(path, 0, core::slice_of_mut(RECORD));
+        if first.status != abi::OK || first.value == 0_usize { return false; }
+        let wire: []const u8 = core::slice_of(RECORD);
+        if argument_wire::word(wire, 0, 4) != 1_usize ||
+            argument_wire::word(wire, 4, 4) != 96_usize ||
+            argument_wire::word(wire, 8, 4) != abi::NODE_FILE as usize ||
+            argument_wire::word(wire, 12, 4) != expected.len { return false; }
+        if !equals(core::slice_from_raw_parts(core::ptr_add(wire.data, 32), expected.len), expected) { return false; }
+        let last: syscall::Reply = files::list(path, first.value, core::slice_of_mut(RECORD));
+        return last.status == abi::OK && last.value == 0_usize;
+    }
+}
+pub fn run() -> u32 {
+    unsafe {
+        if services::stats(5).value > 1_usize {
+            if files::open("unlink/removed", 1).status != abi::NOT_FOUND { return 140; }
+            if !listing("unlink", "保留") { return 141; }
+            return 0;
+        }
+        if files::mkdir("unlink").status != abi::OK { return 142; }
+        let writer: syscall::Reply = files::open("unlink/removed", 6);
+        if writer.status != abi::OK { return 143; }
+        if files::write_at(writer.value, 0, "detached bytes").status != abi::OK ||
+            files::sync(writer.value, false).status != abi::OK ||
+            syscall::close(writer.value).status != abi::OK { return 144; }
+        if !listing("unlink", "removed") { return 145; }
+        let before_blocks: usize = services::stats(6).value;
+        let before_nodes: usize = services::stats(7).value;
+        let reader: syscall::Reply = files::open("unlink/removed", 1);
+        if reader.status != abi::OK || files::unlink("unlink/removed").status != abi::OK { return 146; }
+        if files::open("unlink/removed", 1).status != abi::NOT_FOUND { return 147; }
+        if files::list("unlink", 0, core::slice_of_mut(RECORD)).value != 0_usize { return 148; }
+        let read: syscall::Reply = files::read_at(reader.value, 0, core::slice_of_mut(BUFFER));
+        if read.status != abi::OK || read.value != 14_usize ||
+            !equals(core::slice_from_raw_parts(core::slice_of(BUFFER).data, read.value), "detached bytes") { return 149; }
+        if services::stats(6).value != before_blocks || services::stats(7).value != before_nodes ||
+            services::stats(11).value != 1_usize { return 150; }
+        if syscall::close(reader.value).status != abi::OK { return 151; }
+        var attempts: usize = 0;
+        while services::stats(11).value != 0_usize && attempts < 10000_usize {
+            attempts = attempts + 1_usize;
+        }
+        if services::stats(6).value != before_blocks + 1_usize ||
+            services::stats(7).value != before_nodes + 1_usize || services::stats(11).value != 0_usize { return 152; }
+        let kept: syscall::Reply = files::open("unlink/保留", 6);
+        if kept.status != abi::OK || syscall::close(kept.value).status != abi::OK ||
+            !listing("unlink", "保留") || files::sync_all().status != abi::OK { return 153; }
+        return 0;
+    }
+}

@@ -1,0 +1,451 @@
+{
+  "production": [
+    {
+      "path": "platform/fdt.vt",
+      "bytes": 6854,
+      "physical_lines": 153
+    },
+    {
+      "path": "platform/fdt_properties.vt",
+      "bytes": 7096,
+      "physical_lines": 174
+    },
+    {
+      "path": "platform/fdt_tree.vt",
+      "bytes": 9700,
+      "physical_lines": 226
+    }
+  ],
+  "shared_abi": [
+    {
+      "path": "abi/contract.vt",
+      "bytes": 7766,
+      "physical_lines": 199
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/fdt/README.md",
+      "bytes": 2724,
+      "physical_lines": 19
+    },
+    {
+      "path": "tests/fdt/cases.py",
+      "bytes": 13993,
+      "physical_lines": 214
+    },
+    {
+      "path": "tests/fdt/linux.s0",
+      "bytes": 275,
+      "physical_lines": 9
+    },
+    {
+      "path": "tests/fdt/probe.vt",
+      "bytes": 2270,
+      "physical_lines": 57
+    }
+  ],
+  "tool": [
+    {
+      "path": "tools/check_fdt.py",
+      "bytes": 11913,
+      "physical_lines": 228
+    }
+  ],
+  "binary_fixtures": [
+    {
+      "path": "tests/fdt/opensbi-runtime.dtb",
+      "bytes": 9287,
+      "sha256": "d8b4117980325a8a744f773cf94bbe0b297e947da95a30767b1a2f396880e12d"
+    },
+    {
+      "path": "tests/fdt/qemu-virt.dtb",
+      "bytes": 5044,
+      "sha256": "4b86967d51a0b5f3102e597214ab2c1344bf6ef38f8c31edc3226b96854fe9e1"
+    }
+  ],
+  "elf_bytes": 110593,
+  "elf_segments": [
+    {
+      "flags": 5,
+      "address": 65536,
+      "file_bytes": 99332,
+      "memory_bytes": 99332,
+      "bss_bytes": 0,
+      "alignment": 4096
+    },
+    {
+      "flags": 4,
+      "address": 167936,
+      "file_bytes": 324,
+      "memory_bytes": 324,
+      "bss_bytes": 0,
+      "alignment": 4096
+    },
+    {
+      "flags": 6,
+      "address": 172032,
+      "file_bytes": 1,
+      "memory_bytes": 65538,
+      "bss_bytes": 65537,
+      "alignment": 4096
+    }
+  ],
+  "compiler_metrics": {
+    "sources": "5",
+    "imports": "2",
+    "assembly_files": "1",
+    "source": "33686",
+    "assembly": "275",
+    "names": "678",
+    "name_bytes": "11871",
+    "decls": "234",
+    "types": "58",
+    "fields": "36",
+    "params": "77",
+    "max_ast": "376",
+    "max_ir": "582",
+    "max_frame": "8480",
+    "max_bindings": "14",
+    "max_defers": "0",
+    "max_loops": "2",
+    "max_slots": "337",
+    "max_args": "29",
+    "max_params": "4",
+    "text": "99332",
+    "data": "324",
+    "objects": "35",
+    "symbols": "1575",
+    "fixups": "2909",
+    "relocations": "0",
+    "elf": "110593"
+  },
+  "stack": {
+    "method": "exact RV64 prologue frame constants and direct source call graph; no recursion, all production alignments <=16",
+    "functions": [
+      {
+        "name": "fits",
+        "source": "platform/fdt.vt",
+        "address": 65684,
+        "frame_bytes": 160,
+        "calls": []
+      },
+      {
+        "name": "be32",
+        "source": "platform/fdt.vt",
+        "address": 66028,
+        "frame_bytes": 624,
+        "calls": []
+      },
+      {
+        "name": "be64",
+        "source": "platform/fdt.vt",
+        "address": 67620,
+        "frame_bytes": 192,
+        "calls": [
+          "be32"
+        ]
+      },
+      {
+        "name": "view",
+        "source": "platform/fdt.vt",
+        "address": 67964,
+        "frame_bytes": 176,
+        "calls": []
+      },
+      {
+        "name": "equal",
+        "source": "platform/fdt.vt",
+        "address": 68308,
+        "frame_bytes": 464,
+        "calls": []
+      },
+      {
+        "name": "read_header",
+        "source": "platform/fdt.vt",
+        "address": 69548,
+        "frame_bytes": 1952,
+        "calls": [
+          "be32",
+          "fits"
+        ]
+      },
+      {
+        "name": "append_region",
+        "source": "platform/fdt.vt",
+        "address": 74920,
+        "frame_bytes": 832,
+        "calls": [
+          "fits"
+        ]
+      },
+      {
+        "name": "read_reservations",
+        "source": "platform/fdt.vt",
+        "address": 77216,
+        "frame_bytes": 1456,
+        "calls": [
+          "append_region",
+          "be64",
+          "fits"
+        ]
+      },
+      {
+        "name": "inspect",
+        "source": "platform/fdt.vt",
+        "address": 81172,
+        "frame_bytes": 8480,
+        "calls": [
+          "read_header",
+          "read_reservations",
+          "read_tree"
+        ]
+      },
+      {
+        "name": "terminator",
+        "source": "platform/fdt_tree.vt",
+        "address": 90264,
+        "frame_bytes": 304,
+        "calls": []
+      },
+      {
+        "name": "aligned_after",
+        "source": "platform/fdt_tree.vt",
+        "address": 90980,
+        "frame_bytes": 224,
+        "calls": [
+          "fits"
+        ]
+      },
+      {
+        "name": "named",
+        "source": "platform/fdt_tree.vt",
+        "address": 91488,
+        "frame_bytes": 416,
+        "calls": [
+          "equal",
+          "view"
+        ]
+      },
+      {
+        "name": "name_character",
+        "source": "platform/fdt_tree.vt",
+        "address": 92616,
+        "frame_bytes": 224,
+        "calls": []
+      },
+      {
+        "name": "valid_name",
+        "source": "platform/fdt_tree.vt",
+        "address": 94084,
+        "frame_bytes": 512,
+        "calls": [
+          "name_character"
+        ]
+      },
+      {
+        "name": "valid_property_name",
+        "source": "platform/fdt_tree.vt",
+        "address": 95688,
+        "frame_bytes": 480,
+        "calls": [
+          "name_character"
+        ]
+      },
+      {
+        "name": "reservation_name",
+        "source": "platform/fdt_tree.vt",
+        "address": 97216,
+        "frame_bytes": 752,
+        "calls": [
+          "equal"
+        ]
+      },
+      {
+        "name": "classify_node",
+        "source": "platform/fdt_tree.vt",
+        "address": 99196,
+        "frame_bytes": 2608,
+        "calls": [
+          "equal",
+          "named",
+          "reservation_name",
+          "valid_name"
+        ]
+      },
+      {
+        "name": "begin_node",
+        "source": "platform/fdt_tree.vt",
+        "address": 109192,
+        "frame_bytes": 1904,
+        "calls": [
+          "aligned_after",
+          "classify_node",
+          "terminator",
+          "view"
+        ]
+      },
+      {
+        "name": "read_property",
+        "source": "platform/fdt_tree.vt",
+        "address": 114312,
+        "frame_bytes": 2080,
+        "calls": [
+          "aligned_after",
+          "be32",
+          "fits",
+          "property",
+          "terminator",
+          "valid_property_name",
+          "view"
+        ]
+      },
+      {
+        "name": "read_tree",
+        "source": "platform/fdt_tree.vt",
+        "address": 119648,
+        "frame_bytes": 3936,
+        "calls": [
+          "be32",
+          "begin_node",
+          "finish_node",
+          "fits",
+          "read_property"
+        ]
+      },
+      {
+        "name": "once",
+        "source": "platform/fdt_properties.vt",
+        "address": 133908,
+        "frame_bytes": 208,
+        "calls": []
+      },
+      {
+        "name": "cells",
+        "source": "platform/fdt_properties.vt",
+        "address": 134408,
+        "frame_bytes": 432,
+        "calls": [
+          "be32",
+          "once"
+        ]
+      },
+      {
+        "name": "status",
+        "source": "platform/fdt_properties.vt",
+        "address": 135724,
+        "frame_bytes": 480,
+        "calls": [
+          "equal",
+          "once"
+        ]
+      },
+      {
+        "name": "memory_property",
+        "source": "platform/fdt_properties.vt",
+        "address": 137088,
+        "frame_bytes": 1472,
+        "calls": [
+          "be64",
+          "equal",
+          "once",
+          "status"
+        ]
+      },
+      {
+        "name": "reserved_property",
+        "source": "platform/fdt_properties.vt",
+        "address": 141040,
+        "frame_bytes": 1168,
+        "calls": [
+          "cells",
+          "equal",
+          "once",
+          "status"
+        ]
+      },
+      {
+        "name": "reservation_registers",
+        "source": "platform/fdt_properties.vt",
+        "address": 143996,
+        "frame_bytes": 992,
+        "calls": [
+          "append_region",
+          "be64",
+          "once"
+        ]
+      },
+      {
+        "name": "reservation_property",
+        "source": "platform/fdt_properties.vt",
+        "address": 146944,
+        "frame_bytes": 1616,
+        "calls": [
+          "equal",
+          "once",
+          "reservation_registers",
+          "status"
+        ]
+      },
+      {
+        "name": "property",
+        "source": "platform/fdt_properties.vt",
+        "address": 151256,
+        "frame_bytes": 1264,
+        "calls": [
+          "cells",
+          "equal",
+          "memory_property",
+          "reservation_property",
+          "reserved_property"
+        ]
+      },
+      {
+        "name": "finish_node",
+        "source": "platform/fdt_properties.vt",
+        "address": 154684,
+        "frame_bytes": 816,
+        "calls": []
+      },
+      {
+        "name": "emit",
+        "source": "tests/fdt/probe.vt",
+        "address": 157464,
+        "frame_bytes": 752,
+        "calls": []
+      },
+      {
+        "name": "run",
+        "source": "tests/fdt/probe.vt",
+        "address": 159276,
+        "frame_bytes": 2752,
+        "calls": [
+          "emit",
+          "inspect"
+        ]
+      }
+    ],
+    "inspect_chain_bytes": 19360,
+    "inspect_chain": [
+      "inspect",
+      "read_tree",
+      "read_property",
+      "property",
+      "reservation_property",
+      "reservation_registers",
+      "append_region",
+      "fits"
+    ],
+    "excludes": "caller frames outside inspect, firmware, interrupts and machine bridge"
+  },
+  "production_mutable_static_bytes": 0,
+  "production_function_text_bytes": 91780,
+  "production_text_measurement": "consecutive functions in declared input order: first fits at 65684 through test emit at 157464; test transport and ELF start excluded",
+  "iteration_bounds": {
+    "input_bytes": 65536,
+    "depth": 32,
+    "nodes": 512,
+    "reservation_pairs": 32,
+    "property_name_bytes": 31
+  }
+}

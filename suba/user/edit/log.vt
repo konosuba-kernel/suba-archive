@@ -1,0 +1,117 @@
+module user::edit::app;
+const LOG_CAPACITY: usize = 1048576;
+static mut LOG: [LOG_CAPACITY]u8 = zero;
+static mut LOG_BYTES: usize = 0;
+static mut LOG_TRUNCATED: bool = false;
+static mut LOG_INPUT: [4096]u8 = zero;
+unsafe fn log_append(data: []const u8) -> () {
+    unsafe {
+        var start: usize = 0;
+        if data.len > LOG_CAPACITY { start = data.len - LOG_CAPACITY; }
+        let count: usize = data.len - start;
+        var removed: usize = 0;
+        if count > LOG_CAPACITY - LOG_BYTES { removed = count - (LOG_CAPACITY - LOG_BYTES); }
+        if removed != 0_usize || start != 0_usize { LOG_TRUNCATED = true; }
+        var i: usize = removed;
+        while i < LOG_BYTES { LOG[i - removed] = LOG[i]; i = i + 1_usize; }
+        LOG_BYTES = LOG_BYTES - removed;
+        i = 0;
+        while i < count { LOG[LOG_BYTES + i] = data[start + i]; i = i + 1_usize; }
+        LOG_BYTES = LOG_BYTES + count;
+        DIRTY = true;
+    }
+    return ();
+}
+unsafe fn log_exit(prefix: []const u8, exit: services::Exit) -> () {
+    var storage: [128]u8 = zero;
+    unsafe {
+        var writer: records::Writer = records::begin(core::slice_of_mut(storage));
+        if records::text(core::addr_of_mut(writer), prefix) &&
+            records::number(core::addr_of_mut(writer), exit.status) &&
+            records::text(core::addr_of_mut(writer), " cause=") &&
+            records::number(core::addr_of_mut(writer), exit.cause) &&
+            records::text(core::addr_of_mut(writer), "\n") { log_append(records::bytes(core::addr_of(writer))); }
+    }
+    return ();
+}
+unsafe fn poll_build() -> () {
+    unsafe {
+        match TASK {
+            Task::Idle => {}, Task::Running(current) => {
+                var task: Running = current;
+                var count: usize = 0;
+                while !task.eof && count < 16_usize {
+                    let got: syscall::Reply = services::read(task.pipe, core::slice_of_mut(LOG_INPUT), true);
+                    if got.status == abi::WOULD_BLOCK { break; }
+                    if got.status != abi::OK || got.value > 4096_usize {
+                        message("Build output stream failed"); cancel_build(); return ();
+                    }
+                    if got.value == 0_usize { task.eof = true; break; }
+                    log_append(core::slice_from_raw_parts(core::slice_of(LOG_INPUT).data, got.value));
+                    count = count + 1_usize;
+                }
+                TASK = Task::Running(task);
+                if !task.eof { return (); }
+                match services::collect(task.child) {
+                    services::Collected::Failed(error) => {
+                        if error != abi::WOULD_BLOCK { message("Cannot collect build exit"); }
+                    },
+                    services::Collected::Ready(exit) => {
+                        let closed: syscall::Reply = syscall::close(task.pipe);
+                        TASK = Task::Idle;
+                        log_exit("build exit=", exit);
+                        if task.cancelling { message("Build cancelled; committed publications remain valid"); }
+                        else {
+                            if exit.status == 0_usize && exit.cause == 0_usize { message("Build complete; Ctrl+R runs output"); }
+                            else { message("Build failed; Ctrl+J jumps to a current diagnostic"); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return ();
+}
+unsafe fn poll_run() -> () {
+    unsafe {
+        if RUN_CHILD == 0_usize { return (); }
+        match services::collect(RUN_CHILD) {
+            services::Collected::Failed(error) => {
+                if error != abi::WOULD_BLOCK { message("Cannot collect program exit"); }
+            },
+            services::Collected::Ready(exit) => {
+                RUN_CHILD = 0;
+                log_exit("program exit=", exit);
+                message("Program exited; status in log");
+            }
+        }
+    }
+    return ();
+}
+unsafe fn draw_log(target: draw::Canvas, face: font::Font) -> () {
+    unsafe {
+        var last: usize = LOG_BYTES;
+        if last != 0_usize && LOG[last - 1_usize] == 10_u8 { last = last - 1_usize; }
+        var first: usize = last;
+        var lines: usize = 1;
+        while first != 0_usize {
+            if LOG[first - 1_usize] == 10_u8 {
+                if lines == 5_usize { break; }
+                lines = lines + 1_usize;
+            }
+            first = first - 1_usize;
+        }
+        var y: usize = 376;
+        if LOG_TRUNCATED { paint::line(target, face, "[older output discarded: 1 MiB limit]", 8, y, 0xfbbf24); y = y + 16_usize; }
+        while first < LOG_BYTES && y + 16_usize <= HEIGHT {
+            var end: usize = first;
+            while end < LOG_BYTES && LOG[end] != 10_u8 { end = end + 1_usize; }
+            paint::line(target, face, core::slice_from_raw_parts(core::ptr_add(core::slice_of(LOG).data, first), end - first),
+                8, y, 0x86efac);
+            first = end;
+            if first < LOG_BYTES { first = first + 1_usize; }
+            y = y + 16_usize;
+        }
+    }
+    return ();
+}

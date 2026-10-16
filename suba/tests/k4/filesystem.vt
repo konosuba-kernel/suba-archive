@@ -1,0 +1,87 @@
+module test::program;
+import suba::abi;
+import suba::argument_wire;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+static mut BUFFER: [65536]u8 = zero;
+static mut RECORD: [96]u8 = zero;
+unsafe fn read_equals(handle: usize, offset: usize, expected: []const u8) -> bool {
+    unsafe {
+        let result: syscall::Reply = files::read_at(handle, offset, core::slice_from_raw_parts_mut(core::slice_of_mut(BUFFER).data, expected.len));
+        if result.status != abi::OK || result.value != expected.len { return false; }
+        var i: usize = 0;
+        while i < expected.len { if BUFFER[i] != expected[i] { return false; } i = i + 1_usize; }
+        return true;
+    }
+}
+pub fn run() -> u32 {
+    unsafe {
+        let boot: syscall::Reply = services::stats(5);
+        if boot.status != abi::OK { return 1; }
+        if boot.value > 1_usize {
+            let saved: syscall::Reply = files::open("/work/test/正文.vt", 1);
+            if saved.status != abi::OK || !read_equals(saved.value, 0, "new 中文 data") { return 2; }
+            if syscall::close(saved.value).status != abi::OK { return 3; }
+            if files::open("/work/test/temp", 1).status != abi::NOT_FOUND { return 4; }
+            if files::open("/work/test/gone", 1).status != abi::NOT_FOUND { return 5; }
+            return 0;
+        }
+        if files::mkdir("/work/test").status != abi::OK { return 10; }
+        if files::mkdir("/sys/no").status != abi::DENIED { return 11; }
+        let opened: syscall::Reply = files::open("/work/test/gone", 6);
+        if opened.status != abi::OK { return 13; }
+        let writer: usize = opened.value;
+        if files::write_at(writer, 1, "x").status != abi::INVALID { return 14; }
+        if files::write_at(writer, 0, "old version").status != abi::OK { return 15; }
+        if files::open("/work/test/gone", 1).status != abi::BUSY { return 16; }
+        if files::sync(writer, false).status != abi::OK || syscall::close(writer).status != abi::OK { return 17; }
+        let old: syscall::Reply = files::open("/work/test/gone", 1);
+        if old.status != abi::OK { return 18; }
+        let temp: syscall::Reply = files::open("/work/test/temp", 14);
+        if temp.status != abi::OK || files::write_at(temp.value, 0, "new 中文 data").status != abi::OK { return 19; }
+        if files::replace("/work/test/temp", "/work/test/gone").status != abi::BUSY { return 20; }
+        if files::sync(temp.value, true).status != abi::OK || syscall::close(temp.value).status != abi::OK { return 21; }
+        if files::replace("/work/test/temp", "/work/test/gone").status != abi::OK { return 22; }
+        if !read_equals(old.value, 0, "old version") { return 23; }
+        if syscall::close(old.value).status != abi::OK { return 24; }
+        let current: syscall::Reply = files::open("/work/test/gone", 1);
+        if current.status != abi::OK || !read_equals(current.value, 0, "new 中文 data") { return 25; }
+        match files::stat(current.value) {
+            files::Stated::Failed(status) => { return 26; },
+            files::Stated::Ready(stat) => { if stat.bytes != 15_usize || stat.flags != 0_u32 { return 27; } }
+        }
+        if syscall::close(current.value).status != abi::OK { return 28; }
+        if files::open("/work/test/gone/../x", 6).status != abi::INVALID { return 29; }
+        if files::open("/work/missing/../x", 6).status != abi::NOT_FOUND { return 30; }
+        if files::replace("/work/test/gone", "/work/test/正文.vt").status != abi::OK { return 31; }
+        let renamed: syscall::Reply = files::open("/sys/../work/test/../test/正文.vt", 2);
+        if renamed.status != abi::OK || syscall::close(renamed.value).status != abi::OK { return 33; }
+        let unsealed: syscall::Reply = files::open("/work/test/temp", 14);
+        if unsealed.status != abi::OK || files::write_at(unsealed.value, 0, "discard me").status != abi::OK ||
+            syscall::close(unsealed.value).status != abi::OK { return 34; }
+        if files::mkdir("/work/test/empty").status != abi::OK || files::unlink("/work/test/empty").status != abi::OK { return 35; }
+        if files::unlink("/work/test").status != abi::BUSY { return 36; }
+        var cursor: usize = 0;
+        var entries: usize = 0;
+        loop {
+            let listed: syscall::Reply = files::list("/work/test", cursor, core::slice_of_mut(RECORD));
+            if listed.status != abi::OK { return 37; }
+            if listed.value == 0_usize { break; }
+            if listed.value <= cursor || argument_wire::word(core::slice_of(RECORD), 4, 4) != 96_usize { return 38; }
+            cursor = listed.value;
+            entries = entries + 1_usize;
+            if entries > 2_usize { return 39; }
+        }
+        if entries != 2_usize { return 40; }
+        let read_only: syscall::Reply = files::open("/work/test/正文.vt", 1);
+        if read_only.status != abi::OK || files::write_at(read_only.value, 0, "x").status != abi::DENIED ||
+            files::sync(read_only.value, true).status != abi::DENIED { return 41; }
+        if syscall::close(read_only.value).status != abi::OK || files::read_at(read_only.value, 0, core::slice_of_mut(BUFFER)).status != abi::BAD_HANDLE { return 42; }
+        if files::open("/work/test/正文.vt", 3).status != abi::INVALID ||
+            files::list("/work/test/正文.vt", 0, core::slice_of_mut(RECORD)).status != abi::INVALID { return 43; }
+        // Further resource exhaustion and byte-boundary tests have separate fixtures.
+        if files::sync_all().status != abi::OK { return 32; }
+        return 0;
+    }
+}

@@ -1,0 +1,54 @@
+{
+  "node": "K9",
+  "revision": "r1",
+  "author": "/root",
+  "independent_reviewer": "/root/k4_review",
+  "dependencies": {
+    "K8_commit": "9d948fd",
+    "K8_acceptance_sha256": "39ebd2dc5642991a847ed47ee9420d5a61c3e8ffe59ca7c2af0b8cf5dfb3a34e",
+    "biomiya_commit": "65cb036d1279975dd01d8aee248c6cf0612c8b92"
+  },
+  "owned_files": {
+    "boot/ram.vt": "5bd2923e424adbc88e3f1f24c21371c8c83c9b879c65f8e64ac52be2cedbd2a4",
+    "boot/fw_cfg.vt": "9bff74afd0a83a77eabcbae979e0a83d46d80c55b9829c53a48fc99c27ee722f",
+    "boot/ram.build": "a246f668d92687c51deabf3e361827871af02abadde8e7e942d6b77ea71b80bb",
+    "tools/ram_launch.py": "5b0519b5a05bffd65cafb10b3b071a0fafddc7429be27e4cbd0587c0bff78ae1",
+    "tools/fixed_boot.py": "67ab78718ac0585a5ce9d1ac3a627e9efe0f10d37019d08168655078f62fa215",
+    "tools/native_manifests.py": "51efd080f967fc6a52eef8ccff78e07232c1243cc825f80eca5ebe9faa85a42f",
+    "tools/check_ram_transport.py": "b62f160bc8a73afc928f4beabb6875fceedf1e6b19d5ff6acfd61bc0ae75452d",
+    "tools/check_k9_native.py": "5b82fdca7ab73f16cab96c41671f14b050836a368512d37f96a08b8da1186185",
+    "tools/check_k9_manifest_gui.py": "822d006f92726964a9ebd439b0a45933690907d1bc70dfbe4b0537a691bf2415",
+    "tests/k9/native.vt": "8adaecaae72b39041b02cd55ed7665f0db1ecddc17c996c0dec341bb436fecec",
+    "tests/k8/native.vt": "4492bc9b2b73e9757ff732d3041e051b28396e0eab0147e868d97785beeca015",
+    "tools/build_system.py": "8ba788948e38398f01c77739d3f44305cc82ca9a287f2727a168a75b057eed03",
+    "tools/run_system.py": "371f42862254773b3f51f18a424922ec8aeb59237074223279d9c7d49a589114",
+    "tools/k7_gui.py": "da7197909db2a3be42c1e976c9672d3dfb81d4720ec6294ce938a43a2648d805",
+    "user/edit/app.vt": "2b184f39c928a4e9493d9d5d33244f52634ef698ec0e8cbc1d0d86822ef58103",
+    "user/edit/actions.vt": "21524fa2b84d9c8ffc3a64f0e6d2e7aea6c4569d1171380379739f860ca23bca",
+    "user/edit/keys.vt": "108411811fbca35d5edd320cf0e00fd17f785e1924fac7f9c0c96c3c6985efe2",
+    "user/edit/view.vt": "8605aa7cb86a9d60895efbb03b4d429b6a0d093ec04bade6dc0e364f209be61d",
+    "user/edit/INTERFACE.md": "beffc36518baa3c01e417d4b0cc89cccdcfca097b7bdd87c906cac27915defa2",
+    "user/build/README.md": "3e21c72aa738f655e7fce7b2b035e62ee1d7e0962de1fc484aef3b242bec99cc",
+    "docs/K7_RUN.md": "e97b4ae66f136ac5239631024c7ec751932314ee3a2d2525383659777cc90741"
+  },
+  "helpers": {
+    "tools/build_users.py": "3486c3b312090f1a706162d8009e45bc5ff04a22630716c425f3892c4937f983",
+    "tools/kernel_probe.py": "ebc2491a9131ac61d4b6d6e781072530d725393677eeda154e52898de9e2df3c",
+    "tools/native_probe.py": "4c779e734ad7a2468c10e51aadb2c4a0bfad51fce709f440f7816b5afefe1ff9",
+    "tools/check_k2.py": "38e7c4271a16274fb1e5a3e6da327185dcbe59d2e8a055196709d23d08aba409",
+    "tools/check_kernel_entry.py": "ea54c262911ca809db1db861213be26986fcc77cf211f5b31a730be25ccb6cde",
+    "tools/check_k5_devices.py": "5a7ce5d5dee65427e89bbba090833fe0369b56125ae584503f5d414d8bb154a3",
+    "tools/mkfs.py": "10d3402aa38dfe9211a28263ba88859386ff7f39e11ffc89cbf05356d864cba6",
+    "tools/read_disk.py": "f60130bcc265213b63207e3e10b4f0eb261dc89717f20bacd53a8e8b27afb43b"
+  },
+  "evidence_directories": [
+    "build/k9-native-r2",
+    "build/k9-system-r1",
+    "build/k9-manifest-r1",
+    "build/k9-transport-r1"
+  ],
+  "historical_failure": "build/k9-native-r1: test log created after spawn altered source epoch; fixed helper in K9 only",
+  "kernel_sha256": "737f4cf3c24aa4cc85753694b3e7a00de595bf74bfbfb0a9a291fce07ea6c650",
+  "native_compiler_sha256": "872580a5751997a32c7b91c127987117e375a866fa99ecb36292ab443d0bb63c",
+  "fixed_boot_sha256": "c28806c4d8193839e8d519ca6e4d431f73e7f2daa448ed7ffe25fb0baf678e94"
+}

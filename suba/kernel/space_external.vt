@@ -1,0 +1,10 @@
+// External owners retain the returned Frame and must charge their owning process.
+// Keep the same private kernel reserve as private-page allocation; no duplicate policy.
+module kernel::space;
+pub unsafe fn allocate_external() -> memory::Allocation {
+    // SAFETY: caller serializes S-mode; memory owns the free list and clears one page.
+    unsafe {
+        if memory::stats().free <= KERNEL_RESERVE { return memory::Allocation::Exhausted; }
+        return memory::allocate();
+    }
+}

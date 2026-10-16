@@ -1,0 +1,12 @@
+# Deliberate ordinary-user faults, C ABI. No callee-saved register use.
+__k10_load:
+ld x5, 0(x10)
+jalr x0, 0(x1)
+__k10_store:
+sb x0, 0(x10)
+jalr x0, 0(x1)
+__k10_privileged:
+csrrw x0, 384, x0
+jalr x0, 0(x1)
+__k10_illegal:
+unimp

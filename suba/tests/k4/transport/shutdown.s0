@@ -1,0 +1,14 @@
+# Test-only normal SBI shutdown. C scalar ABI, caller-saved registers only.
+draft_shutdown:
+addi x10, x0, 0
+addi x11, x0, 0
+addi x16, x0, 0
+addi x17, x0, 83
+slli x17, x17, 8
+addi x17, x17, 82
+slli x17, x17, 8
+addi x17, x17, 83
+slli x17, x17, 8
+addi x17, x17, 84
+ecall
+jalr x0, 0(x1)

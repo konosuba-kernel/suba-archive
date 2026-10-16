@@ -1,0 +1,51 @@
+{
+  "version": "17.0.04",
+  "retrieved": "2026-10-15",
+  "font_source_url": "https://unifoundry.com/pub/unifont/unifont-17.0.04/font-builds/unifont-17.0.04.hex.gz",
+  "source_archive_url": "https://unifoundry.com/pub/unifont/unifont-17.0.04/unifont-17.0.04.tar.gz",
+  "source_archive_sha256": "5c52c5d56ef98089ddbca62e68560ceccc57ea88940b9d38cc3c888fe3b59a34",
+  "archive_glyph_member": "unifont-17.0.04/font/precompiled/unifont-17.0.04.hex",
+  "archive_glyph_matches_download": true,
+  "license_members": [
+    "unifont-17.0.04/COPYING",
+    "unifont-17.0.04/OFL-1.1.txt",
+    "unifont-17.0.04/README"
+  ],
+  "copyright_extracted_from": "unifont-17.0.04/font/precompiled/unifont-17.0.04.bdf.gz: COPYRIGHT property",
+  "selected_font_license": "OFL-1.1",
+  "authentication": "HTTPS origin retrieval; locally recorded SHA-256 identities, no claim of detached-signature verification",
+  "artifacts": {
+    "unifont-17.0.04.hex.gz": {
+      "bytes": 936643,
+      "sha256": "e808096f98ff04294f0d49452cad51964e2930b7be046ac8e1efadc46b2bab0f"
+    },
+    "unifont-17.0.04.hex": {
+      "bytes": 3762996,
+      "sha256": "6d3a14fc497f290cc0d43daa87181b5b932d3db23747cf1335a7759e76ef9882"
+    },
+    "suba-bmp.fnt": {
+      "bytes": 2162704,
+      "sha256": "137bb0651c22e30f6eb29aad6f74c6173ee5079a4c739bb78517cb16b9ccc8fd"
+    },
+    "COPYING": {
+      "bytes": 48441,
+      "sha256": "cd2785c2b8e0a01d203560265b2d2d47cdb1401d2707d25918ac5531bcdba947"
+    },
+    "OFL-1.1.txt": {
+      "bytes": 4340,
+      "sha256": "869692af094c57fb7258c57fe26820c759319603321d0ffeb278de3651763ded"
+    },
+    "COPYRIGHT": {
+      "bytes": 355,
+      "sha256": "2cda4009364feab3375529c0e219f3059f04b55d2c5fe4559f3ec4a20a142398"
+    },
+    "UPSTREAM-README": {
+      "bytes": 29677,
+      "sha256": "0c35716b811d92631b60c92c1ab6a650e5da486f82896c1e87aaef931eb9336a"
+    },
+    "coverage.json": {
+      "bytes": 523,
+      "sha256": "94872359f928e3ae0fba06ec45a14aa6c6847bd3de7948111049bb26f4547b98"
+    }
+  }
+}

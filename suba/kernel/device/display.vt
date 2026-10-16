@@ -1,0 +1,119 @@
+// Owns the permanent ramfb bytes and fw_cfg DMA descriptor. Boot-only initialize;
+// callers serialize S-mode. Only physical_base's aligned SCREEN_BYTES may be U-mapped.
+// The kernel ELF BSS reservation owns all backing, including alignment padding.
+module kernel::device::display;
+import platform::devices;
+import suba::windows;
+import kernel::device::io;
+static mut FRONT: [windows::SCREEN_BYTES + 4096]u8 = zero;
+static mut CONFIG: [32]u8 = zero;
+static mut TRANSFER: [32]u8 = zero;
+static mut BASE: usize = 0;
+
+fn swap64(value: usize) -> usize {
+    var result: usize = 0;
+    var i: usize = 0;
+    while i < 8_usize {
+        result = (result << 8_usize) | ((value >> (i * 8_usize)) & 255_usize);
+        i = i + 1_usize;
+    }
+    return result;
+}
+
+unsafe fn put_be(address: usize, value: usize, bytes: usize) -> () {
+    // SAFETY: boot owner passes only its private CONFIG/TRANSFER fields, <=8 bytes.
+    unsafe {
+        var i: usize = 0;
+        while i < bytes {
+            *core::ptr_add(core::ptr::<u8>(address), i) =
+                (value >> ((bytes - i - 1_usize) * 8_usize)) as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+unsafe fn read_be(bytes: usize) -> usize {
+    var result: usize = 0;
+    var i: usize = 0;
+    // SAFETY: fixed mapped fw_cfg data port, big-endian byte stream; <=4 reads.
+    unsafe {
+        while i < bytes {
+            result = result * 256_usize +
+                io::read8(devices::MMIO_OFFSET + devices::FW_CFG) as usize;
+            i = i + 1_usize;
+        }
+    }
+    return result;
+}
+
+unsafe fn find_selector() -> usize {
+    // SAFETY: sole boot fw_cfg owner; 128 directory entries with fixed 64-byte records.
+    unsafe {
+        io::write16(devices::MMIO_OFFSET + devices::FW_CFG + 8_usize, 0x1900);
+        let count: usize = read_be(4);
+        if count > 128_usize { return 0; }
+        var found: usize = 0;
+        var entry: usize = 0;
+        while entry < count {
+            let bytes: usize = read_be(4);
+            let selector: usize = read_be(2);
+            let reserved: usize = read_be(2);
+            var same: bool = bytes == 28_usize && reserved == 0_usize;
+            let name: []const u8 = "etc/ramfb";
+            var i: usize = 0;
+            while i < 56_usize {
+                let ch: u8 = io::read8(devices::MMIO_OFFSET + devices::FW_CFG);
+                if i < name.len {
+                    if ch != name[i] { same = false; }
+                } else {
+                    if ch != 0_u8 { same = false; }
+                }
+                i = i + 1_usize;
+            }
+            if same {
+                if found != 0_usize { return 0; }
+                found = selector;
+            }
+            entry = entry + 1_usize;
+        }
+        return found;
+    }
+}
+
+// Boot-only bounded polling exception: DMA writes a 28-byte configuration, <=100ms.
+// Failure publishes no framebuffer address. BSS remains permanently reserved.
+pub unsafe fn initialize() -> bool {
+    // SAFETY: these static RAM objects outlive DMA and all desktop mappings.
+    unsafe {
+        if BASE != 0_usize { return false; }
+        let selector: usize = find_selector();
+        if selector == 0_usize { return false; }
+        let backing: usize = core::addr(core::slice_of_mut(FRONT).data);
+        let base: usize = (backing + 4095_usize) & 0xfffffffffffff000_usize;
+        let config: usize = core::addr(core::slice_of_mut(CONFIG).data);
+        let transfer: usize = (core::addr(core::slice_of_mut(TRANSFER).data) + 7_usize)
+            & 0xfffffffffffffff8_usize;
+        put_be(config, base, 8);
+        put_be(config + 8_usize, 0x34325258, 4);
+        put_be(config + 12_usize, 0, 4);
+        put_be(config + 16_usize, windows::SCREEN_WIDTH, 4);
+        put_be(config + 20_usize, windows::SCREEN_HEIGHT, 4);
+        put_be(config + 24_usize, windows::SCREEN_STRIDE, 4);
+        put_be(transfer, (selector << 16_usize) | 24_usize, 4);
+        put_be(transfer + 4_usize, 28, 4);
+        put_be(transfer + 8_usize, config, 8);
+        io::barrier();
+        io::write64(devices::MMIO_OFFSET + devices::FW_CFG + 16_usize, swap64(transfer));
+        let deadline: usize = io::time() + 1000000_usize;
+        while io::time() < deadline {
+            let control: u32 = io::read32(transfer);
+            if control == 0_u32 { BASE = base; return true; }
+            if control == 0x01000000_u32 { return false; }
+        }
+    }
+    return false;
+}
+
+// Borrowed permanent physical range; zero means initialization has not succeeded.
+pub unsafe fn physical_base() -> usize { unsafe { return BASE; } }

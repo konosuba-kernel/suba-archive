@@ -1,0 +1,60 @@
+{
+  "node": "M",
+  "revision": "r1",
+  "status": "frozen-for-independent-acceptance",
+  "author": "/root/memory_resume",
+  "inherited_authors": [
+    "/root/physical_memory",
+    "/root/memory_resume"
+  ],
+  "independent_reviewer": "/root",
+  "paths_relative_to": "/home/mii/code/konOSuba/suba",
+  "baseline_commit": "e8fe28288a87a354a1bb01f84084a45764dda2b3",
+  "dependencies": {
+    "D_candidate": {
+      "path": "docs/workflows/k2-ram/D-candidate-r2.json",
+      "sha256": "cb69dd97eaab5961571c6257430d9f39ec1f8c3d40f98c9fe54a7d3f4653f5df"
+    },
+    "D_acceptance": {
+      "path": "docs/workflows/k2-ram/D-acceptance-r2.md",
+      "sha256": "74e7c2084df7505b574ca946fc28414f6046124be23335f9be675603f8cefacd"
+    },
+    "contract": {
+      "path": "docs/workflows/k2-ram/CONTRACT.md",
+      "sha256": "64af9154441e1a66c8c70e17566b53ebee651f01c336a0381ae38b69f5f1d409"
+    },
+    "style": {
+      "path": "CODE_STYLE.md",
+      "sha256": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99"
+    },
+    "ABI": {
+      "path": "abi/contract.vt",
+      "sha256": "3e9027ffb98e1358ccbad362aa07d428b12ade745cfa05c31e00881363950a6d"
+    },
+    "compiler": {
+      "path": "../biomiya/build/layout-p4-r1/e3.elf",
+      "sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144"
+    }
+  },
+  "files": {
+    "kernel/memory.vt": "3d032d74f870ea20e099db7e5862189a4a440d8abfdf671684ef8be7e4cb80eb",
+    "tests/memory/initialize.vt": "e34f0a0063d2b91cdc6344019088881cece1f85cb9ad87cc0a78ca71ebdb5497",
+    "tests/memory/lifecycle.vt": "f96bd6d28f16ae484bc4a344ab2bc4043b1ba3281bca3af33a00a2d499b9a638",
+    "tests/memory/regions_capacity.vt": "913c24de72d5ec5a12abe8b3e9aa54f53675d225a05680cc2f5316cabc806365",
+    "tests/memory/regions_high.vt": "42e393b29073302746c4b7d1e06d9a1edda3bb8b0bad384f7c9732c47d4cb5c6",
+    "tests/memory/regions_invalid.vt": "613927d1214cec529646d9ce65e728f43d9905c7ae34fbb56c51e5e930283ff4",
+    "tests/memory/retirement.vt": "3a381cd41ccd8fb53f0ff609552bc5751046fa8fc1635b6862972fd4d364c43c",
+    "tests/memory/support.vt": "653d563ee451673fc1cf6d10ba5bf38462af4b74aa3ff63c3c1a527c28f106dd",
+    "tools/check_memory.py": "cb6eb3d573207ba7d71e217546c3c603448c8cb63497bd4f7640ec9030928ded",
+    "docs/workflows/k2-ram/M-verification-r1.json": "f6a725715f7fc2d5e0040857a0fd20a2a139e800634f140533abc106e16da3ea",
+    "docs/workflows/k2-ram/M-cost-r1.json": "3ffcb13a3c5b64a712a6c88f5c2776f78095da29ce79943a6422a9b1c27194b9",
+    "docs/workflows/k2-ram/M-report-r1.md": "3040dd423eee5603f2eb49af93dbca79b7a2238b4fb526dbaa87eca5feaa78c5"
+  },
+  "acceptance_required": [
+    "Complete region validation before first state write; invalid retry and successful initialization cannot reset",
+    "Physical-offset slot identity using span bounds independent from managed count; holes never allocated or touched",
+    "Old Frame lifecycle/zeroing/retirement preserved with O(1) runtime metadata operations",
+    "High final slot release/reuse, hole sentinels, 64/65 region boundary and distinguishing negative control",
+    "Frozen exact source identity and actual production/test/metadata/frame cost; no full-RAM or user-isolation claim without I"
+  ]
+}

@@ -1,0 +1,254 @@
+{
+  "compiler_sha256": "049c6e094ccd044fba3b5d357583013b77f0e8e9a98d431ad919e02b0cda2144",
+  "inputs": {
+    "tools/check_q_limits.py": "a2c8efdecc58312893072330f4a0ed18116bc94ed4b738d85fa3d70293f2907f"
+  },
+  "guest_stack_bytes": 1048576,
+  "cases": [
+    {
+      "name": "expression-depth",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=65 limit=64 I_LIMIT file=1 byte=96\n",
+      "source_sha256": "d815982e76db01e524f2448feb0163ac26e45b920b3c687adb63c3f0c6fb93fd",
+      "passed": true
+    },
+    {
+      "name": "block-depth",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=49 limit=48 I_LIMIT file=1 byte=72\n",
+      "source_sha256": "5969f8778f9048b95d64f9b7127fc62b3cda8142dd252a2a11af25daa0f65a32",
+      "passed": true
+    },
+    {
+      "name": "pointer-depth",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=65 limit=64 I_LIMIT file=1 byte=84\n",
+      "source_sha256": "b394a5337853750b44f4719588a7873ea0ed9f623cc44c29ecd7a5dcac28aac8",
+      "passed": true
+    },
+    {
+      "name": "type-chain",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=33 limit=32 I_LIMIT file=1 byte=532\n",
+      "source_sha256": "60d26b40d9681b930dc5d826040f9696310d544c09e1fcb50336a7ea1cd0a249",
+      "passed": true
+    },
+    {
+      "name": "array-count",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=4294967296 limit=4294967295 I_LIMIT file=1 byte=25\n",
+      "source_sha256": "acce1fc4c578ba7a00e65ab180a2bd03f121cfa21a900a208a17cc064a9a1ebb",
+      "passed": true
+    },
+    {
+      "name": "repeat-count",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=4294967296 limit=4294967295 I_LIMIT file=1 byte=35\n",
+      "source_sha256": "01d8f1506506251c25f68638e4f0c5d19d8124e4d432f4a735096ea9027661ef",
+      "passed": true
+    },
+    {
+      "name": "zero-repeat-type",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_TYPE file=1 byte=34\n",
+      "source_sha256": "cc4098a1a774015f5863e65941fc4fb3e2af1cfe755f478f32832065259af4ed",
+      "passed": true
+    },
+    {
+      "name": "zero-repeat-name",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_NAME file=1 byte=40\n",
+      "source_sha256": "3f6e57f924eb2ec7af1ec4c076b613563e76530ffda5647a34822951500507ab",
+      "passed": true
+    },
+    {
+      "name": "mutable-static-permission",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "E_PERMISSION file=1 byte=62\n",
+      "source_sha256": "7f58d13818a3c74c888f77cff86c570bcb16acc6b7c921fb9cccaf7e6bf805c1",
+      "passed": true
+    },
+    {
+      "name": "layout-overflow",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=288230376151711744 limit=288230376151711743 I_LIMIT file=1 byte=12344\n",
+      "source_sha256": "fd73fd48956193cca034600f8572f68afd984f5ff0dd957d1925402c900862f3",
+      "passed": true
+    },
+    {
+      "name": "array-layout-overflow",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=4294967295 limit=0 I_LIMIT file=1 byte=6070\n",
+      "source_sha256": "7fc370b172b4ca154afdf963b1802e74d59873114db7cf75614ae3e552a893f6",
+      "passed": true
+    },
+    {
+      "name": "field-chain",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=65 limit=64 I_LIMIT file=1 byte=44\n",
+      "source_sha256": "2d83fd401eec972e10db051e4086942d387d56f2a0c7b43ec5de5b4fb5eebf8b",
+      "passed": true
+    },
+    {
+      "name": "index-chain",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=65 limit=64 I_LIMIT file=1 byte=44\n",
+      "source_sha256": "1bff62b7b412bb22ac39a454b762ba48aae36293a01844cb8ce85372b248f09c",
+      "passed": true
+    },
+    {
+      "name": "else-chain",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=65 limit=64 I_LIMIT file=1 byte=1113\n",
+      "source_sha256": "920ed37f64c76d919bd232a7a70236bc24be82fc65fbf91b768656756ff84966",
+      "passed": true
+    },
+    {
+      "name": "constant-chain",
+      "command": [
+        "/usr/bin/qemu-riscv64",
+        "-s",
+        "1048576",
+        "/home/mii/code/konOSuba/biomiya/build/layout-check_q_limits-r1/compiler.elf",
+        "build",
+        "case.build"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "actual=65 limit=64 I_LIMIT file=1 byte=24\n",
+      "source_sha256": "2c0bf2e3db3877c647703c322929781588a75d2cc5dabd5be7c60448d2c9d47a",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "identities": [
+    "frontend_depth_limits_and_type_shadowing_fail_before_guest_stack_overflow",
+    "frontend_reports_permission_and_capacity_errors_without_target_panics"
+  ]
+}

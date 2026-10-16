@@ -1,0 +1,41 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+static mut BUFFER: [4096]u8 = zero;
+unsafe fn run_pair(pair: services::StreamPair) -> u32 {
+    unsafe {
+        let child: syscall::Reply = common::spawn("emit", pair.write, 0, 0);
+        if child.status != abi::OK { return 50; }
+        let closed: syscall::Reply = syscall::close(pair.write);
+        if closed.status != abi::OK { return 51; }
+        var total: usize = 0;
+        loop {
+            let ready: syscall::Reply = common::wait(pair.read, syscalls::READABLE);
+            if ready.status != abi::OK || ready.value != 1_usize { return 52; }
+            let read: syscall::Reply = services::read(pair.read, core::slice_of_mut(BUFFER), false);
+            if read.status != abi::OK { return 53; }
+            if read.value == 0_usize { break; }
+            var i: usize = 0;
+            while i < read.value {
+                if BUFFER[i] != (((total + i) % 4096_usize) % 251_usize) as u8 { return 54; }
+                i = i + 1_usize;
+            }
+            total = total + read.value;
+        }
+        if total != 131072_usize || !common::collect(child.value, 0) { return 55; }
+        let stale: syscall::Reply = syscall::kill_child(child.value);
+        if stale.status != abi::BAD_HANDLE { return 56; }
+        let end: syscall::Reply = syscall::close(pair.read);
+        if end.status != abi::OK { return 57; }
+        return 0;
+    }
+}
+pub fn run() -> u32 {
+    match services::streams() {
+        services::Streams::Failed(status) => { return 49; },
+        services::Streams::Ready(pair) => { unsafe { return run_pair(pair); } }
+    }
+}

@@ -1,0 +1,35 @@
+{
+  "node": "R",
+  "revision": "r1",
+  "author": "/root/scope_revision",
+  "independent_reviewer": "/root",
+  "status": "frozen-for-independent-acceptance",
+  "paths_relative_to": "/home/mii/code/konOSuba/suba",
+  "baseline_commit": "006a63b0c368e4c7cfb5c77bda0cb69d16bd64bf",
+  "authorization": "User explicitly accepted separation of guest native building from host byte-copy deployment.",
+  "files": {
+    "REQUIREMENTS.md": "9732f95a2596c36c00c933582ef68dec2862f7fea013e2b2d28b4db340ab3996",
+    "README.md": "6dcb7a18701406230ce2c093b1e076a9504f8c1d941debcf506f674dca144324",
+    "CODE_STYLE.md": "13a349583b87e82fe3c51c2efeafc319a57164fe48d55eb50711e2408d57cc99",
+    "design/ARCHITECTURE.md": "91cfca773695971fe29dd48e67740b7db7ef00e96c0a18657d4604f7e9f9e5f9",
+    "design/CONTRACTS.md": "b3a9434165c237e8d7eff773bfab727eea42f9d9b8a9751347b7ce655bcb0506",
+    "design/IMPLEMENTATION.md": "a42c1b76b855a6d3e07a7e3bb62180fee3e1fd9f5a37e3cec1c97f4e87db222f",
+    "design/SCOPE_REVISION.md": "1585ab48f044bcfe8dc1a995b6bc5ba76abea1437a34f261be854d8ce866972c",
+    "docs/workflows/k2-memory/R-checks-r1.json": "5b050bf3c3077d03e29562da441f21136adfac54c17f7c2b8b1ec1dd8db60304",
+    "docs/workflows/k2-memory/R-report-r1.md": "29e019fd4da40a8413018eae70e73211912b8cfd5ef552bc5e52cd0f0f3805bd"
+  },
+  "unchanged_boundary": [
+    "biomiya/**/*",
+    "abi/contract.vt",
+    "kernel/*.vt",
+    "kernel/*.s0",
+    "historical design/research and acceptance records"
+  ],
+  "acceptance_required": [
+    "Consistent native-build requirement and explicit host deployment boundary",
+    "K1 deferred without K4/K9 dependency",
+    "Unique K4 transport ownership and reuse boundary",
+    "No weakening of persistence, isolation/reclamation, desktop or native compiler fixed point",
+    "Historical frozen evidence preserved and current document identity impact recorded"
+  ]
+}

@@ -1,0 +1,41 @@
+module test::program;
+import suba::abi;
+import libsuba::files;
+import libsuba::services;
+import libsuba::syscall;
+pub fn run() -> u32 {
+    unsafe {
+        let boot: syscall::Reply = services::stats(5);
+        if boot.value == 1_usize {
+            var round: usize = 0;
+            while round < 4_usize {
+                if files::open("new", 6).status != abi::NO_SPACE || files::mkdir("newdir").status != abi::NO_SPACE { return 70; }
+                round = round + 1_usize;
+            }
+            if files::unlink("n0000").status != abi::OK { return 71; }
+            var success: bool = false;
+            round = 0;
+            while round < 128_usize {
+                let opened: syscall::Reply = files::open("replacement", 6);
+                if opened.status == abi::OK {
+                    if files::write_at(opened.value, 0, "reused").status != abi::OK ||
+                        files::sync(opened.value, false).status != abi::OK || syscall::close(opened.value).status != abi::OK { return 72; }
+                    success = true;
+                    break;
+                }
+                if opened.status != abi::NO_SPACE { return 73; }
+                round = round + 1_usize;
+            }
+            if !success { return 74; }
+        }
+        let present: syscall::Reply = files::open("replacement", 1);
+        if present.status != abi::OK { return 75; }
+        match files::stat(present.value) {
+            files::Stated::Failed(status) => { return 76; },
+            files::Stated::Ready(stat) => { if stat.bytes != 6_usize || stat.generation != 2_usize { return 77; } }
+        }
+        if syscall::close(present.value).status != abi::OK { return 78; }
+        if files::open("new", 6).status != abi::NO_SPACE { return 79; }
+        return 0;
+    }
+}

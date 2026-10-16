@@ -1,0 +1,148 @@
+// Fixed syscall ABI routing; unknown/unimplemented families return Unsupported.
+module kernel::dispatch;
+// Module imports are declared once in dispatch.vt (S-next module-wide imports).
+
+unsafe fn kill_child(id: process::Id, token: usize) -> bool {
+    unsafe {
+        match handle(id, token, objects::KILL) {
+            objects::LookupResult::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            objects::LookupResult::Denied => { return answer(id, abi::DENIED, 0); },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Child(child) => {
+                        match children::target(child) {
+                            children::Target::Invalid => { return false; },
+                            children::Target::Finished => { return answer(id, abi::OK, 0); },
+                            children::Target::Ready(target) => {
+                                match process::state(target) {
+                                    process::State::Dying => { return answer(id, abi::OK, 0); },
+                                    process::State::Exited => { return answer(id, abi::OK, 0); },
+                                    process::State::Vacant => { return false; },
+                                    process::State::Loading => {}, process::State::Prepared => {},
+                                    process::State::Ready => {}, process::State::Running => {}, process::State::Blocked => {}
+                                }
+                                if process::trusted_desktop(target) { return answer(id, abi::DENIED, 0); }
+                                if !process::terminate(target, abi::CANCELLED) { return false; }
+                                return answer(id, abi::OK, 0);
+                            }
+                        }
+                    },
+                    objects::Object::Desktop(value) => {},
+                    objects::Object::Empty => {}, objects::Object::Job(value) => {},
+                    objects::Object::File(value) => {}, objects::Object::Window(value) => {},
+                    objects::Object::StreamRead(value) => {}, objects::Object::StreamWrite(value) => {}
+                }
+            }
+        }
+        return answer(id, abi::BAD_HANDLE, 0);
+    }
+}
+unsafe fn collect(id: process::Id, token: usize, address: usize, bytes: usize) -> bool {
+    unsafe {
+        if bytes != syscalls::EXIT_BYTES || !usercopy::range(id, address, bytes, true) { return answer(id, abi::INVALID, 0); }
+        match handle(id, token, objects::COLLECT) {
+            objects::LookupResult::BadHandle => { return answer(id, abi::BAD_HANDLE, 0); },
+            objects::LookupResult::Denied => { return answer(id, abi::DENIED, 0); },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::Child(child) => {
+                        match children::collect(child) {
+                            children::Collect::Invalid => { return false; },
+                            children::Collect::Pending => { return answer(id, abi::WOULD_BLOCK, 0); },
+                            children::Collect::Ready(exit) => {
+                                let output: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, bytes);
+                                argument_wire::put(output, syscalls::EXIT_VERSION, abi::VERSION as usize, 4);
+                                argument_wire::put(output, syscalls::EXIT_LENGTH, bytes, 4);
+                                argument_wire::put(output, syscalls::EXIT_STATUS, exit.status, 8);
+                                argument_wire::put(output, syscalls::EXIT_CAUSE, exit.cause, 8);
+                                argument_wire::put(output, syscalls::EXIT_VALUE, exit.value, 8);
+                                argument_wire::put(output, syscalls::EXIT_PC, exit.pc, 8);
+                                if !usercopy::write(id, address, core::slice_from_raw_parts(output.data, bytes)) { return false; }
+                                if close(id, token) != abi::OK { return false; }
+                                return answer(id, abi::OK, 0);
+                            }
+                        }
+                    },
+                    objects::Object::Desktop(value) => {},
+                    objects::Object::Empty => {}, objects::Object::Job(value) => {},
+                    objects::Object::File(value) => {}, objects::Object::Window(value) => {},
+                    objects::Object::StreamRead(value) => {}, objects::Object::StreamWrite(value) => {}
+                }
+            }
+        }
+        return answer(id, abi::BAD_HANDLE, 0);
+    }
+}
+
+pub unsafe fn call(signal: process::Signal) -> bool {
+    unsafe {
+        CURRENT_KIND = signal.value;
+        let start: usize = machine::time();
+        let result: bool = call_inner(signal);
+        let elapsed: usize = machine::time() - start;
+        if elapsed > SLICE_MAX { SLICE_MAX = elapsed; SLICE_KIND = CURRENT_KIND; }
+        return result;
+    }
+}
+unsafe fn call_inner(signal: process::Signal) -> bool {
+    unsafe {
+        let id: process::Id = signal.id;
+        var args: [6]usize = zero;
+        var i: usize = 0;
+        while i < 6_usize {
+            match process::read_register(id, 10_usize + i) {
+                process::Register::Invalid => { return false; }, process::Register::Value(value) => { args[i] = value; }
+            }
+            i = i + 1_usize;
+        }
+        let operation: usize = signal.value;
+        if operation == abi::SYS_EXIT { return process::terminate(id, args[0_usize]); }
+        // Prevent token exhaustion before an operation can reserve any resource.
+        if !request::available(id) { return answer(id, abi::LIMIT, 0); }
+        if operation == abi::SYS_SPAWN { return spawn_call(id, args[0_usize], args[1_usize]); }
+        if operation == abi::SYS_KILL_CHILD { return kill_child(id, args[0_usize]); }
+        if operation == abi::SYS_COLLECT_EXIT { return collect(id, args[0_usize], args[1_usize], args[2_usize]); }
+        if operation == abi::SYS_JOB_CREATE {
+            if args[2_usize] != 0_usize || args[3_usize] != 0_usize || args[4_usize] != 0_usize || args[5_usize] != 0_usize { return answer(id, abi::INVALID, 0); }
+            return job_create(id, args[0_usize], args[1_usize]);
+        }
+        if operation == abi::SYS_JOB_FREEZE {
+            if args[3_usize] != 0_usize || args[4_usize] != 0_usize || args[5_usize] != 0_usize { return answer(id, abi::INVALID, 0); }
+            return job_call(id, args[0_usize], true, args[1_usize], args[2_usize]);
+        }
+        if operation == abi::SYS_JOB_END { return job_call(id, args[0_usize], false, 0, 0); }
+        if operation == abi::SYS_ALLOC_PAGES { return allocate_pages(id, args[0_usize]); }
+        if operation == abi::SYS_FREE_PAGES { return free_pages(id, args[0_usize], args[1_usize]); }
+        if operation == abi::SYS_CLOSE {
+            let status: usize = close(id, args[0_usize]);
+            if status == abi::IO { return false; }
+            return answer(id, status, 0);
+        }
+        if (operation >= abi::SYS_FILE_OPEN && operation <= abi::SYS_FILE_SYNC) ||
+            (operation >= abi::SYS_MKDIR && operation <= abi::SYS_REPLACE) || operation == abi::SYS_SYNC_ALL {
+            return file_call(id, operation, args);
+        }
+        if operation == abi::SYS_STREAM_CREATE { return create_stream(id, args[0_usize], args[1_usize]); }
+        if operation == abi::SYS_STREAM_READ || operation == abi::SYS_STREAM_WRITE {
+            return transfer(id, args[0_usize], args[1_usize], args[2_usize], args[3_usize], operation == abi::SYS_STREAM_WRITE);
+        }
+        if operation == abi::SYS_EVENT_TRY_READ || operation == abi::SYS_EVENT_WAIT {
+            return wait_call(id, args[0_usize], args[1_usize], args[2_usize], operation == abi::SYS_EVENT_TRY_READ);
+        }
+        if (operation >= abi::SYS_WINDOW_CREATE && operation <= abi::SYS_WINDOW_TRY_EVENT) ||
+            (operation >= abi::SYS_DESKTOP_LIST && operation <= windows::SYS_DESKTOP_TRY_EVENT) {
+            return window_call(id, operation, core::slice_of(args));
+        }
+        if operation == abi::SYS_STATS {
+            if args[0_usize] >= files::STATS_FS_FREE_BLOCKS && args[0_usize] <= files::STATS_FS_DETACHED { return answer(id, abi::OK, fs::resource(args[0_usize])); }
+            if args[0_usize] == files::STATS_SOURCE_EPOCH { return answer(id, abi::OK, fs::source_epoch()); }
+            if args[0_usize] == files::STATS_BOOT_ID { return answer(id, abi::OK, fs::boot_id()); }
+            if args[0_usize] == syscalls::STATS_FREE_PAGES { return answer(id, abi::OK, memory::stats().free); }
+            if args[0_usize] == syscalls::STATS_TIME_TICKS { return answer(id, abi::OK, machine::time()); }
+            if args[0_usize] == syscalls::STATS_SLICE_TICKS { return answer(id, abi::OK, SLICE_MAX); }
+            if args[0_usize] == syscalls::STATS_STREAMS { return answer(id, abi::OK, stream::live_count()); }
+            return answer(id, abi::INVALID, 0);
+        }
+        return answer(id, abi::UNSUPPORTED, 0);
+    }
+}

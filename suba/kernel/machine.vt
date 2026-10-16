@@ -1,0 +1,64 @@
+// Single-hart boot and diagnostic machine boundary; UART polling is bounded.
+// Paging, timer and user-context operations are in machine_runtime.vt.
+module kernel::machine;
+extern abi(C) fn __suba_uart_byte(value: u32) -> u32;
+extern abi(C) fn __suba_machine_init() -> ();
+extern abi(C) fn __suba_halt() -> ();
+extern abi(C) fn __suba_jump(entry: usize, info: usize) -> ();
+extern abi(C) fn __suba_status() -> usize;
+
+pub fn initialize() -> () {
+    // SAFETY: S-mode, bare translation and interrupts disabled by profile entry.
+    unsafe { __suba_machine_init(); }
+    return ();
+}
+
+// Early diagnostics may lose output on a failed UART; they never wait forever.
+pub unsafe fn text(bytes: []const u8) -> () {
+    var i: usize = 0;
+    // SAFETY: caller keeps bytes readable throughout the bounded synchronous loop.
+    unsafe {
+        while i < bytes.len {
+            if __suba_uart_byte(bytes[i] as u32) != 0_u32 { return (); }
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+pub fn status() -> usize {
+    // SAFETY: S-mode CSR access; this is a diagnostic snapshot, not scheduling state.
+    unsafe { return __suba_status(); }
+}
+
+pub fn halt() -> () {
+    // SAFETY: early boot or trusted fatal failure. Does not return or enable interrupts.
+    unsafe { __suba_halt(); }
+    loop {}
+    return ();
+}
+
+// Transfer only to a fully loaded/validated kernel entry; info must remain readable
+// in the stage0 reservation. No pointers to this function's stack may escape.
+pub unsafe fn enter(entry: usize, info: usize) -> () {
+    unsafe { __suba_jump(entry, info); }
+    halt();
+    return ();
+}
+
+pub enum Write16Result { Done, Invalid }
+extern abi(C) fn __suba_store16(address: usize, value: u32) -> ();
+extern abi(C) fn __suba_load8(address: usize) -> u32;
+
+// Caller owns a currently mapped writable MMIO virtual address supporting exactly one 16-bit access.
+// Width/alignment are checked here; the device defines byte order. Never waits.
+pub unsafe fn write16(address: usize, value: u32) -> Write16Result {
+    if address % 2_usize != 0_usize || value > 65535_u32 { return Write16Result::Invalid; }
+    unsafe { __suba_store16(address, value); }
+    return Write16Result::Done;
+}
+
+// Caller provides a currently mapped readable MMIO virtual address supporting byte access. Never waits.
+pub unsafe fn read8(address: usize) -> u8 {
+    unsafe { return __suba_load8(address) as u8; }
+}

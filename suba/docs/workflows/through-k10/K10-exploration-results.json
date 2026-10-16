@@ -1,0 +1,75 @@
+{
+  "scope": "K10 preparatory exploration only",
+  "baseline": "suba 49b2213 via frozen build/k7-system-r5",
+  "results": [
+    {
+      "name": "ready-r1",
+      "report": "build/k10-explore-ready-r1/verification.json",
+      "report_sha256": "ef46d1089846a00f7389e8f80a5a074ef0ff99ff95bef0fb07044b105860df8b",
+      "passed": true,
+      "stage_acceptance": false,
+      "elapsed": 80.85630570099966,
+      "rounds": 100,
+      "kernel_sha256": "2cad5a6720027fae2a42ff4f6fa1a52aaaf3335390d806f33b19e9d9fe6316ba"
+    },
+    {
+      "name": "streamwait-r2",
+      "report": "build/k10-explore-streamwait-r2/verification.json",
+      "report_sha256": "4d27f3e14a5ce7557b20d44199c15c6770320d518ffe64c37e6f0af62efc75b8",
+      "passed": true,
+      "stage_acceptance": false,
+      "elapsed": 80.99396344300112,
+      "rounds": 100,
+      "kernel_sha256": "2cad5a6720027fae2a42ff4f6fa1a52aaaf3335390d806f33b19e9d9fe6316ba"
+    },
+    {
+      "name": "window-r1",
+      "report": "build/k10-explore-window-r1/verification.json",
+      "report_sha256": "4b7a305ae10067986a8d701bbda25b865348a70e9f37eeb8552645f8fdc8d464",
+      "passed": true,
+      "stage_acceptance": false,
+      "elapsed": 72.0002766059988,
+      "rounds": 100,
+      "kernel_sha256": "2cad5a6720027fae2a42ff4f6fa1a52aaaf3335390d806f33b19e9d9fe6316ba"
+    },
+    {
+      "name": "isolation-r2",
+      "report": "build/k10-explore-isolation-r2/verification.json",
+      "report_sha256": "ffa2237a431a13f41492d616f2bc264d3b9607f2541f4037f24b6d25fd352744",
+      "passed": true,
+      "stage_acceptance": false,
+      "elapsed": 12.077024423000694,
+      "rounds": 0,
+      "kernel_sha256": "2cad5a6720027fae2a42ff4f6fa1a52aaaf3335390d806f33b19e9d9fe6316ba"
+    },
+    {
+      "name": "identity-r1",
+      "report": "build/k10-explore-identity-r1/verification.json",
+      "report_sha256": "a30080a74f9c8b6afc12198a91ae2dd7f73cad8550a0b65bc694f5f2aa52395f",
+      "passed": true,
+      "stage_acceptance": false,
+      "elapsed": 8.904353612000705,
+      "rounds": 0,
+      "kernel_sha256": "2cad5a6720027fae2a42ff4f6fa1a52aaaf3335390d806f33b19e9d9fe6316ba"
+    },
+    {
+      "name": "queue-r1",
+      "report": "build/k10-explore-queue-r1/verification.json",
+      "report_sha256": "dfd5ddd7345ea16ec092be8f34d5fbd1f1e3321faccf5c7647cdbc2f308185f9",
+      "passed": true,
+      "stage_acceptance": false,
+      "elapsed": 15.40000053300173,
+      "rounds": 0,
+      "kernel_sha256": "2cad5a6720027fae2a42ff4f6fa1a52aaaf3335390d806f33b19e9d9fe6316ba"
+    }
+  ],
+  "failed_attempts": [
+    "build/k10-explore-streamwait-r1/verification.json",
+    "build/k10-explore-isolation-r1/verification.json"
+  ],
+  "missing": [
+    "full handles/waits/surface/owner-page ledger",
+    "K5 two specific race interleavings",
+    "other IMPLEMENTATION section4 requirements"
+  ]
+}

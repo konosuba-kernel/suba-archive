@@ -1,0 +1,63 @@
+// Process-lifetime read-only startup page. The kernel installs this fixed mapping.
+module libsuba::arguments;
+import suba::abi;
+import suba::argument_wire;
+extern abi(C) fn __suba_arguments() -> usize;
+pub enum BytesResult { Value([]const u8), Invalid }
+
+unsafe fn page() -> []const u8 {
+    // SAFETY: suba-user ABI maps the entire immutable argument page for process life.
+    // Reject an unexpected x27 without following it.
+    unsafe {
+        let address: usize = __suba_arguments();
+        if address != abi::ARGUMENT_BASE { return ""; }
+        return core::slice_from_raw_parts(core::ptr_const(core::ptr::<u8>(address)), abi::ARGUMENT_BYTES);
+    }
+}
+
+pub fn count() -> usize {
+    // SAFETY: page only exposes the kernel-owned fixed mapping.
+    unsafe {
+        let data: []const u8 = page();
+        if !argument_wire::valid(data) { return 0; }
+        return argument_wire::word(data, abi::ARGUMENT_COUNT, 4);
+    }
+}
+
+pub fn argument(index: usize) -> BytesResult {
+    // SAFETY: returned view stays in the immutable process-lifetime page. Checks
+    // precede each index and use subtraction to avoid offset+length overflow.
+    unsafe {
+        let data: []const u8 = page();
+        if !argument_wire::valid(data) || index >= argument_wire::word(data, abi::ARGUMENT_COUNT, 4) {
+            return BytesResult::Invalid;
+        }
+        let at: usize = abi::ARGUMENT_ENTRIES + index * abi::ARGUMENT_ENTRY_BYTES;
+        let offset: usize = argument_wire::word(data, at, 4);
+        let bytes: usize = argument_wire::word(data, at + 4_usize, 4);
+        if offset < abi::ARGUMENT_DATA || offset > data.len || bytes > data.len - offset {
+            return BytesResult::Invalid;
+        }
+        return BytesResult::Value(core::slice_from_raw_parts(core::ptr_add(data.data, offset), bytes));
+    }
+}
+
+pub fn output(error: bool) -> usize {
+    // SAFETY: validated page contains only scalar handle tokens, not pointers.
+    unsafe {
+        let data: []const u8 = page();
+        if !argument_wire::valid(data) { return 0; }
+        if error { return argument_wire::word(data, abi::ARGUMENT_STDERR, 8); }
+        return argument_wire::word(data, abi::ARGUMENT_STDOUT, 8);
+    }
+}
+
+pub fn cwd() -> BytesResult {
+    unsafe {
+        let data: []const u8 = page();
+        if !argument_wire::valid(data) { return BytesResult::Invalid; }
+        let offset: usize = argument_wire::word(data, abi::ARGUMENT_CWD_OFFSET, 4);
+        let bytes: usize = argument_wire::word(data, abi::ARGUMENT_CWD_LENGTH, 4);
+        return BytesResult::Value(core::slice_from_raw_parts(core::ptr_add(data.data, offset), bytes));
+    }
+}

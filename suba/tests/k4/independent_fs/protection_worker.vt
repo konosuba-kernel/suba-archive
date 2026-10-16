@@ -1,0 +1,22 @@
+module test::program;
+import libsuba::arguments;
+extern abi(C) fn __independent_load(address: usize) -> ();
+extern abi(C) fn __independent_store(address: usize) -> ();
+extern abi(C) fn __independent_privileged() -> ();
+pub fn run() -> u32 {
+    match arguments::argument(0) {
+        arguments::BytesResult::Invalid => { return 20; },
+        arguments::BytesResult::Value(role) => {
+            unsafe {
+                if role.len == 0_usize { return 21; }
+                if role[0_usize] == 118_u8 { __independent_load(0x50001000); }
+                if role[0_usize] == 112_u8 && role.len == 4_usize { __independent_load(0x4c201000); }
+                if role[0_usize] == 107_u8 { __independent_load(0x80400000); }
+                if role[0_usize] == 103_u8 { __independent_load(0x3feff000); }
+                if role[0_usize] == 114_u8 { __independent_store(0x3fe00000); }
+                if role[0_usize] == 112_u8 && role.len == 10_usize { __independent_privileged(); }
+            }
+        }
+    }
+    return 99;
+}

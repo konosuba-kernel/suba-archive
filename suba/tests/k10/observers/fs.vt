@@ -1,0 +1,36 @@
+// TEST ONLY: filesystem pins, directory owners and domains are distinct from handles.
+pub struct K10Pins { pub readers: usize, pub writers: usize, pub cwd: usize,
+    pub file_refs: usize, pub domains: usize, pub grants: usize, pub clients: usize }
+pub unsafe fn k10_block_state() -> usize { unsafe { return block::k10_state(); } }
+pub unsafe fn k10_pins() -> K10Pins {
+    unsafe {
+        var result: K10Pins = zero;
+        var i: usize = 0;
+        while i < abi::FS_NODE_COUNT {
+            result.readers = result.readers + NODE_USE[i].readers;
+            result.cwd = result.cwd + NODE_USE[i].cwd;
+            if NODE_USE[i].writer { result.writers = result.writers + 1_usize; }
+            i = i + 1_usize;
+        }
+        i = 0;
+        while i < FILE_CAPACITY { result.file_refs = result.file_refs + FILES[i].references; i = i + 1_usize; }
+        i = 0;
+        while i < JOB_CAPACITY {
+            match DOMAINS[i].state {
+                DomainState::Empty => {}, DomainState::Creating => { result.domains = result.domains + 1_usize; },
+                DomainState::Preparing => { result.domains = result.domains + 1_usize; },
+                DomainState::Frozen => { result.domains = result.domains + 1_usize; },
+                DomainState::Ending => { result.domains = result.domains + 1_usize; },
+                DomainState::Cleaning => { result.domains = result.domains + 1_usize; }
+            }
+            i = i + 1_usize;
+        }
+        i = 0;
+        while i < 16_usize {
+            if GRANTS[i].generation != 0_usize { result.grants = result.grants + 1_usize; }
+            if DIRECTORIES[i].owner.generation != 0_usize { result.clients = result.clients + 1_usize; }
+            i = i + 1_usize;
+        }
+        return result;
+    }
+}

@@ -1,0 +1,81 @@
+// Strict Unicode scalar decoding: no normalization, grapheme clustering or I/O.
+module user::text::utf8;
+pub struct Scalar { pub value: u32, pub next: usize }
+pub enum Decode { Value(Scalar), End, Invalid }
+pub enum Validation { Valid, Invalid(usize) }
+
+pub fn scalar(value: u32) -> bool {
+    return value <= 0x10ffff_u32 && !(value >= 0xd800_u32 && value <= 0xdfff_u32);
+}
+
+// Caller keeps data readable and immutable for the call. Never reads beyond data.len.
+pub unsafe fn decode(data: []const u8, offset: usize) -> Decode {
+    if offset == data.len { return Decode::End; }
+    if offset > data.len { return Decode::Invalid; }
+    // SAFETY: first byte exists; the complete sequence length is checked before continuation reads.
+    unsafe {
+        let lead: u8 = data[offset];
+        if lead < 128_u8 { return Decode::Value(make Scalar { value: lead as u32, next: offset + 1_usize }); }
+        var width: usize = 0;
+        var value: u32 = 0;
+        var minimum: u32 = 0;
+        if lead >= 0xc2_u8 && lead <= 0xdf_u8 {
+            width = 2;
+            value = (lead & 31_u8) as u32;
+            minimum = 0x80;
+        }
+        if lead >= 0xe0_u8 && lead <= 0xef_u8 {
+            width = 3;
+            value = (lead & 15_u8) as u32;
+            minimum = 0x800;
+        }
+        if lead >= 0xf0_u8 && lead <= 0xf4_u8 {
+            width = 4;
+            value = (lead & 7_u8) as u32;
+            minimum = 0x10000;
+        }
+        if width == 0_usize || width > data.len - offset { return Decode::Invalid; }
+        var i: usize = 1;
+        while i < width {
+            let byte: u8 = data[offset + i];
+            if byte < 128_u8 || byte > 191_u8 { return Decode::Invalid; }
+            value = (value << 6_u32) | ((byte & 63_u8) as u32);
+            i = i + 1_usize;
+        }
+        if value < minimum || !scalar(value) { return Decode::Invalid; }
+        return Decode::Value(make Scalar { value: value, next: offset + width });
+    }
+}
+
+pub unsafe fn validate(data: []const u8) -> Validation {
+    var offset: usize = 0;
+    // SAFETY: same live immutable input as decode; next advances by 1..4 bytes.
+    unsafe {
+        while offset < data.len {
+            match decode(data, offset) {
+                Decode::Value(item) => { offset = item.next; },
+                Decode::End => { return Validation::Valid; },
+                Decode::Invalid => { return Validation::Invalid(offset); },
+            }
+        }
+    }
+    return Validation::Valid;
+}
+
+// Requires already validated UTF-8. Both endpoints are boundaries; continuation bytes are not.
+pub unsafe fn boundary(data: []const u8, offset: usize) -> bool {
+    if offset > data.len { return false; }
+    if offset == data.len { return true; }
+    // SAFETY: checked offset, caller promises valid UTF-8 storage.
+    unsafe { return (data[offset] & 0xc0_u8) != 0x80_u8; }
+}
+
+pub unsafe fn previous(data: []const u8, offset: usize) -> usize {
+    if offset == 0_usize || offset > data.len { return 0; }
+    // SAFETY: valid UTF-8 and a boundary offset are caller preconditions; at most three continuations.
+    unsafe {
+        var cursor: usize = offset - 1_usize;
+        while cursor > 0_usize && (data[cursor] & 0xc0_u8) == 0x80_u8 { cursor = cursor - 1_usize; }
+        return cursor;
+    }
+}

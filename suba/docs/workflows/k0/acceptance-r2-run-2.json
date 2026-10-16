@@ -1,0 +1,220 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "name": "stable-marker",
+      "expected_passed": true,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True); time.sleep(2)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 500,
+        "observer_stopped_after_marker": true,
+        "returncode": -15,
+        "log": "READY\n",
+        "passed": true
+      }
+    },
+    {
+      "name": "late-failure",
+      "expected_passed": false,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True); time.sleep(.05); print('PANIC', flush=True); time.sleep(2)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 500,
+        "observer_stopped_after_marker": true,
+        "returncode": -15,
+        "log": "READY\nPANIC\n",
+        "passed": false
+      }
+    },
+    {
+      "name": "late-emergency",
+      "expected_passed": false,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True); time.sleep(.05); print('!0000000000000002:0000000080400000:0000000000000000', flush=True); time.sleep(2)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 500,
+        "observer_stopped_after_marker": true,
+        "returncode": -15,
+        "log": "READY\n!0000000000000002:0000000080400000:0000000000000000\n",
+        "passed": false
+      }
+    },
+    {
+      "name": "early-exit",
+      "expected_passed": false,
+      "execution": {
+        "command": [
+          "/home/mii/miniconda3/bin/python3",
+          "-c",
+          "import time; print('READY', flush=True)"
+        ],
+        "marker": "READY",
+        "observed": true,
+        "stable_observation_ms": 0,
+        "observer_stopped_after_marker": false,
+        "returncode": 0,
+        "log": "READY\n",
+        "passed": false
+      }
+    }
+  ],
+  "terminal_cases": [
+    {
+      "path": "valid",
+      "name": "one-outcome",
+      "text": "suba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\n",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "path": "valid",
+      "name": "duplicate-outcome",
+      "text": "suba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\nsuba kernel K0: handoff accepted\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "valid",
+      "name": "before-boot",
+      "text": "suba kernel K0: handoff accepted\nsuba K0 boot: entering kernel\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "valid",
+      "name": "boot-panic-after",
+      "text": "suba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\nsuba K0 boot panic\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "valid",
+      "name": "different-outcome-after",
+      "text": "suba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\nsuba kernel panic reason=1\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "valid",
+      "name": "different-outcome-after",
+      "text": "suba K0 boot: entering kernel\nsuba kernel K0: handoff accepted\n!0000000000000002:0000000080400000:0000000000000000\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "bad-magic",
+      "name": "one-outcome",
+      "text": "suba K0 boot: entering kernel\nsuba kernel panic reason=1\n",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "path": "bad-magic",
+      "name": "duplicate-outcome",
+      "text": "suba K0 boot: entering kernel\nsuba kernel panic reason=1\nsuba kernel panic reason=1\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "bad-magic",
+      "name": "before-boot",
+      "text": "suba kernel panic reason=1\nsuba K0 boot: entering kernel\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "bad-magic",
+      "name": "boot-panic-after",
+      "text": "suba K0 boot: entering kernel\nsuba kernel panic reason=1\nsuba K0 boot panic\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "bad-magic",
+      "name": "different-outcome-after",
+      "text": "suba K0 boot: entering kernel\nsuba kernel panic reason=1\nsuba kernel K0: handoff accepted\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "bad-magic",
+      "name": "different-outcome-after",
+      "text": "suba K0 boot: entering kernel\nsuba kernel panic reason=1\n!0000000000000002:0000000080400000:0000000000000000\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "one-outcome",
+      "text": "suba K0 boot: entering kernel\n!0000000000000002:0000000080400000:0000000000000000\n",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "path": "trusted-fault",
+      "name": "duplicate-outcome",
+      "text": "suba K0 boot: entering kernel\n!0000000000000002:0000000080400000:0000000000000000\n!0000000000000002:0000000080400000:0000000000000000\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "before-boot",
+      "text": "!0000000000000002:0000000080400000:0000000000000000\nsuba K0 boot: entering kernel\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "boot-panic-after",
+      "text": "suba K0 boot: entering kernel\n!0000000000000002:0000000080400000:0000000000000000\nsuba K0 boot panic\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "different-outcome-after",
+      "text": "suba K0 boot: entering kernel\n!0000000000000002:0000000080400000:0000000000000000\nsuba kernel K0: handoff accepted\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "different-outcome-after",
+      "text": "suba K0 boot: entering kernel\n!0000000000000002:0000000080400000:0000000000000000\nsuba kernel panic reason=1\n",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "incomplete-or-wrong-cause",
+      "text": "suba K0 boot: entering kernel\n!0000000000000002:",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "path": "trusted-fault",
+      "name": "incomplete-or-wrong-cause",
+      "text": "suba K0 boot: entering kernel\n!0000000000000003:0000000080400000:0000000000000000\n",
+      "expected": false,
+      "actual": false
+    }
+  ],
+  "observer_sha256": "5526015515ebdbe8aa5cde66216eda028eed0f0470b7270d09ab56b3cd915731"
+}

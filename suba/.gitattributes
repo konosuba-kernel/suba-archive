@@ -1,0 +1,2 @@
+# Preserve downloaded font license bytes for the recorded upstream hashes.
+assets/unifont/OFL-1.1.txt -text

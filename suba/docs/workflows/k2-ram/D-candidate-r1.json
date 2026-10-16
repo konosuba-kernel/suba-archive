@@ -1,0 +1,12 @@
+{
+  "node": "D",
+  "revision": "r1",
+  "author": "/root",
+  "files": {
+    "docs/workflows/k2-ram/CONTRACT.md": "0529e9087e52bcb76fe0a5ee37d28586ff15e80665c5785ba0a9a56f93e188bc"
+  },
+  "baseline": {
+    "suba": "e8fe282",
+    "biomiya": "d2c6e98"
+  }
+}

@@ -1,0 +1,10 @@
+// TEST ONLY: an image source can outlive the requester until its FS tail closes.
+pub unsafe fn k10_live(slot: usize) -> usize {
+    unsafe {
+        match SOURCES[slot].phase {
+            Phase::Empty => { return 0; }, Phase::Opening => {}, Phase::Stat => {},
+            Phase::Header => {}, Phase::Ready => {}, Phase::Reading => {}
+        }
+    }
+    return 1;
+}

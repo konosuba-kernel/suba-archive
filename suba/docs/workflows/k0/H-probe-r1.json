@@ -1,0 +1,104 @@
+{
+  "input_sha256": {
+    "model.vt": "f7fe40f50f8f3d81b91573f4f746d439454e3ca609eca902f8da01897b0ddc7a",
+    "legacy.vt": "d3f90f15c19bfc51c97c903db696b5ca4313e2126ff0d5ca6c5e0b5e83de2caf",
+    "host.vt": "830b2490b60fc290cb915bebabbea4d68c2d3877054ddff27c888d3841a897b6",
+    "probe.vt": "bb2385739304355f196ad915f93f549bcc5ce8f74c2bad7229f7f7d1befaecb5",
+    "trap.s0": "72dccf887fa0d68b6400c3d363e48c80f72ddd44e0e555e7ad5f4fe8063168ff",
+    "compiler.elf": "8051f3599704a6bf180496b14632691c3463f1239946893641f65aae21969904",
+    "tool.py": "d570ee5213186f39b369de4f6b042f941714e0aa7c4b6d848a59794976b77672"
+  },
+  "cases": [
+    {
+      "name": "capture",
+      "expected_exit": 77,
+      "passed": true,
+      "build": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe-r2/compiler.elf",
+          "build",
+          "probe.build"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "S-next-0.1 sources=3 imports=3 assembly_files=1 source=19714 assembly=260 names=501 name_bytes=8119 decls=174 types=68 fields=80 params=52 max_ast=308 max_ir=313 max_frame=1920 max_bindings=8 max_defers=0 max_loops=2 max_slots=227 max_args=15 max_params=4 text=30824 data=122 objects=38 symbols=562 fixups=1021 relocations=0 elf=40961\n"
+      },
+      "elf_sha256": "33456a7424e5f89649534a3d29f55db83584049e29c8d478edb38fd1252c01b6",
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe-r2/capture/probe.elf"
+        ],
+        "exit": 77,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "sink-failure",
+      "expected_exit": 79,
+      "passed": true,
+      "build": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe-r2/compiler.elf",
+          "build",
+          "probe.build"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "S-next-0.1 sources=3 imports=3 assembly_files=1 source=19714 assembly=260 names=501 name_bytes=8119 decls=174 types=68 fields=80 params=52 max_ast=308 max_ir=313 max_frame=1920 max_bindings=8 max_defers=0 max_loops=2 max_slots=227 max_args=15 max_params=4 text=30824 data=122 objects=38 symbols=562 fixups=1021 relocations=0 elf=40961\n"
+      },
+      "elf_sha256": "8ae8024025b8564970ff3375ec59f26431363c0528e6b7d0afa737ea8cc7469f",
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe-r2/sink-failure/probe.elf"
+        ],
+        "exit": 79,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "legacy-bypass-control",
+      "expected_exit": 85,
+      "passed": true,
+      "build": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe-r2/compiler.elf",
+          "build",
+          "probe.build"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": "S-next-0.1 sources=3 imports=2 assembly_files=1 source=20137 assembly=260 names=510 name_bytes=8180 decls=175 types=68 fields=80 params=59 max_ast=308 max_ir=313 max_frame=1920 max_bindings=8 max_defers=0 max_loops=2 max_slots=227 max_args=21 max_params=4 text=31996 data=122 objects=38 symbols=583 fixups=1057 relocations=0 elf=40961\n"
+      },
+      "elf_sha256": "4dda3e366cfdbc43a331516fa81d885267a1059ccf586c94e1fd8ff209aafaec",
+      "run": {
+        "command": [
+          "/usr/bin/qemu-riscv64",
+          "-s",
+          "1048576",
+          "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/probe-r2/legacy-bypass-control/probe.elf"
+        ],
+        "exit": 85,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  ],
+  "passed": true
+}

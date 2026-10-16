@@ -1,0 +1,66 @@
+// Guest-only edits and full kernel builds through the normal snapshot worker.
+module test::kernel_native;
+import suba::abi;
+import libsuba::files;
+import user::build::io;
+import runtime::bytes;
+import test::native;
+static mut BEFORE: [65537]u8 = zero;
+static mut AFTER: [65537]u8 = zero;
+
+// Exactly one textual anchor must match. No prebuilt mutant input is installed.
+unsafe fn edit(path: []const u8, old: []const u8, next: []const u8) -> bool {
+    unsafe {
+        var count: usize = 0;
+        match io::read(path, core::slice_of_mut(BEFORE)) {
+            io::Read::Failed(error) => { return false; },
+            io::Read::Ready(value) => { count = value; }
+        }
+        var matches: usize = 0;
+        var found: usize = 0;
+        var i: usize = 0;
+        while i + old.len <= count {
+            if bytes::equal(core::slice_from_raw_parts(core::ptr_add(core::slice_of(BEFORE).data, i), old.len), old) {
+                matches = matches + 1_usize;
+                found = i;
+            }
+            i = i + 1_usize;
+        }
+        if matches != 1_usize || next.len > 65536_usize - (count - old.len) { return false; }
+        i = 0;
+        while i < found { AFTER[i] = BEFORE[i]; i = i + 1_usize; }
+        var j: usize = 0;
+        while j < next.len { AFTER[i] = next[j]; i = i + 1_usize; j = j + 1_usize; }
+        j = found + old.len;
+        while j < count { AFTER[i] = BEFORE[j]; i = i + 1_usize; j = j + 1_usize; }
+        if io::save_new("kernel/edit.tmp", core::slice_from_raw_parts(core::slice_of(AFTER).data, i), false) != abi::OK { return false; }
+        return files::replace("kernel/edit.tmp", path).status == abi::OK;
+    }
+}
+
+pub fn main() -> u32 {
+    unsafe {
+        native::stage(1);
+        if !edit("kernel/entry.vt", "suba kernel K0: handoff accepted", "suba native V9: handoff accepted") { return native::result(1); }
+        if !native::command("/sys/build.elf", "", "vt.build", "vt.log", 0) { return native::result(2); }
+        native::stage(2);
+        if !edit("kernel/machine.s0", "sb x10, 0(x5)",
+            "addi x6, x0, 75\nbne x10, x6, .native_plain\naddi x10, x0, 76\n.native_plain:\nsb x10, 0(x5)") { return native::result(3); }
+        if !native::command("/sys/build.elf", "", "s0.build", "s0.log", 0) { return native::result(4); }
+        if files::sync_all().status != abi::OK { return native::result(5); }
+        native::stage(3);
+        return native::result(0);
+    }
+}
+
+// Runs only after the host has copied and loaded the guest-produced kernel.
+pub fn after() -> u32 {
+    unsafe {
+        native::stage(10);
+        if !native::command("/sys/build.elf", "", "hello.build", "post.log", 0) { return native::result(10); }
+        if !native::run("hello.elf", "", "post-run.log", 41) { return native::result(11); }
+        if files::sync_all().status != abi::OK { return native::result(12); }
+        native::stage(11);
+        return native::result(0);
+    }
+}

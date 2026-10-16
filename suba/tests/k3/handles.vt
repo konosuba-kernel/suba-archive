@@ -1,0 +1,47 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::services;
+import libsuba::syscall;
+static mut HANDLES: [62]usize = zero;
+pub fn run() -> u32 {
+    unsafe {
+        var i: usize = 0;
+        while i < 31_usize {
+            match services::streams() {
+                services::Streams::Failed(status) => { return 100; },
+                services::Streams::Ready(pair) => { HANDLES[i * 2_usize] = pair.read; HANDLES[i * 2_usize + 1_usize] = pair.write; }
+            }
+            i = i + 1_usize;
+        }
+        let job: syscall::Reply = services::job_create();
+        if job.status != abi::OK { return 101; }
+        // One free handle slot: read insertion succeeds, write insertion fails and
+        // must roll both endpoint refs and that first handle back.
+        match services::streams() {
+            services::Streams::Ready(pair) => { return 102; },
+            services::Streams::Failed(status) => { if status != abi::LIMIT { return 103; } }
+        }
+        let count: syscall::Reply = services::stats(syscalls::STATS_STREAMS);
+        if count.value != 31_usize { return 104; }
+        let freed_job: syscall::Reply = syscall::close(job.value);
+        if freed_job.status != abi::OK { return 105; }
+        match services::streams() {
+            services::Streams::Failed(status) => { return 106; },
+            services::Streams::Ready(pair) => {
+                let a: syscall::Reply = syscall::close(pair.read);
+                let b: syscall::Reply = syscall::close(pair.write);
+                if a.status != abi::OK || b.status != abi::OK { return 107; }
+            }
+        }
+        i = 0;
+        while i < 62_usize {
+            let closed: syscall::Reply = syscall::close(HANDLES[i]);
+            if closed.status != abi::OK { return 108; }
+            i = i + 1_usize;
+        }
+        let stale: syscall::Reply = syscall::close(HANDLES[0_usize]);
+        if stale.status != abi::BAD_HANDLE { return 109; }
+        return 0;
+    }
+}

@@ -1,0 +1,412 @@
+// Runtime spawn owns one stable FS reader through image_reads. Boot alone uses
+// immutable reserved RAM; both feed the same ELF plan and incremental loader.
+module kernel::dispatch;
+// Module imports are declared once in dispatch.vt (S-next module-wide imports).
+static mut SOURCES: boot_images::Description = zero;
+// Per-request argv snapshots; never embedded in the by-value request enum.
+static mut ARGUMENTS: [65536]u8 = zero;
+static mut PLANS: [process::CAPACITY]elf::Plan = zero;
+static mut PATH: [256]u8 = zero;
+
+// BootInfo/descriptor validation proved every entire immutable source is reserved RAM.
+pub unsafe fn sources(description: boot_images::Description) -> () {
+    unsafe { SOURCES = description; }
+    return ();
+}
+// SAFETY: caller has a live process slot < CAPACITY. The request owns this fixed
+// 4 KiB region until completion/cancel; views never leave one serialized dispatch step.
+unsafe fn argument_page(slot: usize) -> []u8 {
+    unsafe { return core::slice_from_raw_parts_mut(core::ptr_add(core::slice_of_mut(ARGUMENTS).data,
+        slot * abi::ARGUMENT_BYTES), abi::ARGUMENT_BYTES); }
+}
+// SAFETY: the live parent owns this immutable U read-only page. The view is used
+// only in this serialized step; no user execution or reap runs concurrently.
+unsafe fn published_arguments(id: process::Id) -> []const u8 {
+    unsafe {
+        match process::lookup(id, abi::ARGUMENT_BASE, false) {
+            space::Lookup::Invalid => { return ""; },
+            space::Lookup::Page(address) => { return core::slice_from_raw_parts(core::ptr::<u8>(address), abi::ARGUMENT_BYTES); }
+        }
+    }
+}
+unsafe fn default_arguments(bytes: []u8) -> () {
+    unsafe {
+        var i: usize = 0;
+        while i < bytes.len { bytes[i] = 0; i = i + 1_usize; }
+        argument_wire::put(bytes, 0, abi::ARGUMENT_MAGIC, 8);
+        argument_wire::put(bytes, abi::ARGUMENT_VERSION, abi::VERSION as usize, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_LENGTH, abi::ARGUMENT_BYTES, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_CWD_OFFSET, abi::ARGUMENT_DATA, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_CWD_LENGTH, 5, 4);
+        argument_wire::put(bytes, abi::ARGUMENT_DATA_BYTES, 5, 4);
+        bytes[576_usize] = 47; bytes[577_usize] = 119; bytes[578_usize] = 111;
+        bytes[579_usize] = 114; bytes[580_usize] = 107;
+    }
+    return ();
+}
+// Explicit cwd is a real absolute FS path. Empty cwd inherits the parent identity.
+// argument_wire::valid has already proved cwd offsets and lengths in this page.
+unsafe fn cwd_valid(page: []const u8) -> bool {
+    unsafe {
+        let offset: usize = argument_wire::word(page, abi::ARGUMENT_CWD_OFFSET, 4);
+        let length: usize = argument_wire::word(page, abi::ARGUMENT_CWD_LENGTH, 4);
+        if length == 0_usize { return true; }
+        if page[offset] != 47_u8 { return false; }
+        return path::valid(core::slice_from_raw_parts(core::ptr_add(page.data, offset), length));
+    }
+}
+struct Inherited { status: usize, handle: usize }
+unsafe fn inherit(parent: process::Id, child: process::Id, token: usize) -> Inherited {
+    unsafe {
+        if token == 0_usize { return make Inherited { status: abi::OK, handle: 0 }; }
+        match handle(parent, token, objects::WRITE) {
+            objects::LookupResult::BadHandle => { return make Inherited { status: abi::BAD_HANDLE, handle: 0 }; },
+            objects::LookupResult::Denied => { return make Inherited { status: abi::DENIED, handle: 0 }; },
+            objects::LookupResult::Ready(borrow) => {
+                match borrow.object {
+                    objects::Object::StreamWrite(value) => {
+                        if !stream::retain(value, true) { return make Inherited { status: abi::LIMIT, handle: 0 }; }
+                        match insert(child, borrow.object, objects::WRITE) {
+                            objects::InsertResult::Ready(token) => { return make Inherited { status: abi::OK, handle: token }; },
+                            objects::InsertResult::Invalid => {}, objects::InsertResult::Limit => {}
+                        }
+                        if !stream::release(value, true) { return make Inherited { status: abi::IO, handle: 0 }; }
+                        return make Inherited { status: abi::LIMIT, handle: 0 };
+                    },
+                    objects::Object::Desktop(value) => {},
+                    objects::Object::Empty => {}, objects::Object::StreamRead(value) => {},
+                    objects::Object::File(value) => {}, objects::Object::Window(value) => {},
+                    objects::Object::Child(value) => {}, objects::Object::Job(value) => {}
+                }
+            }
+        }
+        return make Inherited { status: abi::BAD_HANDLE, handle: 0 };
+    }
+}
+unsafe fn spawn_failed(parent: process::Id, child: process::Id, token: usize, status: usize) -> bool {
+    unsafe {
+        fs::abort_grant(client(child));
+        // Idempotent only because the actual loader may already have marked Dying.
+        match process::state(child) {
+            process::State::Dying => {},
+            process::State::Loading => { if !process::terminate(child, status) { return false; } },
+            process::State::Prepared => { if !process::terminate(child, status) { return false; } },
+            process::State::Ready => { return false; }, process::State::Running => { return false; },
+            process::State::Blocked => { return false; }, process::State::Exited => { return false; },
+            process::State::Vacant => { return false; }
+        }
+        return close(parent, token) == abi::OK;
+    }
+}
+unsafe fn spawn_call(parent: process::Id, address: usize, length: usize) -> bool {
+    unsafe {
+        if length != syscalls::SPAWN_BYTES { return answer(parent, abi::INVALID, 0); }
+        let record: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(SCRATCH).data, length);
+        if !usercopy::read(parent, address, record) { return answer(parent, abi::INVALID, 0); }
+        let wire: []const u8 = core::slice_from_raw_parts(record.data, record.len);
+        if argument_wire::word(wire, 0, 4) != abi::VERSION as usize ||
+            argument_wire::word(wire, 4, 4) != syscalls::SPAWN_BYTES { return answer(parent, abi::INVALID, 0); }
+        let path_address: usize = argument_wire::word(wire, syscalls::SPAWN_PATH, 8);
+        let path_bytes: usize = argument_wire::word(wire, syscalls::SPAWN_PATH_BYTES, 8);
+        let argv_address: usize = argument_wire::word(wire, syscalls::SPAWN_ARGUMENTS, 8);
+        let argv_bytes: usize = argument_wire::word(wire, syscalls::SPAWN_ARGUMENT_BYTES, 8);
+        let stdout: usize = argument_wire::word(wire, syscalls::SPAWN_STDOUT, 8);
+        let stderr: usize = argument_wire::word(wire, syscalls::SPAWN_STDERR, 8);
+        let job_token: usize = argument_wire::word(wire, syscalls::SPAWN_JOB, 8);
+        if path_bytes == 0_usize || path_bytes > 255_usize { return answer(parent, abi::INVALID, 0); }
+        let path: []u8 = core::slice_from_raw_parts_mut(core::slice_of_mut(PATH).data, path_bytes);
+        if !usercopy::read(parent, path_address, path) { return answer(parent, abi::INVALID, 0); }
+        var job: objects::Identity = zero;
+        if job_token != 0_usize {
+            match handle(parent, job_token, objects::PREPARE) {
+                objects::LookupResult::BadHandle => { return answer(parent, abi::BAD_HANDLE, 0); },
+                objects::LookupResult::Denied => { return answer(parent, abi::DENIED, 0); },
+                objects::LookupResult::Ready(borrow) => {
+                    match borrow.object {
+                        objects::Object::Job(value) => { job = value; },
+                        objects::Object::Desktop(value) => { return answer(parent, abi::BAD_HANDLE, 0); },
+                        objects::Object::Empty => { return answer(parent, abi::BAD_HANDLE, 0); },
+                        objects::Object::File(value) => { return answer(parent, abi::BAD_HANDLE, 0); },
+                        objects::Object::Window(value) => { return answer(parent, abi::BAD_HANDLE, 0); },
+                        objects::Object::StreamRead(value) => { return answer(parent, abi::BAD_HANDLE, 0); },
+                        objects::Object::StreamWrite(value) => { return answer(parent, abi::BAD_HANDLE, 0); },
+                        objects::Object::Child(value) => { return answer(parent, abi::BAD_HANDLE, 0); }
+                    }
+                }
+            }
+            match jobs::status(job) {
+                jobs::Status::Active => {}, jobs::Status::Ending => { return answer(parent, abi::CANCELLED, 0); },
+                jobs::Status::Done => { return answer(parent, abi::CANCELLED, 0); },
+                jobs::Status::Invalid => { return false; }
+            }
+        }
+        if job_token == 0_usize && fs::restricted(client(parent)) { job = fs::inherited_job(client(parent)); }
+        if !fs::spawn_allowed(client(parent), job) { return answer(parent, abi::DENIED, 0); }
+        if argv_bytes != abi::ARGUMENT_BYTES || !usercopy::range(parent, argv_address, argv_bytes, false) {
+            return answer(parent, abi::INVALID, 0);
+        }
+        var source: objects::Identity = zero;
+        match image_reads::begin(client(parent), core::slice_from_raw_parts(path.data, path.len)) {
+            image_reads::Begun::Failed(error) => { return answer(parent, file_error(error), 0); },
+            image_reads::Begun::Ready(value) => { source = value; }
+        }
+        return pending(parent, request::Operation::Preparing(make request::Preparing {
+            source: source, argv: argv_address, stdout: stdout, stderr: stderr, job: job, directory: abi::FS_NODE_COUNT, reservation: make objects::Identity { slot: 0, generation: 0 }, phase: request::Preparation::Copy(0) }));
+    }
+}
+
+// Two fixed copies; the blocked single-threaded parent cannot mutate this buffer
+// between them. Kill revokes active() before another copy, and no resource is held yet.
+unsafe fn copy_arguments(work: request::Pending, inputs: request::Preparing, offset: usize) -> bool {
+    unsafe {
+        if offset != 0_usize && offset != 2048_usize { return false; }
+        let page: []u8 = argument_page(process::slot(work.owner));
+        let part: []u8 = core::slice_from_raw_parts_mut(core::ptr_add(page.data, offset), 2048);
+        if !usercopy::read(work.owner, inputs.argv + offset, part) { return spawn_result(work, inputs.source, abi::INVALID, 0); }
+        var next: request::Preparing = inputs;
+        next.phase = request::Preparation::Inspect;
+        if offset == 0_usize { next.phase = request::Preparation::Copy(2048); }
+        return request::advance(work.owner, work.token, request::Operation::Preparing(next));
+    }
+}
+
+unsafe fn prepare_spawn(work: request::Pending, inputs: request::Preparing) -> bool {
+    unsafe {
+        match inputs.phase {
+            request::Preparation::Directory(ticket) => { return prepare_directory(work, inputs, ticket); },
+            request::Preparation::Create => {
+                CURRENT_KIND = 110;
+                return start_child(work, inputs);
+            },
+            request::Preparation::Inspect => {
+                CURRENT_KIND = 103;
+                match image_reads::header(inputs.source) {
+                    image_reads::Inspected::Wait => { return true; },
+                    image_reads::Inspected::Invalid => { return false; },
+                    image_reads::Inspected::Failed(error) => { return spawn_result(work, inputs.source, file_error(error), 0); },
+                    image_reads::Inspected::Ready(source) => {
+                        match elf::inspect(source.bytes, source.total, false) {
+                            elf::Inspect::Invalid => { return spawn_result(work, inputs.source, abi::INVALID, 0); },
+                            elf::Inspect::Ready(plan) => { PLANS[process::slot(work.owner)] = plan; }
+                        }
+                    }
+                }
+                var next: request::Preparing = inputs;
+                next.phase = request::Preparation::Validate;
+                return request::advance(work.owner, work.token, request::Operation::Preparing(next));
+            },
+            request::Preparation::Copy(offset) => {
+                CURRENT_KIND = 102;
+                return copy_arguments(work, inputs, offset);
+            },
+            request::Preparation::Validate => { CURRENT_KIND = 111; }
+        }
+        let parent: process::Id = work.owner;
+        let args: []u8 = argument_page(process::slot(parent));
+        let args_view: []const u8 = core::slice_from_raw_parts(args.data, args.len);
+        if !argument_wire::valid(args_view) || !cwd_valid(args_view) { return spawn_result(work, inputs.source, abi::INVALID, 0); }
+        // Preserve the display spelling in argv, but inherit the resolved directory pin.
+        if argument_wire::word(args_view, abi::ARGUMENT_CWD_LENGTH, 4) == 0_usize {
+            let old: []const u8 = published_arguments(parent);
+            if old.len != abi::ARGUMENT_BYTES { return false; }
+            let old_view: []const u8 = old;
+            let offset: usize = argument_wire::word(old_view, abi::ARGUMENT_CWD_OFFSET, 4);
+            let count: usize = argument_wire::word(old_view, abi::ARGUMENT_CWD_LENGTH, 4);
+            let used: usize = argument_wire::word(args_view, abi::ARGUMENT_DATA_BYTES, 4);
+            if count > abi::ARGUMENT_BYTES - abi::ARGUMENT_DATA - used { return spawn_result(work, inputs.source, abi::LIMIT, 0); }
+            var i: usize = 0;
+            while i < count { args[abi::ARGUMENT_DATA + used + i] = old[offset + i]; i = i + 1_usize; }
+            argument_wire::put(args, abi::ARGUMENT_CWD_OFFSET, abi::ARGUMENT_DATA + used, 4);
+            argument_wire::put(args, abi::ARGUMENT_CWD_LENGTH, count, 4);
+            argument_wire::put(args, abi::ARGUMENT_DATA_BYTES, used + count, 4);
+            match fs::retain_directory(client(parent)) {
+                fs::PinnedDirectory::Invalid => { return false; },
+                fs::PinnedDirectory::Ready(directory) => {
+                    var next: request::Preparing = inputs;
+                    next.directory = directory;
+                    return reserve_child(work, next);
+                }
+            }
+        }
+        let offset: usize = argument_wire::word(args_view, abi::ARGUMENT_CWD_OFFSET, 4);
+        let length: usize = argument_wire::word(args_view, abi::ARGUMENT_CWD_LENGTH, 4);
+        let directory: []const u8 = core::slice_from_raw_parts(core::ptr_add(args_view.data, offset), length);
+        match fs::enqueue(client(parent), fs::Command::Directory, directory, "") {
+            fs::Queued::Failed(error) => { return spawn_result(work, inputs.source, file_error(error), 0); },
+            fs::Queued::Ready(ticket) => {
+                var next: request::Preparing = inputs;
+                next.phase = request::Preparation::Directory(ticket);
+                return request::advance(parent, work.token, request::Operation::Preparing(next));
+            }
+        }
+    }
+}
+
+unsafe fn start_child(work: request::Pending, inputs: request::Preparing) -> bool {
+    unsafe {
+        let parent: process::Id = work.owner;
+        let reservation: objects::Identity = inputs.reservation;
+        match process::begin(PLANS[process::slot(parent)]) {
+            process::Create::Ready(child) => { return child_created(work, child, reservation, inputs); },
+            process::Create::Invalid => { return false; },
+            process::Create::Full => {
+                if !children::abort(reservation) || !fs::directory_release(inputs.directory) { return false; }
+                return spawn_result(work, inputs.source, abi::LIMIT, 0);
+            },
+            process::Create::NoMemory => {
+                if !children::abort(reservation) || !fs::directory_release(inputs.directory) { return false; }
+                return spawn_result(work, inputs.source, abi::NO_MEMORY, 0);
+            }
+        }
+    }
+}
+unsafe fn child_created(work: request::Pending, child: process::Id,
+    reservation: objects::Identity, inputs: request::Preparing) -> bool {
+    unsafe {
+        let parent: process::Id = work.owner;
+        if inputs.job.generation != 0_usize && !jobs::join(inputs.job) { return false; }
+        if !children::bind(reservation, child, inputs.job) { return false; }
+        // Establish teardown before yielding. Until attach, there are no handle/VA
+        // owners; a parent kill can already reap this bound child through the same gate.
+        CLEANUP[process::slot(child)] = Cleanup::Cancel;
+        ROOTS[process::slot(child)] = false;
+        return request::advance(parent, work.token, request::Operation::Installing(make request::Installing {
+            child: child, reservation: reservation, job: inputs.job, source: inputs.source, stdout: inputs.stdout, stderr: inputs.stderr, directory: inputs.directory }));
+    }
+}
+
+unsafe fn install_child(work: request::Pending, inputs: request::Installing) -> bool {
+    unsafe {
+        let parent: process::Id = work.owner;
+        let child: process::Id = inputs.child;
+        let reservation: objects::Identity = inputs.reservation;
+        if !attach(child, false) || !fs::grant_child(client(parent), client(child), inputs.job) { return false; }
+        if !fs::child_directory_allowed(client(child), inputs.directory) {
+            fs::abort_grant(client(child));
+            if !fs::directory_release(inputs.directory) || !children::release(reservation) ||
+                !process::terminate(child, abi::DENIED) { return false; }
+            return spawn_result(work, inputs.source, abi::DENIED, 0);
+        }
+        if !fs::install_directory(client(child), inputs.directory) { return false; }
+        let args: []u8 = argument_page(process::slot(parent));
+        var child_handle: usize = 0;
+        match insert(parent, objects::Object::Child(reservation), objects::KILL | objects::COLLECT) {
+            objects::InsertResult::Invalid => { return false; },
+            objects::InsertResult::Limit => {
+                fs::abort_grant(client(child));
+                if !children::release(reservation) || !process::terminate(child, abi::LIMIT) { return false; }
+                return spawn_result(work, inputs.source, abi::LIMIT, 0);
+            },
+            objects::InsertResult::Ready(value) => { child_handle = value; }
+        }
+        let output: Inherited = inherit(parent, child, inputs.stdout);
+        let error: Inherited = inherit(parent, child, inputs.stderr);
+        if output.status != abi::OK || error.status != abi::OK {
+            var status: usize = output.status;
+            if status == abi::OK { status = error.status; }
+            if !spawn_failed(parent, child, child_handle, status) { return false; }
+            return spawn_result(work, inputs.source, status, 0);
+        }
+        argument_wire::put(args, abi::ARGUMENT_STDOUT, output.handle, 8);
+        argument_wire::put(args, abi::ARGUMENT_STDERR, error.handle, 8);
+        return request::advance(parent, work.token, request::Operation::Loading(make request::Spawn { child: child,
+            source: inputs.source, handle: child_handle }));
+    }
+}
+
+// Loader ranges were checked by the immutable ELF plan. Only the current slice
+// borrows the source buffer; cancellation closes its reader and FS ticket.
+unsafe fn spawn_step(work: request::Pending, data: request::Spawn) -> bool {
+    unsafe {
+        match process::load_request(data.child) {
+            process::LoadRequest::Invalid => { return false; },
+            process::LoadRequest::Done => {
+                let args: []u8 = argument_page(process::slot(work.owner));
+                if !process::arguments(data.child, core::slice_from_raw_parts(args.data, args.len)) ||
+                    !image_reads::close(data.source) || !process::publish(data.child) { return false; }
+                return finish(work, abi::OK, data.handle);
+            },
+            process::LoadRequest::Bytes(need) => {
+                var status: usize = abi::OK;
+                match image_reads::read(data.source, need.offset, need.bytes) {
+                    image_reads::Read::Wait => { return true; },
+                    image_reads::Read::Invalid => { return false; },
+                    image_reads::Read::Failed(error) => { status = file_error(error); },
+                    image_reads::Read::Ready(bytes) => {
+                        match process::load_step(data.child, bytes) {
+                            loader::Step::Done => {}, loader::Step::More => {},
+                            loader::Step::Invalid => { status = abi::INVALID; },
+                            loader::Step::NoMemory => { status = abi::NO_MEMORY; }
+                        }
+                    }
+                }
+                if status != abi::OK {
+                    if !spawn_failed(work.owner, data.child, data.handle, status) { return false; }
+                    return spawn_result(work, data.source, status, 0);
+                }
+                return true;
+            }
+        }
+    }
+}
+
+unsafe fn spawn_result(work: request::Pending, source: objects::Identity, status: usize, value: usize) -> bool {
+    unsafe { return image_reads::close(source) && finish(work, status, value); }
+}
+
+unsafe fn reserve_child(work: request::Pending, inputs: request::Preparing) -> bool {
+    unsafe {
+        var next: request::Preparing = inputs;
+        match children::reserve(work.owner) {
+            children::Reserve::Invalid => { return false; },
+            children::Reserve::Limit => {
+                if !fs::directory_release(inputs.directory) { return false; }
+                return spawn_result(work, inputs.source, abi::LIMIT, 0);
+            },
+            children::Reserve::Ready(value) => { next.reservation = value; }
+        }
+        next.phase = request::Preparation::Create;
+        return request::advance(work.owner, work.token, request::Operation::Preparing(next));
+    }
+}
+
+// Boot-only provider path; subsequent spawn always uses one loader step per request pass.
+pub unsafe fn boot(index: usize) -> bool {
+    unsafe {
+        if index >= SOURCES.count { return false; }
+        let bytes: []const u8 = boot_images::bytes(SOURCES.images[index]);
+        var plan: elf::Plan = zero;
+        match elf::inspect(bytes, bytes.len, false) {
+            elf::Inspect::Invalid => { return false; }, elf::Inspect::Ready(value) => { plan = value; }
+        }
+        match process::begin(plan) {
+            process::Create::Ready(id) => { return boot_process(id, bytes, index == 0_usize); },
+            process::Create::Invalid => { return false; },
+            process::Create::Full => { return false; },
+            process::Create::NoMemory => { return false; }
+        }
+    }
+}
+unsafe fn boot_process(id: process::Id, bytes: []const u8, desktop: bool) -> bool {
+    unsafe {
+        if !attach(id, true) { return false; }
+        default_arguments(argument_page(process::slot(id)));
+        if !boot_directory(id) { return false; }
+        loop {
+            match process::load_request(id) {
+                process::LoadRequest::Invalid => { return false; },
+                process::LoadRequest::Done => {
+                    if desktop { return boot_desktop_ready(id) && process::publish(id); }
+                    let args: []u8 = argument_page(process::slot(id));
+                    return process::arguments(id, core::slice_from_raw_parts(args.data, args.len)) && process::publish(id);
+                },
+                process::LoadRequest::Bytes(need) => {
+                    match process::load_step(id, core::slice_from_raw_parts(core::ptr_add(bytes.data, need.offset), need.bytes)) {
+                        loader::Step::More => {}, loader::Step::Done => {},
+                        loader::Step::Invalid => { return false; }, loader::Step::NoMemory => { return false; }
+                    }
+                }
+            }
+        }
+    }
+}

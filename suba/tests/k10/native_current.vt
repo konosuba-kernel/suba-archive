@@ -1,0 +1,14 @@
+// Rebuild the exact final system sources after K10 integration.
+module test::current_native;
+import suba::abi;
+import libsuba::files;
+import test::native;
+pub fn main() -> u32 {
+    unsafe {
+        native::stage(1);
+        if !native::command("/sys/build.elf", "", "kernel.build", "current.log", 0) { return native::result(1); }
+        if files::sync_all().status != abi::OK { return native::result(2); }
+        native::stage(2);
+        return native::result(0);
+    }
+}

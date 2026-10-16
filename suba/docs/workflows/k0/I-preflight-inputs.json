@@ -1,0 +1,11 @@
+{
+  "status": "read-only exploratory review; not A acceptance",
+  "inputs": {
+    "kernel/entry.vt": "fdde814179d05254a9c1b8258d4b4452bf738d4e4178f32971a15f6dfdab8151",
+    "kernel/machine.vt": "ad1727f7e727189e2bed337c931841310763e4a5d4a663e626af552248ff96ce",
+    "kernel/machine.s0": "86006c38cd36f619ce8911f569ed695961a3c747eac70332dad58f48f6ac8f0c",
+    "kernel/kernel.build": "a43bc6469ea32d97be70e0816596e9fbbbfe7c64f6511d715cacdfd152165abf",
+    "tests/k0/boot.vt": "6c24d4557e513681af5405a7f0d31ec26f943dbc958547a8b1adffc22aa56e0b",
+    "tools/check_kernel_entry.py": "cd11cc5b2d53a2016a4d991ffbb7e68c712cad0e429f221b13579e3d5059597c"
+  }
+}

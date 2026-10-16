@@ -1,0 +1,148 @@
+// Boot-time admission owns the transition from validated descriptions to page ownership.
+// No retained external views, I/O or runtime waits. Call once with interrupts disabled.
+module kernel::ram;
+import suba::abi;
+import platform::boot_info;
+import platform::fdt;
+import kernel::memory;
+
+pub enum InitResult { Ready, Invalid, Unsupported, Limit, NoMemory, AlreadyInitialized }
+const REGION_CAPACITY: usize = 64;
+struct Plan { count: usize, regions: [64]memory::Region }
+static mut ADMITTED: Plan = zero;
+
+unsafe fn reserve(regions: []memory::Region, at: usize, base: usize, bytes: usize) -> () {
+    // SAFETY: caller supplies one of at most 51 validated, nonempty RAM extents.
+    // Fixed RAM ends on a page boundary, so outward rounding remains in RAM.
+    unsafe {
+        let first: usize = base - base % abi::PAGE_BYTES;
+        let end: usize = base + bytes;
+        let skip: usize = (abi::PAGE_BYTES - end % abi::PAGE_BYTES) % abi::PAGE_BYTES;
+        regions[at] = make memory::Region { base: first, bytes: end + skip - first };
+    }
+    return ();
+}
+
+unsafe fn collect(info: boot_info::Description, tree: fdt::Description,
+    regions: []memory::Region) -> usize {
+    // SAFETY: validated descriptions bound counts to 16 and 32. Together with
+    // the three fixed owners they fit the private 64-entry destination.
+    unsafe {
+        reserve(regions, 0, abi::RAM_BASE, abi::BOOT_BASE - abi::RAM_BASE);
+        reserve(regions, 1, abi::BOOT_BASE, abi::BOOT_BYTES);
+        reserve(regions, 2, abi::KERNEL_BASE, info.kernel_end - abi::KERNEL_BASE);
+        var count: usize = 3;
+        var i: usize = 0;
+        while i < info.reserved_count {
+            reserve(regions, count, info.reserved[i].base, info.reserved[i].bytes);
+            count = count + 1_usize;
+            i = i + 1_usize;
+        }
+        i = 0;
+        while i < tree.reserved_count {
+            reserve(regions, count, tree.reserved[i].base, tree.reserved[i].bytes);
+            count = count + 1_usize;
+            i = i + 1_usize;
+        }
+        return count;
+    }
+}
+
+unsafe fn sort(regions: []memory::Region) -> () {
+    // SAFETY: local bounded array; insertion sort does at most 51*50/2 moves.
+    unsafe {
+        var i: usize = 1;
+        while i < regions.len {
+            let value: memory::Region = regions[i];
+            var j: usize = i;
+            while j > 0_usize {
+                if regions[j - 1_usize].base <= value.base { break; }
+                regions[j] = regions[j - 1_usize];
+                j = j - 1_usize;
+            }
+            regions[j] = value;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
+
+unsafe fn complement(reserved: []const memory::Region) -> Plan {
+    var plan: Plan = zero;
+    var cursor: usize = abi::RAM_BASE;
+    // SAFETY: regions are sorted page-aligned validated RAM extents. Advancing
+    // cursor merges overlaps/adjacency. <=51 reservations produce <=52 free runs.
+    unsafe {
+        var i: usize = 0;
+        while i < reserved.len {
+            let value: memory::Region = reserved[i];
+            if value.base > cursor {
+                plan.regions[plan.count] = make memory::Region {
+                    base: cursor, bytes: value.base - cursor
+                };
+                plan.count = plan.count + 1_usize;
+            }
+            let end: usize = value.base + value.bytes;
+            if end > cursor { cursor = end; }
+            i = i + 1_usize;
+        }
+        let end: usize = abi::RAM_BASE + abi::RAM_BYTES;
+        if cursor < end {
+            plan.regions[plan.count] = make memory::Region { base: cursor, bytes: end - cursor };
+            plan.count = plan.count + 1_usize;
+        }
+    }
+    return plan;
+}
+
+unsafe fn admit(info: boot_info::Description, tree: fdt::Description) -> InitResult {
+    var reserved: [REGION_CAPACITY]memory::Region = zero;
+    // SAFETY: both descriptions were fully decoded, the kernel is the only RAM
+    // owner after firmware handoff, and no consumer has allocated any page yet.
+    unsafe {
+        let count: usize = collect(info, tree, core::slice_of_mut(reserved));
+        let records: []memory::Region = core::slice_from_raw_parts_mut(
+            core::slice_of_mut(reserved).data, count);
+        sort(records);
+        let plan: Plan = complement(core::slice_const(records));
+        if plan.count == 0_usize { return InitResult::NoMemory; }
+        let regions: []const memory::Region = core::slice_from_raw_parts(
+            core::slice_of(plan.regions).data, plan.count);
+        match memory::initialize_regions(abi::RAM_BASE, abi::RAM_BYTES, regions) {
+            memory::InitResult::Ready => { ADMITTED = plan; return InitResult::Ready; },
+            memory::InitResult::Invalid => { return InitResult::Invalid; },
+            memory::InitResult::AlreadyInitialized => { return InitResult::AlreadyInitialized; },
+        }
+    }
+}
+
+// Caller supplies exactly a successful boot_info decode, in serialized bare
+// S-mode. The fixed loader has finished copying DTB and accessing other free RAM.
+pub unsafe fn initialize(info: boot_info::Description) -> InitResult {
+    // SAFETY: decode proved the copied DTB lies wholly inside the permanent boot
+    // window. F only reads it; no described physical page is accessed during parsing.
+    unsafe {
+        let data: []const u8 = core::slice_from_raw_parts(
+            core::ptr_const(core::ptr::<u8>(info.dtb_base)), info.dtb_bytes);
+        match fdt::inspect(data) {
+            fdt::InspectResult::Ready(tree) => { return admit(info, tree); },
+            fdt::InspectResult::Invalid => { return InitResult::Invalid; },
+            fdt::InspectResult::Unsupported => { return InitResult::Unsupported; },
+            fdt::InspectResult::Limit => { return InitResult::Limit; },
+        }
+    }
+}
+
+// Kernel direct-map policy: only admitted RAM is eligible; FDT reservations stay
+// absent unless an explicit separately validated owner maps its own payload.
+pub unsafe fn available_page(address: usize) -> bool {
+    unsafe {
+        var i: usize = 0;
+        while i < ADMITTED.count {
+            if address >= ADMITTED.regions[i].base &&
+                address - ADMITTED.regions[i].base < ADMITTED.regions[i].bytes { return true; }
+            i = i + 1_usize;
+        }
+    }
+    return false;
+}

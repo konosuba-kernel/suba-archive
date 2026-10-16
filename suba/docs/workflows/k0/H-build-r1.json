@@ -1,0 +1,21 @@
+{
+  "baseline": "a86586e",
+  "seed_sha256": "8051f3599704a6bf180496b14632691c3463f1239946893641f65aae21969904",
+  "compiler_sha256": "3b37b59a89774f37bdcf339a1fd9cf2a755cc8f32d08b287ffdd7cfd49d5ae1a",
+  "compiler_path": "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/source/core-s/build/snext-q.elf",
+  "command": [
+    "qemu-riscv64",
+    "-s",
+    "1048576",
+    "/home/mii/code/konOSuba/biomiya/core-s/build/behavior-fixes-p4-r1/e3.elf",
+    "build",
+    "next/q/compiler.build"
+  ],
+  "cwd": "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/source/core-s",
+  "exit": 0,
+  "stdout": "",
+  "stderr": "S-next-0.1 sources=17 imports=52 assembly_files=1 source=340215 assembly=345 names=4187 name_bytes=84313 decls=818 types=429 fields=375 params=635 max_ast=1119 max_ir=1429 max_frame=25808 max_bindings=18 max_defers=0 max_loops=3 max_slots=982 max_args=185 max_params=5 text=1002720 data=1994 objects=556 symbols=12833 fixups=28026 relocations=4 elf=1011792\n",
+  "snapshot_inputs_sha256": "9414e87c5618e195cde7fd26514a61850d9dc60a325c2a2c410557463b0f01af",
+  "source_snapshot": "/home/mii/code/konOSuba/biomiya/core-s/build/k0-h-r1/source/core-s",
+  "scope": "HEAD production sources, H overlays, isolated main/input host call adaptations and manifest insertion; no P/S target changes; not a selfhost fixed point"
+}

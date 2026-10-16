@@ -1,0 +1,56 @@
+module test::program;
+import suba::abi;
+import suba::syscalls;
+import libsuba::arguments;
+import libsuba::services;
+import libsuba::syscall;
+import test::common;
+static mut BLOCK: [4096]u8 = zero;
+unsafe fn sleep_forever() -> u32 {
+    unsafe {
+        let result: syscall::Reply = syscall::invoke(abi::SYS_EVENT_WAIT, 0, 0, 0, 0, 0, 0);
+        return 91;
+    }
+}
+pub fn run() -> u32 {
+    if arguments::count() != 1_usize { return 40; }
+    var role: []const u8 = "";
+    match arguments::argument(0) {
+        arguments::BytesResult::Invalid => { return 41; },
+        arguments::BytesResult::Value(value) => { role = value; }
+    }
+    match arguments::cwd() {
+        arguments::BytesResult::Invalid => { return 42; },
+        arguments::BytesResult::Value(value) => { unsafe { if !common::equal(value, "/boot") { return 43; } } }
+    }
+    let output: usize = arguments::output(false);
+    unsafe {
+        if common::equal(role, "sleep") { return sleep_forever(); }
+        if common::equal(role, "grand") {
+            let sent: syscall::Reply = services::write(output, "G", false);
+            if sent.status != abi::OK { return 44; }
+            return sleep_forever();
+        }
+        if common::equal(role, "tree") {
+            let child: syscall::Reply = common::spawn("grand", output, 0, 0);
+            if child.status != abi::OK { return 45; }
+            let sent: syscall::Reply = services::write(output, "T", false);
+            if sent.status != abi::OK { return 46; }
+            return sleep_forever();
+        }
+        if common::equal(role, "emit") || common::equal(role, "blocked-writer") {
+            var i: usize = 0;
+            while i < 4096_usize { BLOCK[i] = (i % 251_usize) as u8; i = i + 1_usize; }
+            var total: usize = 0;
+            while total < 131072_usize {
+                let offset: usize = total % 4096_usize;
+                let bytes: []const u8 = core::slice_from_raw_parts(core::ptr_add(core::slice_of(BLOCK).data, offset), 4096_usize - offset);
+                let sent: syscall::Reply = services::write(output, bytes, false);
+                if sent.status != abi::OK || sent.value == 0_usize { return 47; }
+                total = total + sent.value;
+            }
+            return 0;
+        }
+        return 48;
+    }
+}

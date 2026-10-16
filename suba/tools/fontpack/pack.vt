@@ -1,0 +1,111 @@
+// Native conversion core; caller-owned input/output, no host or system-call dependency.
+module tool::fontpack;
+import user::text::font;
+pub const INPUT_LIMIT: usize = 5242880;
+pub enum Pack { Ready(usize), Invalid(usize), NoMemory, Limit, Aliased }
+struct Line { code: usize, bitmap: usize, bytes: usize, next: usize }
+enum Parsed { Value(Line), Invalid }
+
+fn nibble(byte: u8) -> usize {
+    if byte >= 48_u8 && byte <= 57_u8 { return (byte - 48_u8) as usize; }
+    if byte >= 65_u8 && byte <= 70_u8 { return (byte - 55_u8) as usize; }
+    if byte >= 97_u8 && byte <= 102_u8 { return (byte - 87_u8) as usize; }
+    return 16;
+}
+
+unsafe fn line(input: []const u8, offset: usize, minimum: usize) -> Parsed {
+    // SAFETY: caller checked offset<input.len; cursor stays in input and line length <=69.
+    unsafe {
+        var end: usize = offset;
+        while end < input.len && input[end] != 10_u8 {
+            if end - offset >= 69_usize { return Parsed::Invalid; }
+            end = end + 1_usize;
+        }
+        let length: usize = end - offset;
+        if length != 37_usize && length != 69_usize { return Parsed::Invalid; }
+        if input[offset + 4_usize] != 58_u8 { return Parsed::Invalid; }
+        var code: usize = 0;
+        var i: usize = 0;
+        while i < 4_usize {
+            let digit: usize = nibble(input[offset + i]);
+            if digit == 16_usize { return Parsed::Invalid; }
+            code = code * 16_usize + digit;
+            i = i + 1_usize;
+        }
+        if code < minimum || (code >= 0xd800_usize && code <= 0xdfff_usize) { return Parsed::Invalid; }
+        i = offset + 5_usize;
+        while i < end {
+            if nibble(input[i]) == 16_usize { return Parsed::Invalid; }
+            i = i + 1_usize;
+        }
+        var next: usize = end;
+        if end < input.len { next = end + 1_usize; }
+        return Parsed::Value(make Line { code: code, bitmap: offset + 5_usize,
+            bytes: (length - 5_usize) / 2_usize, next: next });
+    }
+}
+
+fn overlaps(a: usize, alen: usize, b: usize, blen: usize) -> bool {
+    if alen == 0_usize || blen == 0_usize { return false; }
+    if a <= b { return b - a < alen; }
+    return a - b < blen;
+}
+
+// All errors leave output untouched. Both buffers stay live; output is exclusive ordinary RAM.
+// Parses sorted BMP .hex source twice, then publishes magic last. No hidden allocation.
+pub unsafe fn pack(input: []const u8, output: []u8) -> Pack {
+    if input.len > INPUT_LIMIT { return Pack::Limit; }
+    if output.len < font::FILE_BYTES { return Pack::NoMemory; }
+    if overlaps(core::addr(input.data), input.len, core::addr(output.data), output.len) { return Pack::Aliased; }
+    var cursor: usize = 0;
+    var minimum: usize = 0;
+    var count: usize = 0;
+    // SAFETY: immutable input and exclusive output; full validation precedes first write.
+    unsafe {
+        while cursor < input.len {
+            match line(input, cursor, minimum) {
+                Parsed::Invalid => { return Pack::Invalid(cursor); },
+                Parsed::Value(item) => {
+                    minimum = item.code + 1_usize;
+                    cursor = item.next;
+                    count = count + 1_usize;
+                },
+            }
+        }
+        if count == 0_usize { return Pack::Invalid(0); }
+        var i: usize = 0;
+        while i < font::FILE_BYTES { output[i] = 0; i = i + 1_usize; }
+        cursor = 0;
+        while cursor < input.len {
+            match line(input, cursor, 0) {
+                Parsed::Invalid => { core::panic(); return Pack::Invalid(cursor); },
+                Parsed::Value(item) => {
+                    write_glyph(input, output, item);
+                    cursor = item.next;
+                },
+            }
+        }
+        let header: []const u8 = "SUBAFNT1\0\0\x01\0\x10\0\0\0";
+        i = 0;
+        while i < font::HEADER_BYTES { output[i] = header[i]; i = i + 1_usize; }
+    }
+    return Pack::Ready(count);
+}
+
+unsafe fn write_glyph(input: []const u8, output: []u8, item: Line) -> () {
+    // SAFETY: immutable input was fully validated; code<65536, bytes=16/32, output has FILE_BYTES.
+    unsafe {
+        let stride: usize = item.bytes / 16_usize;
+        output[font::HEADER_BYTES + item.code] = (stride * 8_usize) as u8;
+        var i: usize = 0;
+        while i < item.bytes {
+            let bits: usize = nibble(input[item.bitmap + i * 2_usize]) * 16_usize +
+                nibble(input[item.bitmap + i * 2_usize + 1_usize]);
+            let destination: usize = font::BITMAP_OFFSET + item.code * 32_usize +
+                (i / stride) * 2_usize + i % stride;
+            output[destination] = bits as u8;
+            i = i + 1_usize;
+        }
+    }
+    return ();
+}
